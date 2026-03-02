@@ -434,6 +434,7 @@ async function initTriggerCV(roleType) {
         }
 
         video.srcObject = cvStream;
+        video.play().catch(e => console.warn("Video play failed:", e));
         if (status) {
             status.innerText = "CV AKTIIVINEN";
             status.style.background = "var(--success)";
@@ -454,16 +455,20 @@ async function initTriggerCV(roleType) {
 function startCVLogic(roleType, video, canvas) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-    // Normalize role to 'start', 'finish' or 'split'
+    // Internal canvas for sampling (hidden)
+    const procCanvas = document.createElement('canvas');
+    const procCtx = procCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Normalize role
     let triggerType = 'split';
     if (roleType === 'lähtö') triggerType = 'start';
     if (roleType === 'maali') triggerType = 'finish';
 
-    console.log("CV LOGIC STARTING FOR:", roleType, "->", triggerType);
+    console.log("CV LOGIC STARTING FOR:", roleType);
 
     let previousIntensity = -1;
     const threshold = 12; // sensitivity
-    const gateX = 0.5; // middle of the screen
+    const gateX = 0.5; // middle
 
     const processFrame = () => {
         if (!cvStream) {
@@ -472,18 +477,27 @@ function startCVLogic(roleType, video, canvas) {
         }
 
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const x = canvas.width * gateX;
+            // Match canvas sizes
+            if (canvas.width !== video.videoWidth) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                procCanvas.width = video.videoWidth / 2; // Sample at half res for speed
+                procCanvas.height = video.videoHeight / 2;
+            }
 
-            // 1. Draw Gate UI
+            // 1. MUST DRAW the video to our processing context!
+            procCtx.drawImage(video, 0, 0, procCanvas.width, procCanvas.height);
+
+            // 2. Prepare Overlay UI (transparent)
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const x = canvas.width * gateX;
             ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
 
-            // 2. Sample the Gate (Vertical strip)
-            const imageData = ctx.getImageData(x - 2, 0, 4, canvas.height);
+            // 3. Sample the Gate (from procCanvas)
+            const procX = Math.round(procCanvas.width * gateX);
+            const imageData = procCtx.getImageData(Math.max(0, procX - 1), 0, 2, procCanvas.height);
             const data = imageData.data;
             let totalB = 0;
             for (let i = 0; i < data.length; i += 4) {
@@ -491,7 +505,7 @@ function startCVLogic(roleType, video, canvas) {
             }
             const avgIntensity = totalB / (data.length / 4);
 
-            // 3. Detect Change
+            // 4. Detect Change
             if (previousIntensity !== -1) {
                 const diff = Math.abs(avgIntensity - previousIntensity);
 
@@ -502,8 +516,11 @@ function startCVLogic(roleType, video, canvas) {
 
                 // Numerical Debug Info
                 ctx.fillStyle = "white";
-                ctx.font = "12px Arial";
-                ctx.fillText(`Diff: ${diff.toFixed(1)} / ${threshold}`, 10, canvas.height - 25);
+                ctx.font = "bold 14px Arial";
+                ctx.shadowColor = "black";
+                ctx.shadowBlur = 4;
+                ctx.fillText(`RAW: ${avgIntensity.toFixed(0)}  DIFF: ${diff.toFixed(1)} / ${threshold}`, 10, canvas.height - 30);
+                ctx.shadowBlur = 0;
 
                 const now = Date.now();
                 if (diff > threshold && (now - lastTriggerTime > 3000)) {
@@ -516,7 +533,11 @@ function startCVLogic(roleType, video, canvas) {
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }
-            previousIntensity = avgIntensity;
+
+            // Only update history if we have actual signal (not black)
+            if (avgIntensity > 0 || previousIntensity === -1) {
+                previousIntensity = avgIntensity;
+            }
         }
         requestAnimationFrame(processFrame);
     };
