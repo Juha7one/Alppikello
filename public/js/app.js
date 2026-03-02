@@ -424,11 +424,17 @@ async function initTriggerCV(roleType) {
 
 function startCVLogic(roleType, video, canvas) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const triggerType = roleType === 'lähtö' ? 'start' : (roleType === 'maali' ? 'finish' : 'split');
+
+    // Normalize role to 'start', 'finish' or 'split'
+    let triggerType = 'split';
+    if (roleType === 'lähtö') triggerType = 'start';
+    if (roleType === 'maali') triggerType = 'finish';
+
+    console.log("CV LOGIC STARTING FOR:", roleType, "->", triggerType);
 
     let previousIntensity = -1;
-    const threshold = 15; // sensitivity
-    const gateX = 0.5; // middle of the screen (0.0 to 1.0)
+    const threshold = 12; // slightly more sensitive
+    const gateX = 0.5; // middle of the screen
 
     const processFrame = () => {
         if (!cvStream) return;
@@ -436,62 +442,47 @@ function startCVLogic(roleType, video, canvas) {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-
-            // 1. Draw UI Overlay (The Gate)
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             const x = canvas.width * gateX;
 
+            // 1. Draw Gate UI
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
-            ctx.stroke();
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
 
-            // Draw trigger zone markers
-            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.fillRect(x - 5, 20, 10, 10);
-            ctx.fillRect(x - 5, canvas.height - 30, 10, 10);
-
-            // 2. Sample the Gate Zone
-            // We take a vertical strip 10px wide
-            const imageData = ctx.getImageData(x - 5, 0, 10, canvas.height);
+            // 2. Sample the Gate (Vertical strip)
+            const imageData = ctx.getImageData(x - 2, 0, 4, canvas.height);
             const data = imageData.data;
-
-            let totalBrightness = 0;
+            let totalB = 0;
             for (let i = 0; i < data.length; i += 4) {
-                // simple grayscale conversion
-                totalBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+                totalB += (data[i] + data[i + 1] + data[i + 2]) / 3;
             }
-            const avgIntensity = totalBrightness / (data.length / 4);
+            const avgIntensity = totalB / (data.length / 4);
 
             // 3. Detect Change
             if (previousIntensity !== -1) {
                 const diff = Math.abs(avgIntensity - previousIntensity);
 
-                // Visual feedback of change in corner
-                ctx.fillStyle = diff > threshold ? "var(--danger)" : "var(--success)";
-                ctx.fillRect(10, 10, 20, 20);
+                // Visual Meter (Bottom)
+                const meterW = (diff / 50) * canvas.width;
+                ctx.fillStyle = diff > threshold ? "#ef4444" : "#22c55e";
+                ctx.fillRect(0, canvas.height - 10, meterW, 10);
 
                 const now = Date.now();
-                if (diff > threshold && now - lastTriggerTime > 3000) {
-                    console.log(`CV TRIGGER [${triggerType}] - Diff: ${diff.toFixed(2)}`);
-                    simulateTrigger(triggerType);
+                if (diff > threshold && (now - lastTriggerTime > 3000)) {
+                    console.log("!!! CV TRIGGER DETECTED !!!", triggerType, diff.toFixed(1));
                     lastTriggerTime = now;
+                    simulateTrigger(triggerType);
 
-                    // Visual "flash" of the gate
-                    ctx.strokeStyle = "var(--danger)";
-                    ctx.lineWidth = 10;
-                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+                    // Big visual flash
+                    ctx.fillStyle = "rgba(239, 68, 68, 0.4)";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }
-
             previousIntensity = avgIntensity;
         }
-
         requestAnimationFrame(processFrame);
     };
-
     requestAnimationFrame(processFrame);
 }
 
