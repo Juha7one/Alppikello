@@ -41,6 +41,19 @@ socket.on('disconnect', () => {
     connText.innerText = 'Yhteys katkesi';
 });
 
+// Auto-hide Splash Screen after a short delay
+window.addEventListener('DOMContentLoaded', () => {
+    const splash = document.getElementById('deployment-splash');
+    if (splash) {
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.visibility = 'hidden';
+            }, 800);
+        }, 2500);
+    }
+});
+
 socket.on('session_created', (session) => {
     handleSessionJoin(session, 'VALMENTAJA');
 });
