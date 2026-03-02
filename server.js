@@ -121,9 +121,16 @@ io.on('connection', (socket) => {
         if (session) {
             // Get next athlete from queue
             const athlete = session.activeQueue.shift();
+
+            // BLOCK GHOST STARTS: If no one is assigned to start, ignore the trigger
+            if (!athlete) {
+                console.log(`BLOCKED: No athlete assigned for trigger at ${timestamp}`);
+                return;
+            }
+
             const runner = {
-                id: athlete ? athlete.id : 'GHOST-' + Date.now(),
-                name: athlete ? athlete.name : 'Tuntematon',
+                id: athlete.id,
+                name: athlete.name,
                 startTime: timestamp,
                 splits: [],
                 done: false
@@ -131,6 +138,14 @@ io.on('connection', (socket) => {
 
             session.onCourse.push(runner);
             console.log(`START: ${runner.name} started at ${timestamp}`);
+
+            // Reorder the master athlete list: 
+            // Move the started athlete to the end of allAthletes so the order "auto-rotates" for next run
+            const masterIdx = session.allAthletes.findIndex(a => a.id === athlete.id);
+            if (masterIdx !== -1) {
+                const [moved] = session.allAthletes.splice(masterIdx, 1);
+                session.allAthletes.push(moved);
+            }
 
             io.to(sessionId).emit('timing_update', {
                 type: 'START',
@@ -277,23 +292,28 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Starter (Lähettäjä) moves an athlete to the starting queue
+    // Starter (Lähtöpaikka) manages the "Next Starter" slot
     socket.on('move_to_queue', (data) => {
         const { sessionId, athleteId } = data;
         const session = sessions[sessionId];
         if (session && session.allAthletes) {
-            const athlete = session.allAthletes.find(a => a.id === athleteId);
-            if (athlete) {
-                // If already in queue, remove it first to move it to the end
-                const existingIndex = session.activeQueue.findIndex(a => a.id === athleteId);
-                if (existingIndex !== -1) {
-                    session.activeQueue.splice(existingIndex, 1);
-                }
+            // Current athlete in "Next Starter" slot
+            const currentAttendee = session.activeQueue[0];
 
-                session.activeQueue.push(athlete);
-                console.log(`Starter moved ${athlete.name} to active queue in ${sessionId} (Position: ${session.activeQueue.length})`);
-                io.to(sessionId).emit('device_status_update', { session });
+            // IF we click the person who is ALREADY marked as next -> Unselect them
+            if (currentAttendee && currentAttendee.id === athleteId) {
+                session.activeQueue = [];
+                console.log(`Starter removed ${currentAttendee.name} from slot`);
+            } else {
+                // Find the new person from the master list
+                const athlete = session.allAthletes.find(a => a.id === athleteId);
+                if (athlete) {
+                    // Replace/Set as the single next starter
+                    session.activeQueue = [athlete];
+                    console.log(`Starter set ${athlete.name} as MUST-START`);
+                }
             }
+            io.to(sessionId).emit('device_status_update', { session });
         }
     });
 
