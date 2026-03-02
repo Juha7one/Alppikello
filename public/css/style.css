@@ -10,8 +10,7 @@
     --danger: #ef4444;
     /* Alert Red */
     --warning: #f59e0b;
-    --border-radius: 16px;
-    --glove-btn-size: 80px;
+    --border-radius: 20px;
     --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-body: 'Inter', system-ui, sans-serif;
 }
@@ -88,6 +87,7 @@ h3 {
     font-weight: 800;
     text-transform: uppercase;
     background: linear-gradient(to right, #3b82f6, #60a5fa);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -184,18 +184,19 @@ input:focus {
     letter-spacing: 1px;
 }
 
-/* Status Bar */
+/* Status Bar (Now Footer-style) */
 .status-bar {
-    background: rgba(0, 0, 0, 0.5);
-    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 40px 24px;
     display: flex;
-    justify-content: space-between;
-    font-size: 12px;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    font-size: 14px;
     font-weight: 600;
-    position: fixed;
-    top: 0;
+    margin-top: 60px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     width: 100%;
-    z-index: 1000;
 }
 
 .status-indicator {
@@ -241,4 +242,55 @@ input:focus {
     gap: 12px;
     align-items: center;
     font-size: 18px;
+}
+
+.btn-change-role {
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+}
+
+.btn-change-role:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+}
+
+.view-header {
+    text-align: center;
+    margin-bottom: 40px;
+    margin-top: 20px;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: var(--accent);
+    color: white;
+    border-radius: 40px;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.session-title {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0;
+    letter-spacing: -1px;
+    text-transform: uppercase;
 }

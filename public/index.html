@@ -21,19 +21,6 @@
 
 <body>
 
-    <!-- Status Bar -->
-    <div class="status-bar">
-        <div class="status-indicator">
-            <span id="conn-dot" class="dot"></span>
-            <span id="conn-text">Yhdistetään...</span>
-        </div>
-        <div class="sync-info">
-            Sync: <span id="sync-offset" class="sync-badge">-- ms</span>
-        </div>
-        <button id="btn-change-role" class="btn-mini" onclick="showRoleSelection()"
-            style="display:none; margin-left: 10px;">Vaihda rooli</button>
-    </div>
-
     <!-- Onboarding View -->
     <div id="view-onboarding" class="view container active">
         <div style="max-width: 800px; margin: 0 auto;">
@@ -118,9 +105,11 @@
 
     <!-- Lähtö (Start) Node View -->
     <div id="view-lähtö" class="view container">
+        <div class="view-header">
+            <span class="role-badge">LÄHTÖ</span>
+            <h1 class="session-title" id="start-session-name">Treeni</h1>
+        </div>
         <div class="card">
-            <h2 style="color: var(--accent);">LÄHTÖ-TRIGGERI</h2>
-
             <div id="start-cv-container" class="cv-wrapper"
                 style="margin: 20px 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3;">
                 <video id="start-video" autoplay playsinline muted
@@ -146,9 +135,11 @@
 
     <!-- Maali (Finish) Node View -->
     <div id="view-maali" class="view container">
+        <div class="view-header">
+            <span class="role-badge" style="background: var(--success);">MAALI</span>
+            <h1 class="session-title" id="finish-session-name">Treeni</h1>
+        </div>
         <div class="card">
-            <h2 style="color: var(--success);">MAALI-TRIGGERI</h2>
-
             <div id="maali-cv-container" class="cv-wrapper"
                 style="margin: 20px 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3;">
                 <video id="maali-video" autoplay playsinline muted
@@ -172,9 +163,11 @@
 
     <!-- Lähettäjä (Starter) View -->
     <div id="view-lähettäjä" class="view container">
+        <div class="view-header">
+            <span class="role-badge">LÄHETTÄJÄ</span>
+            <h1 class="session-title" id="starter-session-name">Treeni</h1>
+        </div>
         <div class="card" style="text-align: left;">
-            <h2 style="color: var(--accent);">LÄHETTÄJÄ</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 24px;">Valitse seuraava laskija radalle</p>
 
             <div id="starter-skier-list" style="margin-top: 20px;">
                 <!-- List of all athletes in session will be rendered here -->
@@ -198,9 +191,11 @@
 
     <!-- Väliaika Node View -->
     <div id="view-väliaika" class="view container">
+        <div class="view-header">
+            <span class="role-badge" style="background: var(--warning);">VÄLIAIKA</span>
+            <h1 class="session-title" id="split-session-name">Treeni</h1>
+        </div>
         <div class="card">
-            <h2 style="color: var(--warning);">VÄLIAIKA-TRIGGERI</h2>
-
             <div id="väliaika-cv-container" class="cv-wrapper"
                 style="margin: 20px 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3;">
                 <video id="väliaika-video" autoplay playsinline muted
@@ -223,13 +218,13 @@
 
     <!-- Valmentaja / Control View -->
     <div id="view-valmentaja" class="view container">
+        <div class="view-header">
+            <span class="role-badge">VALMENTAJA</span>
+            <h1 class="session-title" id="coach-session-name">Treeni</h1>
+        </div>
         <div class="card" style="padding: 24px; text-align: left;">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
                 <div>
-                    <p
-                        style="color: var(--accent); font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0;">
-                        VALMENTAJA / CONTROL</p>
-                    <h2 id="session-name" style="margin: 0; font-size: 42px; line-height: 1;">Treeni</h2>
                     <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px; font-weight: 700;">KOODI:
                         <span id="session-code" style="color: var(--text-primary);">--</span>
                     </p>
@@ -285,13 +280,17 @@
         </div>
     </div>
 
-    <!-- Urheilija View -->
     <div id="view-urheilija" class="view container">
+        <div class="view-header">
+            <span class="role-badge">URHEILIJA</span>
+            <h1 class="session-title" id="athlete-session-name">Treeni</h1>
+        </div>
         <div class="card">
-            <h2 id="athlete-welcome">TERVE!</h2>
-            <div id="athlete-status" class="card" style="margin-top: 24px; border-color: var(--accent);">
-                <p style="font-size: 14px; text-transform: uppercase;">Laukaisun Tila</p>
-                <h3 id="athlete-queue-status">EI JONOSSA</h3>
+            <h2 id="athlete-welcome" style="font-size: 32px; margin-bottom: 10px;">TERVE!</h2>
+            <div id="athlete-status" class="card"
+                style="margin-top: 24px; border-color: var(--accent); border-width: 3px;">
+                <p style="font-size: 16px; font-weight: 900; text-transform: uppercase; opacity: 0.6;">TILANNE</p>
+                <h3 id="athlete-queue-status" style="font-size: 48px;">EI JONOSSA</h3>
             </div>
 
             <button id="ready-btn" class="btn btn-success" onclick="markReady()">OLEN VALMIINA LÄHTÖÖN</button>
@@ -322,6 +321,23 @@
                 <p style="color: var(--text-secondary);">Harjoitus ei ole vielä alkanut.</p>
             </div>
         </div>
+    </div>
+
+    <!-- Footer Status & Role Change -->
+    <div class="status-bar">
+        <button id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()" style="display:none;">VAIHDA
+            LAITTEEN ROOLI</button>
+
+        <div style="display: flex; gap: 30px; opacity: 0.4;">
+            <div class="status-indicator">
+                <span id="conn-dot" class="dot"></span>
+                <span id="conn-text">Yhdistetty</span>
+            </div>
+            <div class="sync-info">
+                Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
+            </div>
+        </div>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.2 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->

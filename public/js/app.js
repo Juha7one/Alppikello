@@ -245,8 +245,15 @@ function handleSessionJoin(session, role) {
         uiUpdateTimer = setInterval(updateUI, 100);
     }
 
+    // Update all potential session-name headers
+    ['start', 'finish', 'starter', 'split', 'coach', 'athlete'].forEach(id => {
+        const el = document.getElementById(`${id}-session-name`);
+        if (el) el.innerText = session.name;
+    });
+
     if (role === 'VALMENTAJA') {
-        document.getElementById('session-name').innerText = session.name;
+        const sNameEl = document.getElementById('session-name');
+        if (sNameEl) sNameEl.innerText = session.name;
         document.getElementById('session-code').innerText = session.id;
         generateQR(session.id);
     } else if (role === 'URHEILIJA') {
