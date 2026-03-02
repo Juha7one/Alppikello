@@ -240,12 +240,9 @@ function handleSessionJoin(session, role) {
     // Show change role button
     roleBtn.style.display = "block";
 
-    // Start Live Clock if needed (Coach/Katsomo)
-    if (role === 'VALMENTAJA' || role === 'KATSOMO') {
-        if (!uiUpdateTimer) uiUpdateTimer = setInterval(updateUI, 50);
-    } else {
-        clearInterval(uiUpdateTimer);
-        uiUpdateTimer = null;
+    // Start Live Clock for ALL active roles to ensure queue/timing updates
+    if (!uiUpdateTimer) {
+        uiUpdateTimer = setInterval(updateUI, 100);
     }
 
     if (role === 'VALMENTAJA') {
@@ -705,15 +702,38 @@ function renderStarterView() {
     const athletes = currentSession.allAthletes || [];
     const queue = currentSession.activeQueue || [];
 
-    listEl.innerHTML = athletes.length ? athletes.map(a => `
-        <button class="btn btn-outline" style="padding: 25px; margin-bottom: 15px; font-size: 28px; font-weight: 900;" onclick="addToQueue('${a.id}')">
-            ${a.name.toUpperCase()}
-        </button>
-    `).join('') : '<p>Ei laskijoita.</p>';
+    // 1. Top Section: SEURAAVA LÄHTIJÄ (Giant)
+    if (queue.length > 0) {
+        const next = queue[0];
+        queueEl.innerHTML = `
+            <div style="background: var(--accent); padding: 30px; border-radius: 24px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);">
+                <p style="font-weight: 900; font-size: 14px; letter-spacing: 2px; opacity: 0.8; margin: 0 0 10px 0;">SEURAAVANA LÄHDÖSSÄ</p>
+                <h1 style="font-size: 64px; margin: 0; line-height: 1;">${next.name.toUpperCase()}</h1>
+                ${queue.length > 1 ? `<p style="margin-top: 15px; font-weight: 700; opacity: 0.6;">Sitten: ${queue[1].name.toUpperCase()}</p>` : ''}
+            </div>
+        `;
+    } else {
+        queueEl.innerHTML = `
+            <div style="padding: 40px; border: 3px dashed rgba(255,255,255,0.1); border-radius: 24px; text-align: center; margin-bottom: 30px;">
+                <h2 style="opacity: 0.3;">KETÄÄN EI OLE JONOSSA</h2>
+            </div>
+        `;
+    }
 
-    queueEl.innerHTML = queue.length ? queue.map((a, i) => `
-        <div class="queue-item">#${i + 1} <b>${a.name}</b></div>
-    `).join('') : '<p>Jono tyhjä.</p>';
+    // 2. Bottom Section: All athletes as big selection buttons
+    // Filter out people already in queue top position to avoid confusion? 
+    // No, show everyone so the starter can re-select if needed.
+    listEl.innerHTML = athletes.length ? athletes.map(a => {
+        const isInQueue = queue.some(q => q.id === a.id);
+        return `
+            <button class="btn ${isInQueue ? 'btn-primary' : 'btn-outline'}" 
+                style="padding: 25px; margin-bottom: 12px; font-size: 32px; font-weight: 900; border-width: 3px; ${isInQueue ? 'opacity: 0.5;' : ''}" 
+                onclick="addToQueue('${a.id}')">
+                ${a.name.toUpperCase()}
+                ${isInQueue ? ' (JONOSSA)' : ''}
+            </button>
+        `;
+    }).join('') : '<p style="text-align:center; opacity:0.5;">Ei nimiä listalla.</p>';
 }
 
 // Last Build: Mon Mar  2 17:50:01 EET 2026
