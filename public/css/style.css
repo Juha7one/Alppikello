@@ -294,3 +294,26 @@ input:focus {
     letter-spacing: -1px;
     text-transform: uppercase;
 }
+
+.athlete-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-athlete {
+    padding: 30px 15px;
+    font-size: 28px;
+    font-weight: 900;
+    border-radius: 16px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 100px;
+    border-width: 3px;
+    width: 100%;
+}

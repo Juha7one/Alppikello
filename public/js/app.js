@@ -8,6 +8,13 @@ let rtt = 0;
 let selectedRole = null;
 let userName = localStorage.getItem('alppikello_user_name') || "";
 
+// Rendering optimization locks
+let lastAthletesCount = -1;
+let lastResultsCount = -1;
+let lastQueueCount = -1;
+let lastOnCourseCount = -1;
+let lastNextId = null;
+
 // UI Elements
 const connDot = document.getElementById('conn-dot');
 const connText = document.getElementById('conn-text');
@@ -244,6 +251,12 @@ function handleSessionJoin(session, role) {
     if (!uiUpdateTimer) {
         uiUpdateTimer = setInterval(updateUI, 100);
     }
+
+    // Reset rendering locks to force a full update on join
+    lastAthletesCount = -1;
+    lastResultsCount = -1;
+    lastQueueCount = -1;
+    lastOnCourseCount = -1;
 
     // Update all potential session-name headers
     ['start', 'finish', 'starter', 'split', 'coach', 'athlete'].forEach(id => {
@@ -561,22 +574,24 @@ function renderValmentajaView() {
     const isCoach = currentRole === 'VALMENTAJA';
     if (coachCtrlEl) coachCtrlEl.style.display = isCoach ? 'block' : 'none';
 
-    // 0. Master Athlete List - CHUNKY BUTTONS
-    if (coachListEl) {
-        const athletes = currentSession.allAthletes || [];
+    // 0. Master Athlete List - CHUNKY BUTTONS (Only re-render if count change)
+    const athletes = currentSession.allAthletes || [];
+    if (coachListEl && (athletes.length !== lastAthletesCount)) {
         coachListEl.innerHTML = athletes.length ? athletes.map(a => `
             <button class="btn btn-outline" style="padding: 15px; margin-bottom: 8px; font-size: 20px; text-align: center; display: block; width: 100%; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);" onclick="addToQueue('${a.id}')">
                 ${a.name.toUpperCase()}
             </button>
         `).join('') : '<p style="font-size:14px; opacity:0.5; text-align:center;">Ei nimiä listalla.</p>';
         coachListEl.style.maxHeight = "300px";
+        lastAthletesCount = athletes.length;
     }
 
-    // 1. Show who is currently on course (FIFO-style)
     const onCourse = currentSession.onCourse || [];
     const now = getSyncedTime();
 
+    // Optimization: Check for runners or timer updates
     if (onCourse.length > 0) {
+        // We always update the time, but only re-generate HTML if set changes
         activeEl.innerHTML = onCourse.map(r => {
             const runningTime = now - r.startTime;
             const isGhost = r.id.toString().includes('GHOST');
@@ -600,11 +615,12 @@ function renderValmentajaView() {
                 </div>
             `;
         }).join('');
-    } else {
+    } else if (lastOnCourseCount !== 0) {
         activeEl.innerHTML = `<div style="text-align: center; padding: 40px; border: 2px dashed rgba(255,255,255,0.05); border-radius: 20px;">
             <h2 style="opacity: 0.3; font-size: 32px; margin: 0;">RATA VAPAA</h2>
         </div>`;
     }
+    lastOnCourseCount = onCourse.length;
 
     // 2. Pending suspicious results
     const pending = currentSession.pendingResults || [];
@@ -633,34 +649,40 @@ function renderValmentajaView() {
     // 4. Show recent results
     const results = currentSession.results || [];
     const bestTime = results.length > 0 ? Math.min(...results.map(rs => rs.totalTime)) : 0;
+    const pendingCount = pending.length;
 
     if (results.length > 0 || pending.length > 0) {
-        resultEl.innerHTML = pendingHtml + expectedTxt + results.map((r, i) => {
-            const delta = r.totalTime - bestTime;
-            const isBest = r.totalTime === bestTime;
-            return `
-                <div class="card" style="margin-bottom: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; background: ${isBest ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.02)'}; border-color: ${isBest ? 'var(--success)' : 'transparent'}">
-                    <div>
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <span style="opacity:0.3; font-weight:900; font-size: 20px;">#${results.length - i}</span>
-                            <span style="font-weight: 800; font-size: 24px;">${r.name.toUpperCase()}</span>
+        // Optimization: only re-render results if count changes (or pending changes)
+        if (results.length !== lastResultsCount || pendingCount !== 0) {
+            resultEl.innerHTML = pendingHtml + expectedTxt + results.map((r, i) => {
+                const delta = r.totalTime - bestTime;
+                const isBest = r.totalTime === bestTime;
+                return `
+                    <div class="card" style="margin-bottom: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; background: ${isBest ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.02)'}; border-color: ${isBest ? 'var(--success)' : 'transparent'}">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <span style="opacity:0.3; font-weight:900; font-size: 20px;">#${results.length - i}</span>
+                                <span style="font-weight: 800; font-size: 24px;">${r.name.toUpperCase()}</span>
+                            </div>
+                            <div style="font-size: 14px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-top: 4px;">
+                                ${r.splits.length ? `VÄLI: ${formatDuration(r.splits[0].duration)}` : 'EI VÄLIAIKAA'}
+                                ${r.manual ? ' | <span style="color:var(--warning)">KÄSIKELLO</span>' : ''}
+                            </div>
                         </div>
-                        <div style="font-size: 14px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-top: 4px;">
-                            ${r.splits.length ? `VÄLI: ${formatDuration(r.splits[0].duration)}` : 'EI VÄLIAIKAA'}
-                            ${r.manual ? ' | <span style="color:var(--warning)">KÄSIKELLO</span>' : ''}
+                        <div style="text-align: right;">
+                            <div style="font-size: 32px; font-weight: 900; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'}; font-family: monospace;">${formatDuration(r.totalTime)}</div>
+                            <div style="font-size: 16px; font-weight: 800; color: ${delta === 0 ? 'var(--success)' : 'var(--danger)'};">
+                                ${delta === 0 ? 'KÄRKI' : `+${formatDuration(delta)}`}
+                            </div>
                         </div>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 32px; font-weight: 900; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'}; font-family: monospace;">${formatDuration(r.totalTime)}</div>
-                        <div style="font-size: 16px; font-weight: 800; color: ${delta === 0 ? 'var(--success)' : 'var(--danger)'};">
-                            ${delta === 0 ? 'KÄRKI' : `+${formatDuration(delta)}`}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
+            lastResultsCount = results.length;
+        }
     } else {
         resultEl.innerHTML = `<div style="text-align:center; opacity:0.2; padding:40px; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">Ei tuloksia</div>`;
+        lastResultsCount = 0;
     }
 }
 
@@ -709,38 +731,46 @@ function renderStarterView() {
     const athletes = currentSession.allAthletes || [];
     const queue = currentSession.activeQueue || [];
 
-    // 1. Top Section: SEURAAVA LÄHTIJÄ (Giant)
-    if (queue.length > 0) {
-        const next = queue[0];
-        queueEl.innerHTML = `
-            <div style="background: var(--accent); padding: 30px; border-radius: 24px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);">
-                <p style="font-weight: 900; font-size: 14px; letter-spacing: 2px; opacity: 0.8; margin: 0 0 10px 0;">SEURAAVANA LÄHDÖSSÄ</p>
-                <h1 style="font-size: 64px; margin: 0; line-height: 1;">${next.name.toUpperCase()}</h1>
-                ${queue.length > 1 ? `<p style="margin-top: 15px; font-weight: 700; opacity: 0.6;">Sitten: ${queue[1].name.toUpperCase()}</p>` : ''}
-            </div>
-        `;
-    } else {
-        queueEl.innerHTML = `
-            <div style="padding: 40px; border: 3px dashed rgba(255,255,255,0.1); border-radius: 24px; text-align: center; margin-bottom: 30px;">
-                <h2 style="opacity: 0.3;">KETÄÄN EI OLE JONOSSA</h2>
-            </div>
-        `;
+    // 1. Top Section: SEURAAVA LÄHTIJÄ (Giant) - Only re-render if next person or count changes
+    const nextId = queue.length > 0 ? queue[0].id : null;
+    if (queueEl && (queue.length !== lastQueueCount || (queue.length > 0 && nextId !== lastNextId))) {
+        if (queue.length > 0) {
+            const next = queue[0];
+            queueEl.innerHTML = `
+                <div style="background: var(--accent); padding: 40px 20px; border-radius: 24px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);">
+                    <p style="font-weight: 900; font-size: 14px; letter-spacing: 2px; opacity: 0.8; margin: 0 0 10px 0; text-transform: uppercase;">Seuraava lähtijä:</p>
+                    <h1 style="font-size: 72px; margin: 0; line-height: 1; letter-spacing: -2px;">${next.name.toUpperCase()}</h1>
+                    ${queue.length > 1 ? `<p style="margin-top: 20px; font-weight: 800; font-size: 20px; opacity: 0.6;">Sitten: ${queue[1].name.toUpperCase()}</p>` : ''}
+                </div>
+            `;
+        } else {
+            queueEl.innerHTML = `
+                <div style="padding: 40px; border: 3px dashed rgba(255,255,255,0.1); border-radius: 24px; text-align: center; margin-bottom: 20px;">
+                    <h2 style="opacity: 0.3; text-transform: uppercase;">Ketään ei ole jonossa</h2>
+                </div>
+            `;
+        }
+        lastNextId = nextId;
     }
 
-    // 2. Bottom Section: All athletes as big selection buttons
-    // Filter out people already in queue top position to avoid confusion? 
-    // No, show everyone so the starter can re-select if needed.
-    listEl.innerHTML = athletes.length ? athletes.map(a => {
-        const isInQueue = queue.some(q => q.id === a.id);
-        return `
-            <button class="btn ${isInQueue ? 'btn-primary' : 'btn-outline'}" 
-                style="padding: 25px; margin-bottom: 12px; font-size: 32px; font-weight: 900; border-width: 3px; ${isInQueue ? 'opacity: 0.5;' : ''}" 
-                onclick="addToQueue('${a.id}')">
-                ${a.name.toUpperCase()}
-                ${isInQueue ? ' (JONOSSA)' : ''}
-            </button>
-        `;
-    }).join('') : '<p style="text-align:center; opacity:0.5;">Ei nimiä listalla.</p>';
+    // 2. Bottom Section: All athletes as big selection buttons (2-column grid)
+    if (listEl && (athletes.length !== lastAthletesCount || queue.length !== lastQueueCount)) {
+        listEl.innerHTML = athletes.length ? athletes.map(a => {
+            const isInQueue = queue.some(q => q.id === a.id);
+            const isNext = queue.length > 0 && queue[0].id === a.id;
+
+            return `
+                <button class="btn-athlete ${isInQueue ? 'btn-primary' : 'btn-outline'}" 
+                    style="${isNext ? 'border-color: #fff; box-shadow: inset 0 0 20px rgba(255,255,255,0.2);' : ''} ${isInQueue && !isNext ? 'opacity: 0.4;' : ''}" 
+                    onclick="addToQueue('${a.id}')">
+                    ${a.name.toUpperCase()}
+                </button>
+            `;
+        }).join('') : '<p style="text-align:center; opacity:0.5; grid-column: 1 / span 2; padding: 20px;">Ei nimiä listalla.</p>';
+
+        lastQueueCount = queue.length;
+        lastAthletesCount = athletes.length;
+    }
 }
 
 // Last Build: Mon Mar  2 17:50:01 EET 2026

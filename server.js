@@ -284,12 +284,15 @@ io.on('connection', (socket) => {
         if (session && session.allAthletes) {
             const athlete = session.allAthletes.find(a => a.id === athleteId);
             if (athlete) {
-                // Add to active queue if not already there
-                if (!session.activeQueue.find(a => a.id === athleteId)) {
-                    session.activeQueue.push(athlete);
-                    console.log(`Starter moved ${athlete.name} to active queue in ${sessionId}`);
-                    io.to(sessionId).emit('device_status_update', { session });
+                // If already in queue, remove it first to move it to the end
+                const existingIndex = session.activeQueue.findIndex(a => a.id === athleteId);
+                if (existingIndex !== -1) {
+                    session.activeQueue.splice(existingIndex, 1);
                 }
+
+                session.activeQueue.push(athlete);
+                console.log(`Starter moved ${athlete.name} to active queue in ${sessionId} (Position: ${session.activeQueue.length})`);
+                io.to(sessionId).emit('device_status_update', { session });
             }
         }
     });

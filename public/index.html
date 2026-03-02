@@ -72,7 +72,7 @@
                     </div>
                     <div class="role-card" onclick="selectRole('LÄHETTÄJÄ')" data-role="LÄHETTÄJÄ">
                         <span class="role-icon">🚶</span>
-                        <span class="role-label">LÄHETTÄJÄ</span>
+                        <span class="role-label">LÄHTÖPAIKKA</span>
                     </div>
                     <div class="role-card" onclick="selectRole('LÄHTÖ')" data-role="LÄHTÖ">
                         <span class="role-icon">⏲️</span>
@@ -164,28 +164,26 @@
     <!-- Lähettäjä (Starter) View -->
     <div id="view-lähettäjä" class="view container">
         <div class="view-header">
-            <span class="role-badge">LÄHETTÄJÄ</span>
+            <span class="role-badge">LÄHTÖPAIKKA</span>
             <h1 class="session-title" id="starter-session-name">Treeni</h1>
         </div>
-        <div class="card" style="text-align: left;">
+        <div id="starter-queue-view">
+            <!-- Giant Next Starter Card -->
+        </div>
 
-            <div id="starter-skier-list" style="margin-top: 20px;">
-                <!-- List of all athletes in session will be rendered here -->
-                <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Ladataan laskijoita...</p>
+        <div class="card" style="text-align: left; padding: 20px;">
+            <p
+                style="color: var(--text-secondary); font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px;">
+                Seuraavat lähtijät:</p>
+            <div id="starter-skier-list" class="athlete-grid">
+                <!-- List will be injected here -->
             </div>
 
-            <button class="btn btn-outline btn-mini" style="width: 100%; margin-top: 10px; border-style: dashed;"
+            <button class="btn btn-outline"
+                style="width: 100%; margin-top: 30px; border-style: dashed; padding: 20px; font-size: 18px;"
                 onclick="addManualAthletePrompt()">
-                + LISÄÄ LASKIJA MANUAALISESTI
+                + LISÄÄ LASKIJA
             </button>
-
-            <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <p style="font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase;">JONOSSA
-                </p>
-                <div id="starter-queue-view" style="margin-top: 10px;">
-                    <!-- The active queue will be shown here -->
-                </div>
-            </div>
         </div>
     </div>
 
