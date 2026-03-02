@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alppikello | Älykäs Ajanotto</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@800&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- QRCode Support -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+</head>
+
+<body>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-indicator">
+            <span id="conn-dot" class="dot"></span>
+            <span id="conn-text">Yhdistetään...</span>
+        </div>
+        <div class="sync-info">
+            Sync: <span id="sync-offset" class="sync-badge">-- ms</span>
+        </div>
+        <button id="btn-change-role" class="btn-mini" onclick="showRoleSelection()"
+            style="display:none; margin-left: 10px;">Vaihda rooli</button>
+    </div>
+
+    <!-- Onboarding View -->
+    <div id="view-onboarding" class="view container active">
+        <div class="logo-container">
+            <h1 class="logo-text">Alppikello</h1>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">Älykäs Alppihiihdon Ajanotto</p>
+        </div>
+
+        <div class="card">
+            <!-- Step 0: Initial Options -->
+            <div id="setup-initial">
+                <button class="btn btn-primary" onclick="createSession()">LUO UUSI HARJOITUS</button>
+                <div style="margin: 20px 0; display: flex; align-items: center; gap: 10px;">
+                    <hr style="flex: 1; opacity: 0.1;"> <span style="font-size: 12px; color: var(--text-secondary);">TAI
+                        LIITY</span>
+                    <hr style="flex: 1; opacity: 0.1;">
+                </div>
+                <input type="text" id="session-input" placeholder="SESSION ID" maxlength="6"
+                    style="text-transform: uppercase;">
+                <button class="btn btn-outline" style="margin-top:10px;" onclick="enterSessionManually()">JATKA</button>
+            </div>
+
+            <!-- Step 1: Name Entry -->
+            <div id="setup-name" style="display:none;">
+                <h3 id="session-join-title">Liitytään harjoitukseen</h3>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Valitse nimesi alta tai
+                    kirjoita uusi:</p>
+
+                <div id="valitse-nimi-lista"
+                    style="margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Existing names will be injected here -->
+                </div>
+
+                <div
+                    style="margin-bottom: 12px; opacity: 0.5; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                    Tai uusi laskija:</div>
+                <input type="text" id="name-input" placeholder="OMA NIMESI" maxlength="20">
+                <button class="btn btn-primary" style="margin-top:20px;" onclick="saveName()">JATKA</button>
+            </div>
+
+            <!-- Step 2: Role Selection -->
+            <div id="setup-role" style="display:none;">
+                <p
+                    style="text-align: left; font-size: 14px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">
+                    Valitse laitteen rooli</p>
+                <div class="role-grid">
+                    <div class="role-card" onclick="selectRole('VALMENTAJA')" data-role="VALMENTAJA">
+                        <span class="role-icon">📋</span>
+                        <span class="role-label">VALMENTAJA</span>
+                    </div>
+                    <div class="role-card" onclick="selectRole('LÄHETTÄJÄ')" data-role="LÄHETTÄJÄ">
+                        <span class="role-icon">🚶</span>
+                        <span class="role-label">LÄHETTÄJÄ</span>
+                    </div>
+                    <div class="role-card" onclick="selectRole('LÄHTÖ')" data-role="LÄHTÖ">
+                        <span class="role-icon">⏲️</span>
+                        <span class="role-label">LÄHTÖ (Trigger)</span>
+                    </div>
+                    <div class="role-card" onclick="selectRole('VÄLIAIKA')" data-role="VÄLIAIKA">
+                        <span class="role-icon">⏱️</span>
+                        <span class="role-label">VÄLIAIKA</span>
+                    </div>
+                    <div class="role-card" onclick="selectRole('MAALI')" data-role="MAALI">
+                        <span class="role-icon">🏁</span>
+                        <span class="role-label">MAALI</span>
+                    </div>
+                    <div class="role-card" onclick="selectRole('URHEILIJA')" data-role="URHEILIJA">
+                        <span class="role-icon">⛷️</span>
+                        <span class="role-label">URHEILIJA</span>
+                    </div>
+                    <div class="role-card" onclick="selectRole('VIDEO')" data-role="VIDEO">
+                        <span class="role-icon">📹</span>
+                        <span class="role-label">VIDEO</span>
+                    </div>
+                    <div class="role-card" onclick="selectRole('KATSOMO')" data-role="KATSOMO">
+                        <span class="role-icon">📱</span>
+                        <span class="role-label">KATSOMO</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lähtö (Start) Node View -->
+    <div id="view-lähtö" class="view container">
+        <div class="card">
+            <h2 style="color: var(--accent);">LÄHTÖ-TRIGGERI</h2>
+
+            <div id="start-cv-container" class="cv-wrapper"
+                style="margin: 20px 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3;">
+                <video id="start-video" autoplay playsinline muted
+                    style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="start-overlay"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="start-status-overlay"
+                    style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">
+                    CV POIS PÄÄLTÄ</div>
+            </div>
+
+            <p id="start-node-info" style="font-size: 16px; font-weight: 700;">VALMIINA</p>
+            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 12px;">Suuntaa "viiva" laskijan linjalle
+            </p>
+
+            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                <button id="btn-start-cv" class="btn btn-primary" onclick="initTriggerCV('lähtö')">AKTIVOI
+                    KENNO</button>
+                <button class="btn btn-outline" onclick="simulateTrigger('start')">MANUAL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maali (Finish) Node View -->
+    <div id="view-maali" class="view container">
+        <div class="card">
+            <h2 style="color: var(--success);">MAALI-TRIGGERI</h2>
+
+            <div id="maali-cv-container" class="cv-wrapper"
+                style="margin: 20px 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3;">
+                <video id="maali-video" autoplay playsinline muted
+                    style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="maali-overlay"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="maali-status-overlay"
+                    style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">
+                    CV POIS PÄÄLTÄ</div>
+            </div>
+
+            <p id="finish-node-info" style="font-size: 16px; font-weight: 700;">VALITSE MAALIIN TULIJA</p>
+
+            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                <button id="btn-maali-cv" class="btn btn-success" onclick="initTriggerCV('maali')">AKTIVOI
+                    KENNO</button>
+                <button class="btn btn-outline" onclick="simulateTrigger('finish')">MANUAL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lähettäjä (Starter) View -->
+    <div id="view-lähettäjä" class="view container">
+        <div class="card" style="text-align: left;">
+            <h2 style="color: var(--accent);">LÄHETTÄJÄ</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Valitse seuraava laskija radalle</p>
+
+            <div id="starter-skier-list" style="margin-top: 20px;">
+                <!-- List of all athletes in session will be rendered here -->
+                <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Ladataan laskijoita...</p>
+            </div>
+
+            <button class="btn btn-outline btn-mini" style="width: 100%; margin-top: 10px; border-style: dashed;"
+                onclick="addManualAthletePrompt()">
+                + LISÄÄ LASKIJA MANUAALISESTI
+            </button>
+
+            <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <p style="font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase;">JONOSSA
+                </p>
+                <div id="starter-queue-view" style="margin-top: 10px;">
+                    <!-- The active queue will be shown here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Väliaika Node View -->
+    <div id="view-väliaika" class="view container">
+        <div class="card">
+            <h2 style="color: var(--warning);">VÄLIAIKA-TRIGGERI</h2>
+
+            <div id="väliaika-cv-container" class="cv-wrapper"
+                style="margin: 20px 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3;">
+                <video id="väliaika-video" autoplay playsinline muted
+                    style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="väliaika-overlay"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="väliaika-status-overlay"
+                    style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">
+                    CV POIS PÄÄLTÄ</div>
+            </div>
+
+            <p id="split-node-info" style="font-size: 16px; font-weight: 700;">VALMIINA</p>
+            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                <button id="btn-väliaika-cv" class="btn btn-warning" onclick="initTriggerCV('väliaika')">AKTIVOI
+                    KENNO</button>
+                <button class="btn btn-outline" onclick="simulateTrigger('split')">MANUAL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Valmentaja / Control View -->
+    <div id="view-valmentaja" class="view container">
+        <div class="card" style="padding: 24px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
+                <div>
+                    <h2 id="session-name" style="margin: 0; font-size: 28px;">Treeni</h2>
+                    <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; opacity: 0.5;">ID: <span
+                            id="session-code">--</span></p>
+                </div>
+                <div style="text-align: center; display: flex; gap: 10px;">
+                    <button class="btn-mini" onclick="runTestSimulation()"
+                        style="padding: 10px; border-radius: 12px; background: rgba(34, 197, 94, 0.2); border: 1px solid var(--success); color: var(--success); font-weight: 800;">
+                        SIMULOI
+                    </button>
+                    <div style="text-align: center;">
+                        <button class="btn-mini" onclick="showQRModal()"
+                            style="padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.05);">
+                            <span style="font-size: 20px;">📱</span>
+                        </button>
+                        <p style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">JAA</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Modal Overlay -->
+            <div id="qr-modal" class="view"
+                style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 2000; align-items: center; justify-content: center; display: none; flex-direction: column;">
+                <div class="container" style="text-align: center;">
+                    <h2 style="margin-bottom: 20px;">JAA HARJOITUS</h2>
+                    <div style="background: white; padding: 20px; border-radius: 20px; display: inline-block;">
+                        <canvas id="session-qr-large"></canvas>
+                    </div>
+                    <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">Skannaa koodi liittyäksesi</p>
+                    <button class="btn btn-primary" onclick="hideQRModal()">VALMIS</button>
+                </div>
+            </div>
+
+            <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
+                Laskija Radalla</p>
+            <div id="active-skier"
+                style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; margin-top: 8px;">
+                <h3 style="font-size: 24px;">Ei Laukaisua</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">Odotetaan lähtöä...</p>
+            </div>
+
+            <div id="coach-controls">
+                <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
+                    Laskijoiden Hallinta</p>
+                <div id="coach-athlete-list"
+                    style="margin-top: 12px; max-height: 150px; overflow-y: auto; margin-bottom: 20px;">
+                    <!-- Master list -->
+                </div>
+                <button class="btn btn-outline btn-mini"
+                    style="width: 100%; margin: 8px 0 32px 0; border-style: dashed;" onclick="addManualAthletePrompt()">
+                    + LISÄÄ NIMI LISTALLE
+                </button>
+            </div>
+
+            <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">Päivän
+                Tulokset</p>
+            <div id="result-list" style="margin-top: 12px;">
+                <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Odotetaan suorituksia...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Urheilija View -->
+    <div id="view-urheilija" class="view container">
+        <div class="card">
+            <h2 id="athlete-welcome">TERVE!</h2>
+            <div id="athlete-status" class="card" style="margin-top: 24px; border-color: var(--accent);">
+                <p style="font-size: 14px; text-transform: uppercase;">Laukaisun Tila</p>
+                <h3 id="athlete-queue-status">EI JONOSSA</h3>
+            </div>
+
+            <button id="ready-btn" class="btn btn-success" onclick="markReady()">OLEN VALMIINA LÄHTÖÖN</button>
+
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 24px;">VIIMEISIMMÄT AIKASI</p>
+            <div id="athlete-results-list" style="margin-top: 12px;">
+                <!-- List of times will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Video View -->
+    <div id="view-video" class="view container">
+        <div class="card">
+            <h2 style="color: var(--danger);">VIDEO-TALLENNIN</h2>
+            <div id="video-status" style="font-size: 100px; margin: 30px 0;">📹</div>
+            <p style="font-weight: 700;">VALMIINA TALLENNUKSEEN</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Automaattinen tallennus lähdöstä
+            </p>
+        </div>
+    </div>
+
+    <!-- Katsomo View -->
+    <div id="view-katsomo" class="view container">
+        <div class="card">
+            <h2>LIVE TULOKSET</h2>
+            <div id="viewer-results" style="margin-top: 24px;">
+                <p style="color: var(--text-secondary);">Harjoitus ei ole vielä alkanut.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core App Logic -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

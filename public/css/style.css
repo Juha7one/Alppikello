@@ -1,0 +1,244 @@
+:root {
+    --bg-color: #0d0f14;
+    --card-bg: #1a1e26;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a8b3;
+    --accent: #3b82f6;
+    /* Premium Blue */
+    --success: #10b981;
+    /* Alpine Green */
+    --danger: #ef4444;
+    /* Alert Red */
+    --warning: #f59e0b;
+    --border-radius: 16px;
+    --glove-btn-size: 80px;
+    --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.5px;
+}
+
+/* Layout Containers */
+.container {
+    padding: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.view {
+    display: none;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.view.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Onboarding / Cards */
+.card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 32px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 48px;
+    margin-top: 40px;
+}
+
+.logo-text {
+    font-size: 32px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: linear-gradient(to right, #3b82f6, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Glove-Friendly Buttons */
+.btn {
+    width: 100%;
+    padding: 24px;
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: var(--border-radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    color: white;
+}
+
+.btn-success {
+    background-color: var(--success);
+    color: white;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.btn:active {
+    transform: scale(0.96);
+    filter: brightness(1.2);
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 18px;
+    border-radius: var(--border-radius);
+    font-size: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Role Selector Grid */
+.role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.role-card {
+    padding: 24px;
+    background: var(--card-bg);
+    border: 2px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.role-card.selected {
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.role-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.role-label {
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Status Bar */
+.status-bar {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--danger);
+}
+
+.dot.connected {
+    background-color: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+/* Time Sync Display */
+.sync-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    font-family: monospace;
+}
+
+.btn-mini {
+    padding: 10px 16px;
+    font-size: 14px;
+    margin: 0;
+    width: auto;
+    font-weight: 700;
+}
+
+.queue-item {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 18px;
+}
