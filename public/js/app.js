@@ -505,31 +505,31 @@ function startCVLogic(roleType, video, canvas) {
             }
             const avgIntensity = totalB / (data.length / 4);
 
-            // 4. Detect Change
-            if (previousIntensity !== -1) {
-                const diff = Math.abs(avgIntensity - previousIntensity);
+            // 4. Debug & Detection
+            const now = Date.now();
+            const diff = (previousIntensity !== -1) ? Math.abs(avgIntensity - previousIntensity) : 0;
 
+            // DRAW DEBUG ALWAYS (TOP LEFT)
+            ctx.fillStyle = "white";
+            ctx.font = "bold 18px Courier";
+            ctx.shadowColor = "black";
+            ctx.shadowBlur = 5;
+            ctx.fillText(`RAW: ${avgIntensity.toFixed(0)}  DIFF: ${diff.toFixed(1)}  THR: ${threshold}`, 15, 30);
+            ctx.shadowBlur = 0;
+
+            if (previousIntensity !== -1) {
                 // Visual Meter (Bottom)
                 const meterW = Math.min((diff / 40) * canvas.width, canvas.width);
                 ctx.fillStyle = diff > threshold ? "#ef4444" : "#22c55e";
                 ctx.fillRect(0, canvas.height - 15, meterW, 15);
 
-                // Numerical Debug Info
-                ctx.fillStyle = "white";
-                ctx.font = "bold 14px Arial";
-                ctx.shadowColor = "black";
-                ctx.shadowBlur = 4;
-                ctx.fillText(`RAW: ${avgIntensity.toFixed(0)}  DIFF: ${diff.toFixed(1)} / ${threshold}`, 10, canvas.height - 30);
-                ctx.shadowBlur = 0;
-
-                const now = Date.now();
                 if (diff > threshold && (now - lastTriggerTime > 3000)) {
                     console.log("!!! CV TRIGGER DETECTED !!!", triggerType, diff.toFixed(1));
                     lastTriggerTime = now;
                     simulateTrigger(triggerType);
 
                     // Big visual flash
-                    ctx.fillStyle = "rgba(239, 68, 68, 0.5)";
+                    ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }
@@ -686,3 +686,5 @@ function renderStarterView() {
         <div class="queue-item">#${i + 1} <b>${a.name}</b></div>
     `).join('') : '<p>Jono tyhjä.</p>';
 }
+
+// Last Build: Mon Mar  2 17:50:01 EET 2026
