@@ -388,32 +388,61 @@ function runTestSimulation() {
 // --- Computer Vision (Digital Photocell) ---
 
 async function initTriggerCV(roleType) {
-    const videoId = roleType === 'lähtö' ? 'start-video' : (roleType === 'maali' ? 'maali-video' : 'väliaika-video');
-    const canvasId = roleType === 'lähtö' ? 'start-overlay' : (roleType === 'maali' ? 'maali-overlay' : 'väliaika-overlay');
-    const statusId = roleType === 'lähtö' ? 'start-status-overlay' : (roleType === 'maali' ? 'maali-status-overlay' : 'väliaika-status-overlay');
+    const isStart = roleType === 'lähtö';
+    const isFinish = roleType === 'maali';
+    const isSplit = roleType === 'väliaika';
+
+    const videoId = isStart ? 'start-video' : (isFinish ? 'maali-video' : 'väliaika-video');
+    const canvasId = isStart ? 'start-overlay' : (isFinish ? 'maali-overlay' : 'väliaika-overlay');
+    const statusId = isStart ? 'start-status-overlay' : (isFinish ? 'maali-status-overlay' : 'väliaika-status-overlay');
+    const btnId = isStart ? 'btn-start-cv' : (isFinish ? 'btn-maali-cv' : 'btn-väliaika-cv');
 
     const video = document.getElementById(videoId);
     const canvas = document.getElementById(canvasId);
     const status = document.getElementById(statusId);
+    const btn = document.getElementById(btnId);
 
     if (!video || !canvas) return;
 
     if (cvStream) {
         cvStream.getTracks().forEach(track => track.stop());
         cvStream = null;
-        status.innerText = "CV POIS PÄÄLTÄ";
-        status.style.background = "rgba(0,0,0,0.6)";
+        if (status) {
+            status.innerText = "CV POIS PÄÄLTÄ";
+            status.style.background = "rgba(0,0,0,0.6)";
+        }
+        if (btn) {
+            btn.innerText = "AKTIVOI KENNO";
+            btn.classList.remove('btn-danger');
+            btn.classList.add(isStart ? 'btn-primary' : (isFinish ? 'btn-success' : 'btn-warning'));
+        }
         return;
     }
 
     try {
-        cvStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: 640, height: 480 },
-            audio: false
-        });
+        // Try environment camera first (phone back cam), fallback to any if fails
+        try {
+            cvStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment', width: 640, height: 480 },
+                audio: false
+            });
+        } catch (e) {
+            cvStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480 },
+                audio: false
+            });
+        }
+
         video.srcObject = cvStream;
-        status.innerText = "CV AKTIIVINEN";
-        status.style.background = "var(--success)";
+        if (status) {
+            status.innerText = "CV AKTIIVINEN";
+            status.style.background = "var(--success)";
+        }
+        if (btn) {
+            btn.innerText = "SULJE KENNO";
+            btn.classList.remove('btn-primary', 'btn-success', 'btn-warning');
+            btn.classList.add('btn-danger');
+        }
 
         startCVLogic(roleType, video, canvas);
     } catch (err) {
@@ -433,11 +462,14 @@ function startCVLogic(roleType, video, canvas) {
     console.log("CV LOGIC STARTING FOR:", roleType, "->", triggerType);
 
     let previousIntensity = -1;
-    const threshold = 12; // slightly more sensitive
+    const threshold = 12; // sensitivity
     const gateX = 0.5; // middle of the screen
 
     const processFrame = () => {
-        if (!cvStream) return;
+        if (!cvStream) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
 
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             canvas.width = video.videoWidth;
@@ -446,7 +478,7 @@ function startCVLogic(roleType, video, canvas) {
 
             // 1. Draw Gate UI
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
 
@@ -464,9 +496,14 @@ function startCVLogic(roleType, video, canvas) {
                 const diff = Math.abs(avgIntensity - previousIntensity);
 
                 // Visual Meter (Bottom)
-                const meterW = (diff / 50) * canvas.width;
+                const meterW = Math.min((diff / 40) * canvas.width, canvas.width);
                 ctx.fillStyle = diff > threshold ? "#ef4444" : "#22c55e";
-                ctx.fillRect(0, canvas.height - 10, meterW, 10);
+                ctx.fillRect(0, canvas.height - 15, meterW, 15);
+
+                // Numerical Debug Info
+                ctx.fillStyle = "white";
+                ctx.font = "12px Arial";
+                ctx.fillText(`Diff: ${diff.toFixed(1)} / ${threshold}`, 10, canvas.height - 25);
 
                 const now = Date.now();
                 if (diff > threshold && (now - lastTriggerTime > 3000)) {
@@ -475,7 +512,7 @@ function startCVLogic(roleType, video, canvas) {
                     simulateTrigger(triggerType);
 
                     // Big visual flash
-                    ctx.fillStyle = "rgba(239, 68, 68, 0.4)";
+                    ctx.fillStyle = "rgba(239, 68, 68, 0.5)";
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }
