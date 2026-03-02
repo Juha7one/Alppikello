@@ -562,6 +562,20 @@ function markRunnerDNF(runnerId) {
     socket.emit('mark_dnf', { sessionId: currentSession.id, runnerId });
 }
 
+function confirmResult(runnerId) {
+    socket.emit('confirm_result', { sessionId: currentSession.id, runnerId });
+}
+
+function rejectResult(runnerId) {
+    socket.emit('reject_result', { sessionId: currentSession.id, runnerId });
+}
+
+function manualFinish(runnerId) {
+    if (confirm("Lopetetaanko ajanotto manuaalisesti?")) {
+        socket.emit('manual_finish', { sessionId: currentSession.id, runnerId });
+    }
+}
+
 function updateUI() {
     if (!currentSession) return;
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
@@ -598,17 +612,21 @@ function renderValmentajaView() {
     if (onCourse.length > 0) {
         activeEl.innerHTML = onCourse.map(r => {
             const runningTime = now - r.startTime;
+            const isGhost = r.id.toString().includes('GHOST');
             return `
-                <div style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid ${isGhost ? 'var(--danger)' : 'var(--accent)'}; padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h3 style="margin: 0; font-size: 24px;">${r.name.toUpperCase()}</h3>
-                        <p style="color: var(--accent); font-weight: 700; margin: 4px 0;">
-                            ${r.splits.length > 0 ? `V: ${formatDuration(r.splits[0].duration)}` : 'LASKEE...'}
+                        <p style="color: ${isGhost ? 'var(--danger)' : 'var(--accent)'}; font-weight: 700; margin: 4px 0;">
+                            ${r.splits.length > 0 ? `V: ${formatDuration(r.splits[0].duration)}` : (isGhost ? 'HAAMU-LASKU' : 'LASKEE...')}
                         </p>
                     </div>
                     <div style="text-align: right;">
                         <h2 style="margin: 0; font-family: monospace; font-size: 32px; color: var(--text-primary);">${formatDuration(runningTime)}</h2>
-                        ${isCoach ? `<button class="btn-mini" style="background: var(--danger); opacity: 0.6; margin-top: 5px; padding: 4px 8px;" onclick="markRunnerDNF('${r.id}')">DNF</button>` : ''}
+                        <div style="display:flex; gap:4px; justify-content:flex-end; margin-top:5px;">
+                            ${isCoach ? `<button class="btn-mini" style="background: var(--danger); opacity: 0.6; padding: 4px 8px;" onclick="markRunnerDNF('${r.id}')">DNF</button>` : ''}
+                            ${isCoach ? `<button class="btn-mini" style="background: var(--warning); opacity: 0.6; padding: 4px 8px; color:black;" onclick="manualFinish('${r.id}')">STOP</button>` : ''}
+                        </div>
                     </div>
                 </div>
             `;
@@ -617,27 +635,55 @@ function renderValmentajaView() {
         activeEl.innerHTML = `<h3 style="opacity: 0.5;">Ei ketään rinteessä</h3>`;
     }
 
-    // 2. Show recent results
+    // 2. Pending suspicious results
+    const pending = currentSession.pendingResults || [];
+    const pendingHtml = pending.length > 0 ? `
+        <div style="margin-bottom:20px; border:1px solid var(--danger); border-radius:12px; padding:10px; background:rgba(239, 68, 68, 0.05);">
+            <p style="color:var(--danger); font-size:10px; font-weight:900; margin:0 0 8px 0;">⚠️ TARKISTA TULOKSET (IKKUNAN ULKOPUOLELLA)</p>
+            ${pending.map(r => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; margin-bottom:5px;">
+                    <div>
+                        <span style="font-weight:700;">${r.name}</span>
+                        <span style="color:var(--danger); margin-left:10px; font-weight:900;">${formatDuration(r.totalTime)}</span>
+                    </div>
+                    <div>
+                        <button class="btn-mini" style="background:var(--success); padding:2px 8px;" onclick="confirmResult('${r.id}')">HYVÄKSY</button>
+                        <button class="btn-mini" style="background:var(--danger); padding:2px 8px;" onclick="rejectResult('${r.id}')">HYLKÄÄ</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    ` : '';
+
+    // 3. Expected Time / Target Info
+    const expectedTxt = currentSession.expectedDuration ?
+        `<p style="font-size:10px; opacity:0.6; margin-bottom:10px;">Oletusaika: ${formatDuration(currentSession.expectedDuration)} (±30-50%)</p>` : '';
+
+    // 4. Show recent results
     const results = currentSession.results || [];
-    const leaderTime = results.length > 0 ? results[results.length - 1].totalTime : 0; // Simple leader: last on list (usually bottom of history but top of session)
-    // Actually, results are unshifted, so index 0 is latest. Let's find best time.
     const bestTime = results.length > 0 ? Math.min(...results.map(rs => rs.totalTime)) : 0;
 
-    if (results.length > 0) {
-        resultEl.innerHTML = results.map(r => {
+    if (results.length > 0 || pending.length > 0) {
+        resultEl.innerHTML = pendingHtml + expectedTxt + results.map((r, i) => {
             const delta = r.totalTime - bestTime;
             const isBest = r.totalTime === bestTime;
             return `
                 <div class="card" style="margin-bottom: 8px; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: ${isBest ? 'rgba(34, 197, 94, 0.05)' : 'var(--card-bg)'}; border-color: ${isBest ? 'var(--success)' : 'rgba(255,255,255,0.05)'}">
                     <div>
-                        <span style="font-weight: 700; font-size: 18px;">${r.name}</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="opacity:0.3; font-weight:900;">#${results.length - i}</span>
+                            <span style="font-weight: 700; font-size: 18px;">${r.name}</span>
+                        </div>
                         <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
                             ${r.splits.length ? `SPLIT: ${formatDuration(r.splits[0].duration)}` : 'EI VÄLIAIKAA'}
+                            ${r.manual ? ' | <span style="color:var(--warning)">MANUAALI</span>' : ''}
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 24px; font-weight: 800; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'};">${formatDuration(r.totalTime)}</div>
-                        ${!isBest ? `<div style="font-size: 12px; color: var(--danger);">+${(delta / 1000).toFixed(2)}</div>` : ''}
+                        <div style="font-size: 20px; font-weight: 900; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'};">${formatDuration(r.totalTime)}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: ${delta === 0 ? 'var(--success)' : 'var(--danger)'};">
+                            ${delta === 0 ? 'KÄRKI' : `+${formatDuration(delta)}`}
+                        </div>
                     </div>
                 </div>
             `;

@@ -33,7 +33,10 @@ io.on('connection', (socket) => {
             allAthletes: [], // Master list
             activeQueue: [], // Ready to start
             onCourse: [],    // Currently skiing
-            results: []      // History
+            results: [],      // History
+            pendingResults: [], // Unconfirmed suspicious times
+            expectedDuration: null, // Average of first successful runs
+            forerunnerCount: 0
         };
         socket.join(sessionId);
         socket.emit('session_created', sessions[sessionId]);
@@ -142,20 +145,86 @@ io.on('connection', (socket) => {
         const { sessionId, timestamp } = data;
         const session = sessions[sessionId];
         if (session && session.onCourse.length > 0) {
-            // Skier who has been on course longest is likely the one finishing (FIFO)
-            const runner = session.onCourse.shift(); // Remove from course
+            const runner = session.onCourse.shift();
             runner.finishTime = timestamp;
-            runner.totalTime = timestamp - runner.startTime;
+            const duration = timestamp - runner.startTime;
+            runner.totalTime = duration;
             runner.done = true;
 
-            session.results.unshift(runner); // Add to top of results
+            // Logic for "Clean" Results:
+            let isSuspicious = false;
+            if (session.expectedDuration) {
+                const min = session.expectedDuration * 0.7; // 30% margin
+                const max = session.expectedDuration * 1.5;
+                if (duration < min || duration > max) {
+                    isSuspicious = true;
+                }
+            }
 
-            console.log(`FINISH: ${runner.name} finished in ${runner.totalTime}ms`);
+            if (isSuspicious) {
+                runner.suspicious = true;
+                session.pendingResults.push(runner);
+                console.log(`SUSPICIOUS FINISH: ${runner.name} time ${duration}ms (Expected ~${session.expectedDuration}ms)`);
+            } else {
+                session.results.unshift(runner);
+
+                // Update expected duration with a rolling average (first 5 runs)
+                if (session.forerunnerCount < 5) {
+                    if (!session.expectedDuration) {
+                        session.expectedDuration = duration;
+                    } else {
+                        session.expectedDuration = (session.expectedDuration * session.forerunnerCount + duration) / (session.forerunnerCount + 1);
+                    }
+                    session.forerunnerCount++;
+                }
+                console.log(`FINISH: ${runner.name} finished in ${duration}ms`);
+            }
+
             io.to(sessionId).emit('timing_update', {
                 type: 'FINISH',
                 runner: runner,
                 session: session
             });
+        }
+    });
+
+    socket.on('confirm_result', (data) => {
+        const { sessionId, runnerId } = data;
+        const session = sessions[sessionId];
+        if (session) {
+            const idx = session.pendingResults.findIndex(r => r.id === runnerId);
+            if (idx !== -1) {
+                const runner = session.pendingResults.splice(idx, 1)[0];
+                delete runner.suspicious;
+                session.results.unshift(runner);
+                io.to(sessionId).emit('device_status_update', { session });
+            }
+        }
+    });
+
+    socket.on('reject_result', (data) => {
+        const { sessionId, runnerId } = data;
+        const session = sessions[sessionId];
+        if (session) {
+            session.pendingResults = session.pendingResults.filter(r => r.id !== runnerId);
+            io.to(sessionId).emit('device_status_update', { session });
+        }
+    });
+
+    socket.on('manual_finish', (data) => {
+        const { sessionId, runnerId } = data;
+        const session = sessions[sessionId];
+        if (session) {
+            const idx = session.onCourse.findIndex(r => r.id === runnerId);
+            if (idx !== -1) {
+                const runner = session.onCourse.splice(idx, 1)[0];
+                runner.finishTime = Date.now(); // fallback to current server time
+                runner.totalTime = runner.finishTime - runner.startTime;
+                runner.done = true;
+                runner.manual = true;
+                session.results.unshift(runner);
+                io.to(sessionId).emit('device_status_update', { session });
+            }
         }
     });
 
