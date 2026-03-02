@@ -348,43 +348,6 @@ function simulateTrigger(type) {
 
 // --- Simulator ---
 
-function runTestSimulation() {
-    if (!currentSession) return alert("Luo ensin harjoitus!");
-
-    const mockName = "SIMU-" + Math.floor(Math.random() * 100);
-    console.log("Starting full simulation for:", mockName);
-
-    // 1. Add Athlete
-    socket.emit('add_athlete', { sessionId: currentSession.id, name: mockName });
-
-    // Delay slightly to let the server process
-    setTimeout(() => {
-        // 2. Find their ID and move to queue
-        const athlete = currentSession.allAthletes.find(a => a.name === mockName);
-        if (athlete) {
-            socket.emit('move_to_queue', { sessionId: currentSession.id, athleteId: athlete.id });
-
-            // 3. Trigger Start after 1.5s
-            setTimeout(() => {
-                console.log("SIMU: Triggering Start...");
-                simulateTrigger('start');
-
-                // 4. Trigger Split after 5s
-                setTimeout(() => {
-                    console.log("SIMU: Triggering Split...");
-                    simulateTrigger('split');
-
-                    // 5. Trigger Finish after 10s
-                    setTimeout(() => {
-                        console.log("SIMU: Triggering Finish...");
-                        simulateTrigger('finish');
-                    }, 5000);
-                }, 5000);
-            }, 1500);
-        }
-    }, 500);
-}
-
 // --- Computer Vision (Digital Photocell) ---
 
 async function initTriggerCV(roleType) {
@@ -594,15 +557,15 @@ function renderValmentajaView() {
     const isCoach = currentRole === 'VALMENTAJA';
     if (coachCtrlEl) coachCtrlEl.style.display = isCoach ? 'block' : 'none';
 
-    // 0. Master Athlete List for Coach
+    // 0. Master Athlete List - CHUNKY BUTTONS
     if (coachListEl) {
         const athletes = currentSession.allAthletes || [];
         coachListEl.innerHTML = athletes.length ? athletes.map(a => `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:8px; margin-bottom:6px;">
-                <span style="font-size:14px;">${a.name}</span>
-                <button class="btn btn-primary btn-mini" style="font-size:10px; padding:4px 8px;" onclick="addToQueue('${a.id}')">LÄHETÄ</button>
-            </div>
-        `).join('') : '<p style="font-size:12px; opacity:0.5; text-align:center;">Ei laskijoita listalla.</p>';
+            <button class="btn btn-outline" style="padding: 15px; margin-bottom: 8px; font-size: 20px; text-align: center; display: block; width: 100%; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);" onclick="addToQueue('${a.id}')">
+                ${a.name.toUpperCase()}
+            </button>
+        `).join('') : '<p style="font-size:14px; opacity:0.5; text-align:center;">Ei nimiä listalla.</p>';
+        coachListEl.style.maxHeight = "300px";
     }
 
     // 1. Show who is currently on course (FIFO-style)
@@ -614,25 +577,29 @@ function renderValmentajaView() {
             const runningTime = now - r.startTime;
             const isGhost = r.id.toString().includes('GHOST');
             return `
-                <div style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid ${isGhost ? 'var(--danger)' : 'var(--accent)'}; padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h3 style="margin: 0; font-size: 24px;">${r.name.toUpperCase()}</h3>
-                        <p style="color: ${isGhost ? 'var(--danger)' : 'var(--accent)'}; font-weight: 700; margin: 4px 0;">
-                            ${r.splits.length > 0 ? `V: ${formatDuration(r.splits[0].duration)}` : (isGhost ? 'HAAMU-LASKU' : 'LASKEE...')}
-                        </p>
-                    </div>
-                    <div style="text-align: right;">
-                        <h2 style="margin: 0; font-family: monospace; font-size: 32px; color: var(--text-primary);">${formatDuration(runningTime)}</h2>
-                        <div style="display:flex; gap:4px; justify-content:flex-end; margin-top:5px;">
-                            ${isCoach ? `<button class="btn-mini" style="background: var(--danger); opacity: 0.6; padding: 4px 8px;" onclick="markRunnerDNF('${r.id}')">DNF</button>` : ''}
-                            ${isCoach ? `<button class="btn-mini" style="background: var(--warning); opacity: 0.6; padding: 4px 8px; color:black;" onclick="manualFinish('${r.id}')">STOP</button>` : ''}
+                <div style="background: rgba(255, 255, 255, 0.05); border-left: 8px solid ${isGhost ? 'var(--danger)' : 'var(--accent)'}; padding: 25px; border-radius: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 34px; line-height: 1;">${r.name.toUpperCase()}</h3>
+                            <p style="color: ${isGhost ? 'var(--danger)' : 'var(--accent)'}; font-weight: 900; margin: 8px 0; font-size: 18px; letter-spacing: 1px;">
+                                ${r.splits.length > 0 ? `VÄLIAIKA: ${formatDuration(r.splits[0].duration)}` : (isGhost ? '⚠️ HAAMU-ALKU' : 'LASKEE...')}
+                            </p>
                         </div>
+                        <div style="text-align: right;">
+                            <h2 style="margin: 0; font-family: monospace; font-size: 54px; color: var(--text-primary); font-weight: 800; line-height: 1;">${formatDuration(runningTime)}</h2>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        ${isCoach ? `<button class="btn btn-danger" style="padding: 15px; margin: 0; font-size: 16px;" onclick="markRunnerDNF('${r.id}')">KESKEYTYS (DNF)</button>` : ''}
+                        ${isCoach ? `<button class="btn btn-outline" style="padding: 15px; margin: 0; font-size: 16px; border-color: var(--warning); color: var(--warning);" onclick="manualFinish('${r.id}')">MANUAALI STOP</button>` : ''}
                     </div>
                 </div>
             `;
         }).join('');
     } else {
-        activeEl.innerHTML = `<h3 style="opacity: 0.5;">Ei ketään rinteessä</h3>`;
+        activeEl.innerHTML = `<div style="text-align: center; padding: 40px; border: 2px dashed rgba(255,255,255,0.05); border-radius: 20px;">
+            <h2 style="opacity: 0.3; font-size: 32px; margin: 0;">RATA VAPAA</h2>
+        </div>`;
     }
 
     // 2. Pending suspicious results
@@ -668,20 +635,20 @@ function renderValmentajaView() {
             const delta = r.totalTime - bestTime;
             const isBest = r.totalTime === bestTime;
             return `
-                <div class="card" style="margin-bottom: 8px; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: ${isBest ? 'rgba(34, 197, 94, 0.05)' : 'var(--card-bg)'}; border-color: ${isBest ? 'var(--success)' : 'rgba(255,255,255,0.05)'}">
+                <div class="card" style="margin-bottom: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; background: ${isBest ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.02)'}; border-color: ${isBest ? 'var(--success)' : 'transparent'}">
                     <div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="opacity:0.3; font-weight:900;">#${results.length - i}</span>
-                            <span style="font-weight: 700; font-size: 18px;">${r.name}</span>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span style="opacity:0.3; font-weight:900; font-size: 20px;">#${results.length - i}</span>
+                            <span style="font-weight: 800; font-size: 24px;">${r.name.toUpperCase()}</span>
                         </div>
-                        <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
-                            ${r.splits.length ? `SPLIT: ${formatDuration(r.splits[0].duration)}` : 'EI VÄLIAIKAA'}
-                            ${r.manual ? ' | <span style="color:var(--warning)">MANUAALI</span>' : ''}
+                        <div style="font-size: 14px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-top: 4px;">
+                            ${r.splits.length ? `VÄLI: ${formatDuration(r.splits[0].duration)}` : 'EI VÄLIAIKAA'}
+                            ${r.manual ? ' | <span style="color:var(--warning)">KÄSIKELLO</span>' : ''}
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 20px; font-weight: 900; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'};">${formatDuration(r.totalTime)}</div>
-                        <div style="font-size: 11px; font-weight: 700; color: ${delta === 0 ? 'var(--success)' : 'var(--danger)'};">
+                        <div style="font-size: 32px; font-weight: 900; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'}; font-family: monospace;">${formatDuration(r.totalTime)}</div>
+                        <div style="font-size: 16px; font-weight: 800; color: ${delta === 0 ? 'var(--success)' : 'var(--danger)'};">
                             ${delta === 0 ? 'KÄRKI' : `+${formatDuration(delta)}`}
                         </div>
                     </div>
@@ -689,7 +656,7 @@ function renderValmentajaView() {
             `;
         }).join('');
     } else {
-        resultEl.innerHTML = `<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Odotetaan suorituksia...</p>`;
+        resultEl.innerHTML = `<div style="text-align:center; opacity:0.2; padding:40px; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">Ei tuloksia</div>`;
     }
 }
 
@@ -700,18 +667,35 @@ function renderAthleteView() {
     // Filter results for this specific user
     const myResults = (currentSession.results || []).filter(r => r.name === userName);
 
-    if (myResults.length > 0) {
-        listEl.innerHTML = myResults.map(r => `
-            <div class="card" style="margin-bottom: 10px; border-color: var(--accent);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size: 14px; color: var(--text-secondary);">AIKA</span>
-                    <span style="font-size: 32px; font-weight: 800; color: var(--text-primary);">${formatDuration(r.totalTime)}</span>
+    // Show Current Queue
+    const queue = currentSession.activeQueue || [];
+    const queueHtml = queue.length > 0 ? `
+        <div style="margin-bottom: 30px; background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 20px; border: 1px solid rgba(59, 130, 246, 0.2);">
+            <p style="font-size:12px; font-weight:900; color:var(--accent); margin:0 0 10px 0;">LÄHTÖJÄRJESTYS</p>
+            ${queue.map((a, i) => `
+                <div style="font-size: 24px; font-weight: 800; margin-bottom: 5px; opacity: ${i === 0 ? 1 : 0.5};">
+                    ${i + 1}. ${a.name.toUpperCase()} ${i === 0 ? ' ← SEURAAVANA' : ''}
                 </div>
-                ${r.splits.length ? `<p style="font-size: 12px; margin-top: 8px;">Väliaika: ${formatDuration(r.splits[0].duration)}</p>` : ''}
-            </div>
-        `).join('');
+            `).join('')}
+        </div>
+    ` : '';
+
+    if (myResults.length > 0 || queue.length > 0) {
+        listEl.innerHTML = queueHtml + `
+            <p style="font-size:12px; font-weight:900; opacity:0.5; margin-bottom:10px;">OMAT TULOKSESI</p>
+            ${myResults.map(r => `
+                <div class="card" style="margin-bottom: 20px; border-color: var(--accent); padding: 25px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size: 38px; font-weight: 900; color: var(--text-primary); font-family: monospace;">${formatDuration(r.totalTime)}</span>
+                        <div style="text-align:right;">
+                           <div style="font-size: 14px; color: var(--text-secondary); font-weight:700;">${r.splits.length ? `VÄLI: ${formatDuration(r.splits[0].duration)}` : ''}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        `;
     } else {
-        listEl.innerHTML = `<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Ei vielä suorituksia.</p>`;
+        listEl.innerHTML = `<p style="color: var(--text-secondary); text-align: center; padding: 40px; font-size: 20px; opacity: 0.3;">Ei vielä suorituksia.</p>`;
     }
 }
 
@@ -722,10 +706,9 @@ function renderStarterView() {
     const queue = currentSession.activeQueue || [];
 
     listEl.innerHTML = athletes.length ? athletes.map(a => `
-        <div class="card" style="margin-bottom:10px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
-            <span>${a.name}</span>
-            <button class="btn btn-primary btn-mini" onclick="addToQueue('${a.id}')">LISÄÄ LÄHTÖÖN</button>
-        </div>
+        <button class="btn btn-outline" style="padding: 25px; margin-bottom: 15px; font-size: 28px; font-weight: 900;" onclick="addToQueue('${a.id}')">
+            ${a.name.toUpperCase()}
+        </button>
     `).join('') : '<p>Ei laskijoita.</p>';
 
     queueEl.innerHTML = queue.length ? queue.map((a, i) => `
