@@ -67,7 +67,8 @@ io.on('connection', (socket) => {
                 role: role,
                 name: deviceName,
                 lastHeartbeat: Date.now(),
-                battery: 100
+                battery: 100,
+                location: null
             };
 
             // If an athlete joins, add to the master list of athletes for this session
@@ -126,6 +127,13 @@ io.on('connection', (socket) => {
             clientSentTime: clientSentTime,
             serverReceivedTime: serverReceivedTime
         });
+    });
+
+    socket.on('update_location', (data) => {
+        const { sessionId, lat, lon, accuracy } = data;
+        if (sessions[sessionId] && sessions[sessionId].devices[socket.id]) {
+            sessions[sessionId].devices[socket.id].location = { lat, lon, accuracy, timestamp: Date.now() };
+        }
     });
 
     // --- Real-time Events (Trigger / Matching) ---

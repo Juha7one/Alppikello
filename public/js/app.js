@@ -351,7 +351,33 @@ function handleSessionJoin(session, role) {
         renderAthleteView();
     }
 
+    // Start GPS Tracking for all devices
+    startGPSTracking();
+
     updateUI();
+}
+
+let watchId = null;
+function startGPSTracking() {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+    if ("geolocation" in navigator) {
+        watchId = navigator.geolocation.watchPosition((pos) => {
+            if (currentSession) {
+                socket.emit('update_location', {
+                    sessionId: currentSession.id,
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy
+                });
+            }
+        }, (err) => {
+            console.warn("GPS tracking error:", err.message);
+        }, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+        });
+    }
 }
 
 /**

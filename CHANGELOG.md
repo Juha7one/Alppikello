@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.0 - "GPS-VALMIUS" (2026-03-03)
+*   **Automaattinen GPS-seuranta:** Kaikki laitteet lähettävät nyt sijaintitietonsa palvelimelle 5 sekunnin välein.
+*   **Sijaintitiedon tallennus:** Palvelin tallentaa kunkin laitteen koordinaatit ja tarkkuuden osaksi laitteen statusta.
+*   **Pohja älykkäälle videolle:** Tämä päivitys luo teknisen pohjan automaattiselle kameroiden valinnalle sijainnin perusteella.
+
 ## v1.6.1 - "ROOLINIMET" (2026-03-03)
 *   **Laitteiden roolinimet:** Valmentajan näkymässä näkyy nyt selkeästi laitteen rooli ennen sen nimeä (esim. "MAALI: IPAD 1").
 *   **Selkeytetty näyttö:** Parannettu laitelistauksen luettavuutta lisäämällä tekstiprefiksit.
