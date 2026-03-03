@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.6.1 - "ROOLINIMET" (2026-03-03)
+*   **Laitteiden roolinimet:** Valmentajan näkymässä näkyy nyt selkeästi laitteen rooli ennen sen nimeä (esim. "MAALI: IPAD 1").
+*   **Selkeytetty näyttö:** Parannettu laitelistauksen luettavuutta lisäämällä tekstiprefiksit.
+
 ## v1.6.0 - "MONITOIMIPANEELI" (2026-03-03)
 *   **Laitteiden seurantapaneeli:** Valmentajalle uusi reaaliaikainen näkymä kaikkien kiinteiden laitteiden tilaan (Linjoilla / Ei yhteyttä).
 *   **Reaaliaikainen yhteysstatus:** Paneeli näyttää laitteen heartbeat-signaalin perusteella, onko se aktiivinen (15 sekunnin timeout).

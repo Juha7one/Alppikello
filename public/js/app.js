@@ -775,15 +775,18 @@ function renderValmentajaView() {
         deviceEl.innerHTML = fixedDevices.map(d => {
             const isOnline = (Date.now() - d.lastHeartbeat) < 15000;
             let icon = '⏲️';
-            if (d.role === 'MAALI') icon = '🏁';
-            if (d.role === 'VÄLIAIKA') icon = '⏱️';
-            if (d.role === 'VIDEO') icon = '📹';
+            let roleName = 'STARTTI';
+            if (d.role === 'MAALI') { icon = '🏁'; roleName = 'MAALI'; }
+            if (d.role === 'VÄLIAIKA') { icon = '⏱️'; roleName = 'VÄLIAIKA'; }
+            if (d.role === 'VIDEO') { icon = '📹'; roleName = 'VIDEO'; }
 
             return `
                 <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; padding: 10px; border-radius: 10px; display: flex; align-items: center; gap: 10px; overflow: hidden;">
                     <div style="font-size: 20px;">${icon}</div>
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-size: 11px; font-weight: 900; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.name.toUpperCase()}</div>
+                        <div style="font-size: 11px; font-weight: 900; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${roleName}: ${d.name.toUpperCase()}
+                        </div>
                         <div style="display: flex; align-items: center; gap: 5px;">
                             <div style="width: 6px; height: 6px; border-radius: 50%; background: ${isOnline ? 'var(--success)' : 'var(--danger)'};"></div>
                             <span style="font-size: 9px; opacity: 0.6; font-weight: 700;">${isOnline ? 'LINJOILLA' : 'EI YHTEYTTÄ'}</span>
