@@ -52,6 +52,15 @@ io.on('connection', (socket) => {
                 return socket.emit('session_joined', { success: false, error: "Virheellinen rooli" });
             }
 
+            // If single-instance device, remove any existing devices with the same role
+            if (role === 'LÄHTÖ' || role === 'MAALI') {
+                for (let did in sessions[sessionId].devices) {
+                    if (sessions[sessionId].devices[did].role === role) {
+                        delete sessions[sessionId].devices[did];
+                    }
+                }
+            }
+
             // Register device
             sessions[sessionId].devices[socket.id] = {
                 id: socket.id,
@@ -67,7 +76,13 @@ io.on('connection', (socket) => {
                 // Update or add athlete
                 const existing = sessions[sessionId].allAthletes.find(a => a.id === socket.id);
                 if (!existing) {
-                    sessions[sessionId].allAthletes.push({ id: socket.id, name: deviceName });
+                    let uniqueName = deviceName;
+                    let count = 1;
+                    while (sessions[sessionId].allAthletes.some(a => a.name.toUpperCase() === uniqueName.toUpperCase())) {
+                        count++;
+                        uniqueName = `${deviceName} ${count}`;
+                    }
+                    sessions[sessionId].allAthletes.push({ id: socket.id, name: uniqueName });
                 }
             }
 
@@ -95,7 +110,8 @@ io.on('connection', (socket) => {
         if (sessions[sessionId]) {
             socket.emit('session_names_list', {
                 name: sessions[sessionId].name,
-                athletes: sessions[sessionId].allAthletes || []
+                athletes: sessions[sessionId].allAthletes || [],
+                devices: Object.values(sessions[sessionId].devices || {})
             });
         } else {
             socket.emit('session_names_list', { error: "Session not found" });
@@ -245,14 +261,14 @@ io.on('connection', (socket) => {
 
     // From Split Node (Trigger)
     socket.on('trigger_split', (data) => {
-        const { sessionId, timestamp } = data;
+        const { sessionId, timestamp, deviceName } = data;
         const session = sessions[sessionId];
         if (session && session.onCourse.length > 0) {
-            // Associate split with the skier who doesn't have a split yet
-            const runner = session.onCourse.find(r => r.splits.length === 0);
+            // Find the oldest runner on course who hasn't received a split from THIS specific device yet
+            const runner = session.onCourse.find(r => !r.splits.some(s => s.deviceName === deviceName));
             if (runner) {
                 const splitTime = timestamp - runner.startTime;
-                runner.splits.push({ timestamp, duration: splitTime });
+                runner.splits.push({ timestamp, duration: splitTime, deviceName });
 
                 console.log(`SPLIT: ${runner.name} passed split at +${splitTime}ms`);
                 io.to(sessionId).emit('timing_update', {
@@ -269,11 +285,19 @@ io.on('connection', (socket) => {
         const { sessionId, name } = data;
         const session = sessions[sessionId];
         if (session && name) {
-            const athleteEntry = { id: 'MANUAL-' + Date.now(), name: name };
             if (!session.allAthletes) session.allAthletes = [];
+
+            let uniqueName = name;
+            let count = 1;
+            while (session.allAthletes.some(a => a.name.toUpperCase() === uniqueName.toUpperCase())) {
+                count++;
+                uniqueName = `${name} ${count}`;
+            }
+
+            const athleteEntry = { id: 'MANUAL-' + Date.now(), name: uniqueName };
             session.allAthletes.push(athleteEntry);
 
-            console.log(`Manual athlete ${name} added in session ${sessionId}`);
+            console.log(`Manual athlete ${uniqueName} added in session ${sessionId}`);
             io.to(sessionId).emit('device_status_update', { session });
         }
     });

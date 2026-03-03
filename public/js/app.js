@@ -105,17 +105,20 @@ function enterSessionManually() {
 }
 
 function saveName() {
-    const name = document.getElementById('name-input').value.trim();
-    if (!name) return alert("Anna nimesi!");
-    userName = name;
-    localStorage.setItem('alppikello_user_name', name);
+    const inputName = document.getElementById('name-input').value.trim();
+    if (!inputName) return alert("Anna nimi!");
 
-    // If we're creating a new session
-    if (selectedRole === 'VALMENTAJA' && !currentSession) {
-        createSession();
+    const isDeviceRole = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'].includes(selectedRole);
+
+    if (!isDeviceRole) {
+        userName = inputName;
+        localStorage.setItem('alppikello_user_name', userName);
     } else {
-        joinSession();
+        localStorage.setItem('alppikello_device_name', inputName);
     }
+
+    // Pass the typed name explicitly to joinSession
+    joinSession(inputName);
 }
 
 function showOnboardingStep(step) {
@@ -124,7 +127,8 @@ function showOnboardingStep(step) {
     document.getElementById('setup-role').style.display = (step === 'role' ? 'block' : 'none');
 
     if (step === 'name') {
-        document.getElementById('name-input').value = userName;
+        const isDeviceRole = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'].includes(selectedRole);
+        document.getElementById('name-input').value = isDeviceRole ? (localStorage.getItem('alppikello_device_name') || '') : userName;
         const sid = document.getElementById('session-input').value.trim().toUpperCase();
         if (sid) socket.emit('get_session_names', sid);
     }
@@ -132,17 +136,74 @@ function showOnboardingStep(step) {
 
 socket.on('session_names_list', (data) => {
     const listEl = document.getElementById('valitse-nimi-lista');
+    const introEl = document.getElementById('setup-name-instruction');
+    const labelEl = document.getElementById('setup-name-new-label');
+    const inputEl = document.getElementById('name-input');
+
     if (!listEl) return;
 
-    if (data.athletes && data.athletes.length > 0) {
-        listEl.innerHTML = data.athletes.map(a => `
-            <button class="btn btn-outline btn-mini" style="text-align:left; justify-content:flex-start; font-size:16px;" onclick="selectExistingName('${a.name}')">
-                👤 ${a.name}
+    let itemsToShow = [];
+    let icon = '👤';
+
+    if (selectedRole === 'VÄLIAIKA') {
+        introEl.innerText = "Valitse väliaikapiste tai luo uusi:";
+        labelEl.innerText = "TAI UUSI VÄLIAIKAPISTE:";
+        inputEl.placeholder = "PISTEEN NIMI";
+        icon = '⏱️';
+        if (data.devices) {
+            itemsToShow = data.devices.filter(d => d.role === 'VÄLIAIKA').map(d => ({ name: d.name }));
+        }
+    } else if (selectedRole === 'VIDEO') {
+        introEl.innerText = "Valitse kamera tai luo uusi:";
+        labelEl.innerText = "TAI UUSI KAMERA:";
+        inputEl.placeholder = "KAMERAN NIMI";
+        icon = '📹';
+        if (data.devices) {
+            itemsToShow = data.devices.filter(d => d.role === 'VIDEO').map(d => ({ name: d.name }));
+        }
+    } else if (selectedRole === 'LÄHTÖ') {
+        introEl.innerText = "Valitse korvattava Starttikello tai nimeä tämä laite:";
+        labelEl.innerText = "TAI UUSI LAITENIMI:";
+        inputEl.placeholder = "ESIM. VARAPUHELIN";
+        icon = '⏲️';
+        if (data.devices) {
+            itemsToShow = data.devices.filter(d => d.role === 'LÄHTÖ').map(d => ({ name: d.name }));
+        }
+    } else if (selectedRole === 'MAALI') {
+        introEl.innerText = "Valitse korvattava Maalikamera tai nimeä tämä laite:";
+        labelEl.innerText = "TAI UUSI LAITENIMI:";
+        inputEl.placeholder = "ESIM. IPAD LOPPU";
+        icon = '🏁';
+        if (data.devices) {
+            itemsToShow = data.devices.filter(d => d.role === 'MAALI').map(d => ({ name: d.name }));
+        }
+    } else if (selectedRole === 'VALMENTAJA' || selectedRole === 'LÄHETTÄJÄ' || selectedRole === 'KATSOMO') {
+        introEl.innerText = "Anna laitteelle tai sijainnille nimi:";
+        labelEl.innerText = "LAITTEEN NIMI:";
+        inputEl.placeholder = "NIMI TAI TUNNISTE";
+        // Generally these don't pick from a list of athletes, maybe show an empty list or show devices
+        itemsToShow = [];
+    } else {
+        // URHEILIJA defaults
+        introEl.innerText = "Valitse nimesi alta tai kirjoita uusi:";
+        labelEl.innerText = "TAI UUSI LASKIJA:";
+        inputEl.placeholder = "OMA NIMESI";
+        itemsToShow = data.athletes || [];
+    }
+
+    // Deduplicate names to keep the list clean
+    const uniqueNames = [...new Set(itemsToShow.map(item => item.name))].filter(n => n);
+
+    if (uniqueNames.length > 0) {
+        listEl.innerHTML = uniqueNames.map(name => `
+            <button class="btn btn-outline btn-mini" style="text-align:left; justify-content:flex-start; font-size:16px;" onclick="selectExistingName('${name.replace(/'/g, "\\'")}')">
+                ${icon} ${name}
             </button>
         `).join('');
         listEl.style.display = 'flex';
     } else {
         listEl.style.display = 'none';
+        listEl.innerHTML = '';
     }
 });
 
@@ -188,11 +249,14 @@ function selectRole(role) {
         if (card.dataset.role === role) card.classList.add('selected');
     });
 
-    // If we already have a name and a session (role switching), join immediately
-    if (userName && currentSession) {
+    // Device-specific roles should always verify their name, so they don't accidentally join as "Juha"
+    const requiresDeviceName = role === 'VÄLIAIKA' || role === 'VIDEO';
+
+    // If we already have a name and a session, and it's a personal role, we can join immediately
+    if (userName && currentSession && !requiresDeviceName) {
         joinSession();
     } else {
-        // First time joining: Go to Name/Identity step
+        // Go to Name/Identity step
         showOnboardingStep('name');
     }
 }
@@ -223,7 +287,7 @@ async function createSession() {
     socket.emit('create_session', { name: sessionName, creatorName: userName });
 }
 
-function joinSession() {
+function joinSession(specificName) {
     let sid = document.getElementById('session-input').value.trim().toUpperCase();
 
     // If empty but we're switching roles, use currentSession id
@@ -234,7 +298,7 @@ function joinSession() {
     socket.emit('join_session', {
         sessionId: sid,
         role: selectedRole,
-        deviceName: userName || "Laite"
+        deviceName: specificName || userName || "Laite"
     });
 }
 
@@ -360,7 +424,11 @@ function markReady() {
 
 function simulateTrigger(type) {
     const timestamp = getSyncedTime();
-    socket.emit(`trigger_${type}`, { sessionId: currentSession.id, timestamp });
+    socket.emit(`trigger_${type}`, {
+        sessionId: currentSession.id,
+        timestamp,
+        deviceName: userName || 'Tuntematon laite'
+    });
 
     // Flash UI for feedback
     const id = type === 'start' ? 'start' : (type === 'finish' ? 'finish' : 'split');
@@ -696,6 +764,34 @@ function renderValmentajaView() {
     } else {
         resultEl.innerHTML = `<div style="text-align:center; opacity:0.2; padding:40px; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">Ei tuloksia</div>`;
         lastResultsCount = 0;
+    }
+    // 5. Device Status List
+    const deviceEl = document.getElementById('device-status-list');
+    if (deviceEl) {
+        const devices = Object.values(currentSession.devices || {});
+        const fixedRoles = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'];
+        const fixedDevices = devices.filter(d => fixedRoles.includes(d.role));
+
+        deviceEl.innerHTML = fixedDevices.map(d => {
+            const isOnline = (Date.now() - d.lastHeartbeat) < 15000;
+            let icon = '⏲️';
+            if (d.role === 'MAALI') icon = '🏁';
+            if (d.role === 'VÄLIAIKA') icon = '⏱️';
+            if (d.role === 'VIDEO') icon = '📹';
+
+            return `
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; padding: 10px; border-radius: 10px; display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                    <div style="font-size: 20px;">${icon}</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 11px; font-weight: 900; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.name.toUpperCase()}</div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 6px; height: 6px; border-radius: 50%; background: ${isOnline ? 'var(--success)' : 'var(--danger)'};"></div>
+                            <span style="font-size: 9px; opacity: 0.6; font-weight: 700;">${isOnline ? 'LINJOILLA' : 'EI YHTEYTTÄ'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('') || '<p style="grid-column: span 2; font-size: 12px; opacity: 0.3; text-align: center; padding: 10px;">Ei kiinteitä laitteita kytkettynä.</p>';
     }
 }
 

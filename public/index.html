@@ -23,8 +23,8 @@
     <!-- Deployment Splash Screen (Identification for new pushes) -->
     <div id="deployment-splash" style="background: #6366f1;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">HUIPPU-HANKI</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.3.1</div>
+        <h1 class="splash-title">MONITOIMIPANEELI</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.6.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -51,7 +51,8 @@
             <!-- Step 1: Name Entry -->
             <div id="setup-name" style="display:none;">
                 <h3 id="session-join-title">Liitytään harjoitukseen</h3>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Valitse nimesi alta tai
+                <p id="setup-name-instruction"
+                    style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Valitse nimesi alta tai
                     kirjoita uusi:</p>
 
                 <div id="valitse-nimi-lista"
@@ -59,10 +60,10 @@
                     <!-- Existing names will be injected here -->
                 </div>
 
-                <div
+                <div id="setup-name-new-label"
                     style="margin-bottom: 12px; opacity: 0.5; font-size: 11px; font-weight: 700; text-transform: uppercase;">
                     Tai uusi laskija:</div>
-                <input type="text" id="name-input" placeholder="OMA NIMESI" maxlength="20">
+                <input type="text" id="name-input" placeholder="NIMI TAI TUNNISTE" maxlength="20">
                 <button class="btn btn-primary" style="margin-top:20px;" onclick="saveName()">JATKA</button>
             </div>
 
@@ -82,7 +83,7 @@
                     </div>
                     <div class="role-card" onclick="selectRole('LÄHTÖ')" data-role="LÄHTÖ">
                         <span class="role-icon">⏲️</span>
-                        <span class="role-label">LÄHTÖ (Trigger)</span>
+                        <span class="role-label">STARTTIKELLO</span>
                     </div>
                     <div class="role-card" onclick="selectRole('VÄLIAIKA')" data-role="VÄLIAIKA">
                         <span class="role-icon">⏱️</span>
@@ -112,7 +113,7 @@
     <!-- Lähtö (Start) Node View -->
     <div id="view-lähtö" class="view container">
         <div class="view-header">
-            <span class="role-badge">LÄHTÖ</span>
+            <span class="role-badge">STARTTIKELLO</span>
             <h1 class="session-title" id="start-session-name">Treeni</h1>
         </div>
         <div class="card">
@@ -278,8 +279,15 @@
 
             <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">Päivän
                 Tulokset</p>
-            <div id="result-list" style="margin-top: 12px;">
+            <div id="result-list" style="margin-top: 12px; margin-bottom: 24px;">
                 <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Odotetaan suorituksia...</p>
+            </div>
+
+            <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
+                Laitteiden Tila</p>
+            <div id="device-status-list"
+                style="margin-top: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <!-- Device status will be injected here -->
             </div>
         </div>
     </div>
@@ -341,12 +349,12 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.2 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.6.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=1.6.0"></script>
 </body>
 
 </html>
