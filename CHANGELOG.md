@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.5 - "LÄHISTÖ-LIITTYMINEN" (2026-03-04)
+*   **Discovery-toiminto:** Tunnistaa GPS:n avulla lähistöllä (5km) olevat aktiiviset harjoitukset ja tarjoaa niitä listana aloitussivulla.
+*   **Laitteiden Hallinta:** Valmentajan näkymä näyttää nyt kaikki yhdistetyt laitteet (valmentajat, laskijat, katsomo) kategorisoituna.
+*   **GPS-korjaus:** Parannettu GPS-datan päivitystä ja visualisointia laitelistassa.
+
 ## v1.7.4 - "GPS-MONITORI" (2026-03-04)
 *   **GPS-Visualisointi:** Valmentajan laitelistassa näkyy nyt kunkin laitteen tarkat GPS-koordinaatit ja mittaustarkkuus.
 *   **Seurantavalmius:** Tämä helpottaa radan kalibrointia ja laitteiden sijoittelun varmistamista.

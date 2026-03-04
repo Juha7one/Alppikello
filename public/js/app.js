@@ -40,7 +40,54 @@ socket.on('connect', () => {
     connText.innerText = 'Yhdistetty';
     startTimeSync();
     checkDeepLink();
+    startDiscoveryGPS(); // Start looking for nearby sessions
 });
+
+socket.on('nearby_sessions_found', (sessions) => {
+    const container = document.getElementById('nearby-sessions-list');
+    const items = document.getElementById('nearby-items');
+    if (!container || !items) return;
+
+    if (sessions && sessions.length > 0) {
+        container.style.display = 'block';
+        items.innerHTML = sessions.map(s => `
+            <div class="card" onclick="joinNearbySession('${s.id}')" style="padding: 16px; margin: 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.1); border-color: var(--accent);">
+                <div>
+                    <div style="font-weight: 800; font-size: 16px;">${s.name.toUpperCase()}</div>
+                    <div style="font-size: 11px; opacity: 0.6; font-weight: 700;">KOODI: ${s.id} • ${s.athleteCount} LASKIJAA</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 900; color: var(--accent); font-size: 14px;">${s.distance} km</div>
+                    <div style="font-size: 9px; opacity: 0.5;">ETAISYYS</div>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        container.style.display = 'none';
+    }
+});
+
+function joinNearbySession(sid) {
+    document.getElementById('session-input').value = sid;
+    enterSessionManually();
+}
+
+let discoveryWatchId = null;
+function startDiscoveryGPS() {
+    if (!navigator.geolocation) return;
+    discoveryWatchId = navigator.geolocation.watchPosition((pos) => {
+        socket.emit('find_nearby_sessions', {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude
+        });
+    }, (err) => {
+        console.warn("Discovery GPS error:", err);
+    }, {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+    });
+}
 
 socket.on('disconnect', () => {
     connDot.classList.remove('connected');
@@ -315,6 +362,12 @@ function handleSessionJoin(session, role) {
     // Sync session input so switching role works even if it was empty
     const input = document.getElementById('session-input');
     if (input) input.value = session.id;
+
+    // Stop discovery GPS when joined
+    if (discoveryWatchId) {
+        navigator.geolocation.clearWatch(discoveryWatchId);
+        discoveryWatchId = null;
+    }
 
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-onboarding').classList.remove('active');
@@ -813,16 +866,27 @@ function renderValmentajaView() {
     const deviceEl = document.getElementById('device-status-list');
     if (deviceEl) {
         const devices = Object.values(currentSession.devices || {});
-        const fixedRoles = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'];
-        const fixedDevices = devices.filter(d => fixedRoles.includes(d.role));
+        // Show ALL devices in the status list for Valmentaja, but sort track nodes first
+        const trackNodes = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'];
+        devices.sort((a, b) => {
+            const aIsTrack = trackNodes.includes(a.role);
+            const bIsTrack = trackNodes.includes(b.role);
+            if (aIsTrack && !bIsTrack) return -1;
+            if (!aIsTrack && bIsTrack) return 1;
+            return 0;
+        });
 
-        deviceEl.innerHTML = fixedDevices.map(d => {
+        deviceEl.innerHTML = devices.map(d => {
             const isOnline = (Date.now() - d.lastHeartbeat) < 15000;
-            let icon = '⏲️';
-            let roleName = 'STARTTI';
+            let icon = '📱';
+            let roleName = d.role;
+            if (d.role === 'LÄHTÖ') { icon = '⏲️'; roleName = 'STARTTI'; }
             if (d.role === 'MAALI') { icon = '🏁'; roleName = 'MAALI'; }
             if (d.role === 'VÄLIAIKA') { icon = '⏱️'; roleName = 'VÄLIAIKA'; }
             if (d.role === 'VIDEO') { icon = '📹'; roleName = 'VIDEO'; }
+            if (d.role === 'URHEILIJA') { icon = '⛷️'; roleName = 'LASKIJA'; }
+            if (d.role === 'VALMENTAJA') { icon = '📋'; roleName = 'VALMENTAJA'; }
+            if (d.role === 'KATSOMO') { icon = '👁️'; roleName = 'KATSOMO'; }
 
             const loc = d.location;
             const gpsInfo = loc ? `
@@ -830,14 +894,14 @@ function renderValmentajaView() {
                     GPS: ${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)} (+/-${Math.round(loc.accuracy)}m)
                 </div>
             ` : `
-                <div style="font-size: 8px; color: var(--danger); opacity: 0.5; margin-top: 2px;">ODOTETAAN GPS...</div>
+                <div style="font-size: 8px; color: var(--danger); opacity: 0.5; margin-top: 2px;">EI GPS DATA-A</div>
             `;
 
             return `
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; padding: 10px; border-radius: 10px; display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                <div style="background: ${trackNodes.includes(d.role) ? 'rgba(59, 130, 246, 0.05)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; padding: 10px; border-radius: 10px; display: flex; align-items: center; gap: 10px; overflow: hidden; opacity: ${isOnline ? 1 : 0.5}">
                     <div style="font-size: 20px;">${icon}</div>
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-size: 11px; font-weight: 900; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <div style="font-size: 11px; font-weight: 900; color: ${trackNodes.includes(d.role) ? 'var(--accent)' : 'var(--text-secondary)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             ${roleName}: ${d.name.toUpperCase()}
                         </div>
                         <div style="display: flex; align-items: center; gap: 5px;">
@@ -848,7 +912,7 @@ function renderValmentajaView() {
                     </div>
                 </div>
             `;
-        }).join('') || '<p style="grid-column: span 2; font-size: 12px; opacity: 0.3; text-align: center; padding: 10px;">Ei kiinteitä laitteita kytkettynä.</p>';
+        }).join('');
     }
 }
 
