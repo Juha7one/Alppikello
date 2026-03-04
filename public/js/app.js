@@ -1,4 +1,10 @@
-const socket = io();
+// If hosted on a static server (like alppikello.luodut.com), connect to the external Render server.
+// Otherwise, connect to the same origin.
+const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? undefined
+    : 'https://alppikello-backend.onrender.com'; // Placeholder, replace with your actual Render URL
+
+const socket = io(SERVER_URL);
 
 // --- Globals & State ---
 let currentSession = null;
