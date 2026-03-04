@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.9.0 - "SMART-SYNC" (2026-03-04)
+*   **Laskijaseuranta:** Videolaite tietää nyt, kuka on radalla (`activeRunnerOnCourse`).
+*   **Älykäs tallennus:** Kamera kieltäytyy tallentamasta "turhaa" liikettä, jos kukaan ei ole parhaillaan laskemassa radalla.
+*   **Metadata-tuki:** Tallennettu video sisältää nyt puskurin lisäksi tiedon suorituksen tekijästä.
+
 ## v1.8.9 - "VIDEO-REC-TEST" (2026-03-04)
 *   **Video-puskurointi:** Implementoitu jatkuva 20 sekunnin puskuritallennus RAM-muistiin.
 *   **Älykäs tallennus:** Kun CV havaitsee liikkeen videokamerassa, laite "leikkaa" puskurista videoklipin ja antaa ilmoituksen "VIDEO TALLENNETTU!".

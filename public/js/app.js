@@ -13,6 +13,7 @@ let serverTimeOffset = 0;
 let rtt = 0;
 let selectedRole = null;
 let userName = localStorage.getItem('alppikello_user_name') || "";
+let activeRunnerOnCourse = null; // Track who is currently running
 
 // Rendering optimization locks
 let lastAthletesCount = -1;
@@ -125,6 +126,14 @@ socket.on('session_joined', (data) => {
 
 socket.on('device_status_update', (data) => {
     currentSession = data.session;
+
+    // Check if someone is on course for Video logic
+    if (currentSession.onCourse && currentSession.onCourse.length > 0) {
+        activeRunnerOnCourse = currentSession.onCourse[0];
+    } else {
+        activeRunnerOnCourse = null;
+    }
+
     updateUI();
 });
 
@@ -683,19 +692,21 @@ function startVideoBuffer(stream) {
 function saveVideoClip() {
     if (recordingChunks.length === 0) return;
 
-    console.log("Saving Video Clip from buffer...");
+    // Metadata: Who was running?
+    const runnerName = activeRunnerOnCourse ? activeRunnerOnCourse.name : "Tuntematon";
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const fileName = `Alppikello_${runnerName}_${timestamp}.mp4`;
+
+    console.log(`Saving Video Clip for ${runnerName}...`);
     const blob = new Blob(recordingChunks, { type: recordingChunks[0].type });
-    const url = URL.createObjectURL(blob);
+    // const url = URL.createObjectURL(blob);
 
-    // For now, let's show it in the UI or offer a download to prove it works
-    showVideoNotification("VIDEO TALLENNETTU! 🎬");
+    showVideoNotification(`VIDEO TALLESSA: ${runnerName.toUpperCase()} 🎬`);
 
-    // In a real app, we'd upload this to a server (Render/S3)
-    // For the demo: just log the size
-    console.log(`Clip saved: ${Math.round(blob.size / 1024)} KB`);
+    // Log info for the user
+    console.log(`File: ${fileName}, Size: ${Math.round(blob.size / 1024)} KB`);
 
-    // Reset buffer optionally or keep it rolling? 
-    // Usually keep rolling so we don't miss the next one if they come fast.
+    // FUTURE: socket.emit('upload_video', { fileName, blob, runnerId: activeRunnerOnCourse?.id });
 }
 
 function getDistanceBetween(lat1, lon1, lat2, lon2) {
@@ -782,18 +793,24 @@ function startCVLogic(roleType, video, canvas) {
                 ctx.fillRect(0, canvas.height - 15, meterW, 15);
 
                 if (diff > threshold && (now - lastTriggerTime > 3000)) {
-                    console.log("!!! CV TRIGGER DETECTED !!!", triggerType, diff.toFixed(1));
-                    lastTriggerTime = now;
+                    // SMART GATE: Only trigger if someone is actually on course
+                    if (activeRunnerOnCourse || roleType !== 'video') {
+                        console.log("!!! CV TRIGGER DETECTED !!!", triggerType, diff.toFixed(1));
+                        lastTriggerTime = now;
 
-                    if (triggerType === 'video_clip') {
-                        saveVideoClip();
+                        if (triggerType === 'video_clip') {
+                            saveVideoClip();
+                        } else {
+                            simulateTrigger(triggerType);
+                        }
+
+                        // Big visual flash
+                        ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
                     } else {
-                        simulateTrigger(triggerType);
+                        // Movement detected but no one on course -> Log silently
+                        console.log("Movement ignored: No runner on course.");
                     }
-
-                    // Big visual flash
-                    ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }
 
