@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.9.2 - "BUFFER-PRO" (2026-03-04)
+*   **Yksi video per laskija:** Kamera tallentaa nyt vain yhden videon per käynnissä oleva suoritus, vaikka liikettä olisi enemmän.
+*   **Viive-tallennus:** Tallennus valmistuu vasta 5 sekuntia liikkeen havaitsemisen jälkeen, jotta koko suoritus saadaan talteen.
+*   **Puskurin hallinta:** Puskuri tyhjennetään tallennuksen jälkeen uutta laskijaa varten.
+
 ## v1.9.1 - "GALLERY-FIX" (2026-03-04)
 *   **Video-galleria:** Videolaitteelle on lisätty galleria, josta voi heti katsoa juuri kuvatut videot ("KATSO") tai ladata ne puhelimelle ("LATAA").
 *   **Paikallinen esikatselu:** Videot luodaan Blob-linkkeinä, jotka toimivat suoraan selaimessa ilman viivettä.

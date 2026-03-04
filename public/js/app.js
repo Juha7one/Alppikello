@@ -14,6 +14,7 @@ let rtt = 0;
 let selectedRole = null;
 let userName = localStorage.getItem('alppikello_user_name') || "";
 let activeRunnerOnCourse = null; // Track who is currently running
+let hasRecordedForCurrentRunner = false; // Prevent multiple clips per runner
 
 // Rendering optimization locks
 let lastAthletesCount = -1;
@@ -130,9 +131,15 @@ socket.on('device_status_update', (data) => {
 
     // Check if someone is on course for Video logic
     if (currentSession.onCourse && currentSession.onCourse.length > 0) {
-        activeRunnerOnCourse = currentSession.onCourse[0];
+        const firstRunner = currentSession.onCourse[0];
+        // If a new runner appears, reset the recording flag
+        if (!activeRunnerOnCourse || activeRunnerOnCourse.id !== firstRunner.id) {
+            activeRunnerOnCourse = firstRunner;
+            hasRecordedForCurrentRunner = false;
+        }
     } else {
         activeRunnerOnCourse = null;
+        hasRecordedForCurrentRunner = false;
     }
 
     updateUI();
@@ -714,6 +721,9 @@ function saveVideoClip() {
     showVideoNotification(`VIDEO TALLESSA: ${runnerName.toUpperCase()} 🎬`);
 
     console.log(`File: ${fileName}, Size: ${Math.round(blob.size / 1024)} KB`);
+
+    // Clear chunks so the next video starts fresh
+    recordingChunks = [];
 }
 
 function renderVideoGallery() {
@@ -823,23 +833,32 @@ function startCVLogic(roleType, video, canvas) {
                 ctx.fillRect(0, canvas.height - 15, meterW, 15);
 
                 if (diff > threshold && (now - lastTriggerTime > 3000)) {
-                    // SMART GATE: Only trigger if someone is actually on course
-                    if (activeRunnerOnCourse || roleType !== 'video') {
+                    // SMART GATE: Only trigger if someone is actually on course AND we haven't recorded yet
+                    if (activeRunnerOnCourse && !hasRecordedForCurrentRunner) {
+                        console.log("!!! CV TRIGGER DETECTED !!! (VIDEO)", diff.toFixed(1));
+                        lastTriggerTime = now;
+                        hasRecordedForCurrentRunner = true; // Lock further recordings for this runner
+
+                        showVideoNotification("TALLENNETAAN... 📹");
+
+                        // Wait 5 seconds to capture the 'after' action before finalizing
+                        setTimeout(() => {
+                            saveVideoClip();
+                        }, 5000);
+
+                        // Visual flash
+                        ctx.fillStyle = "rgba(16, 185, 129, 0.6)"; // Green flash for success
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    } else if (roleType !== 'video') {
+                        // Regular timing node trigger (LÄHTÖ/MAALI/VÄLIAIKA)
                         console.log("!!! CV TRIGGER DETECTED !!!", triggerType, diff.toFixed(1));
                         lastTriggerTime = now;
-
-                        if (triggerType === 'video_clip') {
-                            saveVideoClip();
-                        } else {
-                            simulateTrigger(triggerType);
-                        }
-
-                        // Big visual flash
+                        simulateTrigger(triggerType);
                         ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
                     } else {
-                        // Movement detected but no one on course -> Log silently
-                        console.log("Movement ignored: No runner on course.");
+                        // Movement detected but no one on course or already recorded -> Log silently
+                        console.log("Movement ignored: No runner on course or already recorded.");
                     }
                 }
             }
