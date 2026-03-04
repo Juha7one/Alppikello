@@ -125,6 +125,11 @@ socket.on('device_status_update', (data) => {
     updateUI();
 });
 
+socket.on('session_ended', () => {
+    alert('Harjoitus on lopetettu valmentajan toimesta.');
+    location.reload(); // Hard reset to onboarding
+});
+
 socket.on('timing_update', (data) => {
     // data contains: type (START/SPLIT/FINISH), runner, session
     currentSession = data.session;
@@ -150,11 +155,21 @@ function checkDeepLink() {
 
 function enterSessionManually() {
     const sid = document.getElementById('session-input').value.trim().toUpperCase();
-    if (!sid) return alert("Anna Session ID!");
-    document.getElementById('session-join-title').innerText = `Liitytään: ${sid}`;
+    if (!sid) return alert('Syötä SESSION ID');
 
+    // Attempt to join with a dummy role first to check if exists, 
+    // or just emit join_session with URHEILIJA as default if we didn't pick role yet?
+    // Actually, we usually go to role selection first.
     socket.emit('get_session_names', sid);
     showOnboardingStep('role');
+}
+
+function confirmEndSession() {
+    if (confirm('Haluatko varmasti lopettaa harjoituksen? Tämä poistaa kaikki tiedot ja katkaisee yhteyden muilta laitteilta.')) {
+        if (currentSession) {
+            socket.emit('end_session', currentSession.id);
+        }
+    }
 }
 
 function saveName() {

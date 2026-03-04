@@ -59,6 +59,14 @@ io.on('connection', (socket) => {
         socket.emit('session_created', sessions[sessionId]);
     });
 
+    socket.on('end_session', (sessionId) => {
+        if (sessions[sessionId]) {
+            console.log(`Session ${sessionId} ended by admin.`);
+            io.to(sessionId).emit('session_ended');
+            delete sessions[sessionId];
+        }
+    });
+
     socket.on('find_nearby_sessions', (data) => {
         const { lat, lon } = data;
         if (!lat || !lon) return;

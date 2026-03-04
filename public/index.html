@@ -23,8 +23,8 @@
     <!-- Deployment Splash Screen (Identification for new pushes) -->
     <div id="deployment-splash" style="background: #34d399;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">VIILAUKSET</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.7.6</div>
+        <h1 class="splash-title">PYSYVYYS</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.7.7</div>
     </div>
 
     <!-- Onboarding View -->
@@ -232,9 +232,14 @@
 
     <!-- Valmentaja / Control View -->
     <div id="view-valmentaja" class="view container">
-        <div class="view-header">
-            <span id="coach-role-badge" class="role-badge">VALMENTAJA</span>
-            <h1 class="session-title" id="coach-session-name">Treeni</h1>
+        <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="coach-role-badge" class="role-badge">VALMENTAJA</span>
+                <h1 class="session-title" id="coach-session-name">Treeni</h1>
+            </div>
+            <button class="btn-mini-link" onclick="confirmEndSession()"
+                style="color: var(--danger); opacity: 0.6; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; font-size: 10px;">LOPETA
+                TREENI</button>
         </div>
         <div class="card" style="padding: 24px; text-align: left;">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
@@ -360,12 +365,12 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.7.6 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.7.7 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/app.js?v=1.7.6"></script>
+    <script src="js/app.js?v=1.7.7"></script>
 </body>
 
 </html>
