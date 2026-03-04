@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.9.1 - "GALLERY-FIX" (2026-03-04)
+*   **Video-galleria:** Videolaitteelle on lisätty galleria, josta voi heti katsoa juuri kuvatut videot ("KATSO") tai ladata ne puhelimelle ("LATAA").
+*   **Paikallinen esikatselu:** Videot luodaan Blob-linkkeinä, jotka toimivat suoraan selaimessa ilman viivettä.
+
 ## v1.9.0 - "SMART-SYNC" (2026-03-04)
 *   **Laskijaseuranta:** Videolaite tietää nyt, kuka on radalla (`activeRunnerOnCourse`).
 *   **Älykäs tallennus:** Kamera kieltäytyy tallentamasta "turhaa" liikettä, jos kukaan ei ole parhaillaan laskemassa radalla.

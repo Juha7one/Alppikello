@@ -36,6 +36,7 @@ let cvStream = null;
 let mediaRecorder = null;
 let recordingChunks = [];
 let isRecordingActive = false;
+let recordedClips = []; // Store blobs locally for the gallery
 
 // --- Initialization & Socket Events ---
 
@@ -699,14 +700,43 @@ function saveVideoClip() {
 
     console.log(`Saving Video Clip for ${runnerName}...`);
     const blob = new Blob(recordingChunks, { type: recordingChunks[0].type });
-    // const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
 
+    // Store for gallery
+    recordedClips.unshift({
+        name: runnerName,
+        url: url,
+        time: new Date().toLocaleTimeString(),
+        size: Math.round(blob.size / 1024)
+    });
+
+    renderVideoGallery();
     showVideoNotification(`VIDEO TALLESSA: ${runnerName.toUpperCase()} 🎬`);
 
-    // Log info for the user
     console.log(`File: ${fileName}, Size: ${Math.round(blob.size / 1024)} KB`);
+}
 
-    // FUTURE: socket.emit('upload_video', { fileName, blob, runnerId: activeRunnerOnCourse?.id });
+function renderVideoGallery() {
+    const gallery = document.getElementById('video-gallery');
+    if (!gallery) return;
+
+    if (recordedClips.length === 0) {
+        gallery.innerHTML = '<p style="font-size: 14px; opacity: 0.5; text-align: center; padding: 10px;">Ei tallenteita tässä istunnossa.</p>';
+        return;
+    }
+
+    gallery.innerHTML = recordedClips.map((clip, index) => `
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent);">
+            <div>
+                <div style="font-weight: 800; font-size: 14px;">${clip.name.toUpperCase()}</div>
+                <div style="font-size: 10px; opacity: 0.5;">${clip.time} • ${clip.size} KB</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-mini" onclick="window.open('${clip.url}')" style="background: var(--accent); white-space: nowrap;">KATSO</button>
+                <a href="${clip.url}" download="Alppikello_${clip.name}.mp4" class="btn-mini" style="background: rgba(255,255,255,0.1); text-decoration: none; display: flex; align-items: center; font-size: 10px;">LATAA</a>
+            </div>
+        </div>
+    `).join('');
 }
 
 function getDistanceBetween(lat1, lon1, lat2, lon2) {
