@@ -37,7 +37,8 @@ let cvStream = null;
 let mediaRecorder = null;
 let recordingChunks = [];
 let isRecordingActive = false;
-let recordedClips = []; // Store blobs locally for the gallery
+let recordedClips = [];
+let bufferResetTimer = null;
 
 // --- Initialization & Socket Events ---
 
@@ -671,59 +672,86 @@ async function initTriggerCV(roleType) {
     }
 }
 
+
 function startVideoBuffer(stream) {
-    console.log("Starting Video Buffer (simulated chunks)");
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') return;
+
+    console.log("Starting Video Buffer...");
     try {
         const types = ['video/mp4', 'video/webm;codecs=vp8', 'video/webm'];
         let supportedType = types.find(t => MediaRecorder.isTypeSupported(t));
 
-        if (!supportedType) {
-            console.warn("No supported MediaRecorder types found.");
-            return;
-        }
+        if (!supportedType) return;
 
         mediaRecorder = new MediaRecorder(stream, { mimeType: supportedType });
+        recordingChunks = [];
+
         mediaRecorder.ondataavailable = (e) => {
             if (e.data.size > 0) {
                 recordingChunks.push(e.data);
-                // Keep only last 20 chunks (approx 20s if timeslice is 1000)
-                if (recordingChunks.length > 20) recordingChunks.shift();
             }
         };
-        mediaRecorder.start(1000); // chunk every second
-        console.log("MediaRecorder active:", supportedType);
+
+        mediaRecorder.onstop = () => {
+            // This is where the actual saving happens now
+            finalizeVideoSave();
+        };
+
+        mediaRecorder.start(1000);
+
+        // Rolling buffer logic: If no one is on course, restart every 20s to keep header fresh
+        if (bufferResetTimer) clearTimeout(bufferResetTimer);
+        bufferResetTimer = setTimeout(() => {
+            if (!activeRunnerOnCourse && mediaRecorder && mediaRecorder.state === 'recording') {
+                console.log("Idle buffer reset...");
+                mediaRecorder.stop();
+                setTimeout(() => startVideoBuffer(stream), 100);
+            }
+        }, 20000);
+
     } catch (e) {
         console.error("MediaRecorder start failed:", e);
     }
 }
 
+let pendingRunnerMetadata = null;
+
 function saveVideoClip() {
-    if (recordingChunks.length === 0) return;
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
 
-    // Metadata: Who was running?
-    const runnerName = activeRunnerOnCourse ? activeRunnerOnCourse.name : "Tuntematon";
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const fileName = `Alppikello_${runnerName}_${timestamp}.mp4`;
+    // Set metadata for the stop event
+    pendingRunnerMetadata = activeRunnerOnCourse ? { ...activeRunnerOnCourse } : { name: "Tuntematon" };
 
-    console.log(`Saving Video Clip for ${runnerName}...`);
+    console.log("Stopping recorder to finalize clip...");
+    mediaRecorder.stop();
+    // finalizeVideoSave() will be called by onstop
+}
+
+function finalizeVideoSave() {
+    if (recordingChunks.length === 0) {
+        // If it was just an idle reset, just restart
+        if (!pendingRunnerMetadata) return;
+    }
+
+    const runner = pendingRunnerMetadata || { name: "Tuntematon" };
+    pendingRunnerMetadata = null;
+
+    console.log(`Finalizing video for ${runner.name}...`);
     const blob = new Blob(recordingChunks, { type: recordingChunks[0].type });
     const url = URL.createObjectURL(blob);
 
-    // Store for gallery
     recordedClips.unshift({
-        name: runnerName,
+        name: runner.name,
         url: url,
         time: new Date().toLocaleTimeString(),
         size: Math.round(blob.size / 1024)
     });
 
     renderVideoGallery();
-    showVideoNotification(`VIDEO TALLESSA: ${runnerName.toUpperCase()} 🎬`);
+    showVideoNotification(`VIDEO TALLESSA: ${runner.name.toUpperCase()} 🎬`);
 
-    console.log(`File: ${fileName}, Size: ${Math.round(blob.size / 1024)} KB`);
-
-    // Clear chunks so the next video starts fresh
-    recordingChunks = [];
+    // Restart buffer immediately
+    if (cvStream) startVideoBuffer(cvStream);
 }
 
 function renderVideoGallery() {

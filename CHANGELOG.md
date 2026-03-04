@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.9.3 - "STABLE-BUFFER" (2026-03-04)
+*   **Korjaus 0s videoon:** Uudistettu puskurointilogiikka, joka varmistaa, että videon header-tiedot säilyvät aina.
+*   **Rolling Buffer:** Tallennin nollaa itsensä 20 sekunnin välein ollessaan joutilaana, taaten puhtaan aloituksen jokaiselle suoritukselle.
+*   **Vakaampi tallennus:** Video tallennetaan vasta tallentimen pysäytyksen jälkeen, mikä takaa korruptoitumattomat tiedostot.
+
 ## v1.9.2 - "BUFFER-PRO" (2026-03-04)
 *   **Yksi video per laskija:** Kamera tallentaa nyt vain yhden videon per käynnissä oleva suoritus, vaikka liikettä olisi enemmän.
 *   **Viive-tallennus:** Tallennus valmistuu vasta 5 sekuntia liikkeen havaitsemisen jälkeen, jotta koko suoritus saadaan talteen.
