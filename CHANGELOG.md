@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.8.8 - "VIDEO-TESTI" (2026-03-04)
+*   **Video-kameratila:** Lisätty VIDEO-roolille oma kameranäkymä ja CV-liikkeentunnistuksen testausmahdollisuus.
+*   **Avoimet silmät:** Nyt videolaite voi avata oman kameransa ja valmistautua puskuroituun tallennukseen.
+*   **Keskityskorjaukset:** Viimeistelty käyttöliittymän keskitystä mobiililaitteilla.
+
 ## v1.8.3 - "NAME-FIX" (2026-03-04)
 *   **Nimen vaihto korjattu:** Nimen vaihto -painike aktivoi nyt oikeaoppisesti asennusnäkymän, jolloin käyttäjä voi vaihtaa nimensä kesken harjoituksen.
 

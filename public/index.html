@@ -24,8 +24,8 @@
     <!-- Deployment Splash Screen (Identification for new pushes) -->
     <div id="deployment-splash" style="background: #34d399;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">NAME-FIX</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.8.3</div>
+        <h1 class="splash-title">VIDEO-TESTI</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.8.8</div>
     </div>
 
     <!-- Onboarding View -->
@@ -337,13 +337,28 @@
 
     <!-- Video View -->
     <div id="view-video" class="view container">
+        <div class="view-header">
+            <span class="role-badge" style="background: var(--danger);">VIDEO-TALLENNIN</span>
+            <h1 class="session-title" id="video-session-name">Treeni</h1>
+        </div>
         <div class="card">
-            <h2 style="color: var(--danger);">VIDEO-TALLENNIN</h2>
-            <div id="video-status" style="font-size: 100px; margin: 30px 0;">📹</div>
-            <p style="font-weight: 700;">VALMIINA TALLENNUKSEEN</p>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Automaattinen tallennus
-                lähdöstä
-            </p>
+            <div id="video-cv-container" class="cv-wrapper"
+                style="margin: 20px 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16/9;">
+                <video id="video-video" autoplay playsinline muted
+                    style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="video-overlay"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="video-status-overlay"
+                    style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">
+                    EIKAAPPAUSTA</div>
+            </div>
+            <p id="video-node-info" style="font-size: 16px; font-weight: 700;">ODOTTAA</p>
+            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                <button id="btn-video-cv" class="btn btn-danger" style="width: 100%;"
+                    onclick="initTriggerCV('video')">AKTIVOI KAMERA</button>
+            </div>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 16px;">Tämä laite toimii automaattisena
+                puskuritallentimena.</p>
         </div>
     </div>
 
@@ -373,12 +388,12 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.8.3 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.8.8 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/app.js?v=1.8.3"></script>
+    <script src="js/app.js?v=1.8.8"></script>
 </body>
 
 </html>

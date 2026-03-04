@@ -568,11 +568,12 @@ async function initTriggerCV(roleType) {
     const isStart = roleType === 'lähtö';
     const isFinish = roleType === 'maali';
     const isSplit = roleType === 'väliaika';
+    const isVideo = roleType === 'video';
 
-    const videoId = isStart ? 'start-video' : (isFinish ? 'maali-video' : 'väliaika-video');
-    const canvasId = isStart ? 'start-overlay' : (isFinish ? 'maali-overlay' : 'väliaika-overlay');
-    const statusId = isStart ? 'start-status-overlay' : (isFinish ? 'maali-status-overlay' : 'väliaika-status-overlay');
-    const btnId = isStart ? 'btn-start-cv' : (isFinish ? 'btn-maali-cv' : 'btn-väliaika-cv');
+    const videoId = isStart ? 'start-video' : (isFinish ? 'maali-video' : (isSplit ? 'väliaika-video' : 'video-video'));
+    const canvasId = isStart ? 'start-overlay' : (isFinish ? 'maali-overlay' : (isSplit ? 'väliaika-overlay' : 'video-overlay'));
+    const statusId = isStart ? 'start-status-overlay' : (isFinish ? 'maali-status-overlay' : (isSplit ? 'väliaika-status-overlay' : 'video-status-overlay'));
+    const btnId = isStart ? 'btn-start-cv' : (isFinish ? 'btn-maali-cv' : (isSplit ? 'btn-väliaika-cv' : 'btn-video-cv'));
 
     const video = document.getElementById(videoId);
     const canvas = document.getElementById(canvasId);
@@ -589,9 +590,9 @@ async function initTriggerCV(roleType) {
             status.style.background = "rgba(0,0,0,0.6)";
         }
         if (btn) {
-            btn.innerText = "AKTIVOI KENNO";
+            btn.innerText = isVideo ? "AKTIVOI KAMERA" : "AKTIVOI KENNO";
             btn.classList.remove('btn-danger');
-            btn.classList.add(isStart ? 'btn-primary' : (isFinish ? 'btn-success' : 'btn-warning'));
+            btn.classList.add(isStart ? 'btn-primary' : (isFinish ? 'btn-success' : (isSplit ? 'btn-warning' : 'btn-danger')));
         }
         return;
     }
