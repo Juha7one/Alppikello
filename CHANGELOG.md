@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.8.2 - "CENTER-FIX" (2026-03-04)
+*   **Absoluuttinen keskitys:** Päivitetty CSS-säiliöt käyttämään `align-items: center` ja `text-align: center` pakotuksia. Tämä takaa, että roolivalinta ja logo ovat täsmälleen keskellä myös iOS Safarilla.
+*   **Lovituki (Notch):** Lisätty dynaamiset sivupaddingit (`safe-area-inset-left/right`), jotta sisältö ei valu reunoista yli, kun puhelin on vaaka-asennossa.
+
 ## v1.8.1 - "LÄHISTÖ-FIX" (2026-03-04)
 *   **Discovery-korjaus:** Korjattu bugi, jossa harjoituksen luoja (admin) ei automaattisesti reksitöitynyt laitelistalle. Tämä esti harjoituksen sijainnin pivityksen ja siten sen näkymisen muille "Lähistöllä olevat" -listassa.
 *   **GPS-varmistus:** Varmistettu, että admin-laite alkaa heti lähettää koordinaatteja harjoituksen luonnin jälkeen.
