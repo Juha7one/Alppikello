@@ -23,8 +23,8 @@
     <!-- Deployment Splash Screen (Identification for new pushes) -->
     <div id="deployment-splash" style="background: #34d399;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">HYBRID-MALLI</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.7.2</div>
+        <h1 class="splash-title">HIENOSÄÄTÖ</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.7.3</div>
     </div>
 
     <!-- Onboarding View -->
@@ -224,7 +224,7 @@
     <!-- Valmentaja / Control View -->
     <div id="view-valmentaja" class="view container">
         <div class="view-header">
-            <span class="role-badge">VALMENTAJA</span>
+            <span id="coach-role-badge" class="role-badge">VALMENTAJA</span>
             <h1 class="session-title" id="coach-session-name">Treeni</h1>
         </div>
         <div class="card" style="padding: 24px; text-align: left;">
@@ -339,6 +339,8 @@
     <div class="status-bar">
         <button id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()" style="display:none;">VAIHDA
             LAITTEEN ROOLI</button>
+        <button id="btn-change-name" class="btn-mini-link" onclick="showOnboardingStep('name')"
+            style="display:none;">VAIHDA NIMI (ID: <span id="current-user-name-display"></span>)</button>
 
         <div style="display: flex; gap: 30px; opacity: 0.4;">
             <div class="status-indicator">
@@ -349,12 +351,12 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.7.2 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.7.3 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/app.js?v=1.7.2"></script>
+    <script src="js/app.js?v=1.7.3"></script>
 </body>
 
 </html>

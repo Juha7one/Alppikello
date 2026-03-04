@@ -327,8 +327,20 @@ function handleSessionJoin(session, role) {
     if (viewEl) viewEl.classList.add('active');
     else console.warn("View not found for role:", role, viewId);
 
-    // Show change role button
+    // Show change buttons
     roleBtn.style.display = "block";
+    const nameBtn = document.getElementById('btn-change-name');
+    if (nameBtn) {
+        nameBtn.style.display = "block";
+        document.getElementById('current-user-name-display').innerText = userName || "Tuntematon";
+    }
+
+    // Update Headings if Katsomo
+    const coachBadge = document.getElementById('coach-role-badge');
+    if (coachBadge) {
+        coachBadge.innerText = (role === 'KATSOMO') ? 'KATSOMO / LIVE' : 'VALMENTAJA';
+        coachBadge.style.background = (role === 'KATSOMO') ? 'var(--success)' : 'var(--accent)';
+    }
 
     // Start Live Clock for ALL active roles to ensure queue/timing updates
     if (!uiUpdateTimer) {

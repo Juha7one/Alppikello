@@ -292,7 +292,25 @@ input:focus {
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.2s;
-    margin-bottom: 20px;
+    margin: 0 auto 12px auto;
+    display: block;
+}
+
+.btn-mini-link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    padding: 10px;
+    opacity: 0.7;
+}
+
+.btn-mini-link:hover {
+    opacity: 1;
 }
 
 .btn-change-role:active {

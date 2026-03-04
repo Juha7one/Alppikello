@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.3 - "HIENOSÄÄTÖ" (2026-03-04)
+*   **Katsomo-näkymän korjaus:** Katsomo-roolilla näkyy nyt selkeästi "KATSOMO / LIVE" -otsikko valmentaja-näkymän sijaan.
+*   **Nimen vaihtaminen:** Lisätty mahdollisuus vaihtaa omaa nimeä suoraan sovelluksen alareunasta ilman sivun uudelleenlatausta.
+*   **Keskityskorjaus:** Korjattu mobiilikäyttöliittymän nappien ja elementtien keskitys pystyasennossa.
+
 ## v1.7.2 - "HYBRID-MALLI" (2026-03-04)
 *   **Hybridiratkaisu:** Sovelluksen käyttöliittymä hostattu `luodut.com`:ssa ja kello-moottori (backend) `render.com`:ssa.
 *   **CORS-valmius:** Palvelin sallii nyt ristiinyhteydet eri domaineista.
