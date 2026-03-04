@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.8.9 - "VIDEO-REC-TEST" (2026-03-04)
+*   **Video-puskurointi:** Implementoitu jatkuva 20 sekunnin puskuritallennus RAM-muistiin.
+*   **Älykäs tallennus:** Kun CV havaitsee liikkeen videokamerassa, laite "leikkaa" puskurista videoklipin ja antaa ilmoituksen "VIDEO TALLENNETTU!".
+*   **Etäisyyslaskenta:** Lisätty pohjatyö GPS-etäisyyden laskemiseen radalla.
+
 ## v1.8.8 - "VIDEO-TESTI" (2026-03-04)
 *   **Video-kameratila:** Lisätty VIDEO-roolille oma kameranäkymä ja CV-liikkeentunnistuksen testausmahdollisuus.
 *   **Avoimet silmät:** Nyt videolaite voi avata oman kameransa ja valmistautua puskuroituun tallennukseen.

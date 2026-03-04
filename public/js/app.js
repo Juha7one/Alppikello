@@ -27,11 +27,14 @@ const connText = document.getElementById('conn-text');
 const syncOffsetEl = document.getElementById('sync-offset');
 const roleBtn = document.getElementById('btn-change-role');
 
-// Timers
+// Timers & Video
 let uiUpdateTimer = null;
 let cvInterval = null;
 let lastTriggerTime = 0;
 let cvStream = null;
+let mediaRecorder = null;
+let recordingChunks = [];
+let isRecordingActive = false;
 
 // --- Initialization & Socket Events ---
 
@@ -135,9 +138,26 @@ socket.on('timing_update', (data) => {
     currentSession = data.session;
     updateUI();
 
+    if (currentRole === 'VIDEO' && data.type === 'START') {
+        showVideoNotification(`LASKIJA LÄHTI: ${data.runner.name}`);
+        // In the future: logic for delayed capture based on GPS
+    }
+
     // Optional: Add a toast or flash for the event
     console.log(`TIMING [${data.type}]: ${data.runner.name}`);
 });
+
+function showVideoNotification(msg) {
+    const info = document.getElementById('video-node-info');
+    if (info) {
+        info.innerText = msg;
+        info.style.color = "var(--accent)";
+        setTimeout(() => {
+            info.innerText = "VALMIINA";
+            info.style.color = "";
+        }, 5000);
+    }
+}
 
 // --- Onboarding & Deep Linking ---
 
@@ -618,9 +638,13 @@ async function initTriggerCV(roleType) {
             status.style.background = "var(--success)";
         }
         if (btn) {
-            btn.innerText = "SULJE KENNO";
+            btn.innerText = "SULJE KAMERA";
             btn.classList.remove('btn-primary', 'btn-success', 'btn-warning');
             btn.classList.add('btn-danger');
+        }
+
+        if (isVideo) {
+            startVideoBuffer(cvStream);
         }
 
         startCVLogic(roleType, video, canvas);
@@ -628,6 +652,61 @@ async function initTriggerCV(roleType) {
         console.error("Kameravirhe:", err);
         alert("Kameran avaaminen epäonnistui. Varmista luvat.");
     }
+}
+
+function startVideoBuffer(stream) {
+    console.log("Starting Video Buffer (simulated chunks)");
+    try {
+        const types = ['video/mp4', 'video/webm;codecs=vp8', 'video/webm'];
+        let supportedType = types.find(t => MediaRecorder.isTypeSupported(t));
+
+        if (!supportedType) {
+            console.warn("No supported MediaRecorder types found.");
+            return;
+        }
+
+        mediaRecorder = new MediaRecorder(stream, { mimeType: supportedType });
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                recordingChunks.push(e.data);
+                // Keep only last 20 chunks (approx 20s if timeslice is 1000)
+                if (recordingChunks.length > 20) recordingChunks.shift();
+            }
+        };
+        mediaRecorder.start(1000); // chunk every second
+        console.log("MediaRecorder active:", supportedType);
+    } catch (e) {
+        console.error("MediaRecorder start failed:", e);
+    }
+}
+
+function saveVideoClip() {
+    if (recordingChunks.length === 0) return;
+
+    console.log("Saving Video Clip from buffer...");
+    const blob = new Blob(recordingChunks, { type: recordingChunks[0].type });
+    const url = URL.createObjectURL(blob);
+
+    // For now, let's show it in the UI or offer a download to prove it works
+    showVideoNotification("VIDEO TALLENNETTU! 🎬");
+
+    // In a real app, we'd upload this to a server (Render/S3)
+    // For the demo: just log the size
+    console.log(`Clip saved: ${Math.round(blob.size / 1024)} KB`);
+
+    // Reset buffer optionally or keep it rolling? 
+    // Usually keep rolling so we don't miss the next one if they come fast.
+}
+
+function getDistanceBetween(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c * 1000; // Returns meters
 }
 
 function startCVLogic(roleType, video, canvas) {
@@ -641,6 +720,7 @@ function startCVLogic(roleType, video, canvas) {
     let triggerType = 'split';
     if (roleType === 'lähtö') triggerType = 'start';
     if (roleType === 'maali') triggerType = 'finish';
+    if (roleType === 'video') triggerType = 'video_clip';
 
     console.log("CV LOGIC STARTING FOR:", roleType);
 
@@ -704,7 +784,12 @@ function startCVLogic(roleType, video, canvas) {
                 if (diff > threshold && (now - lastTriggerTime > 3000)) {
                     console.log("!!! CV TRIGGER DETECTED !!!", triggerType, diff.toFixed(1));
                     lastTriggerTime = now;
-                    simulateTrigger(triggerType);
+
+                    if (triggerType === 'video_clip') {
+                        saveVideoClip();
+                    } else {
+                        simulateTrigger(triggerType);
+                    }
 
                     // Big visual flash
                     ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
