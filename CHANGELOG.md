@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.9.6 - "HYBRID-TRACK" (2026-03-04)
+*   **Hybridiseuranta:** Yhdistetty matemaattinen ETA (ensisijainen) ja valinnainen GPS-varmennus (laskijan omasta laitteesta).
+*   **GPS-Varmennus:** Jos laskijalla on laite mukana, videolaite näyttää etäisyyden suoraan laskijaan vihreällä statuksella.
+*   **Sijainnin varmuus:** Vaikka GPS-yhteys laskijaan katkeaisi, matemaattinen ennuste pitää videon "ajan tasalla".
+
 ## v1.9.5 - "PREDICT-FIX" (2026-03-04)
 *   **Ennustava videolaukaisija:** Kamera laskee nyt laskijan saapumisajan (`ETA`) starttihetken ja kelloetäisyyden perusteella.
 *   **Laskija-riippumaton:** Urheilijan ei tarvitse kantaa puhelinta – kaikki laskenta perustuu kiinteisiin ratakameroihin ja ajanottolaitteisiin.

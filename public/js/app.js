@@ -968,20 +968,29 @@ function renderVideoView() {
         let countdownText = "";
 
         if (activeRunnerOnCourse) {
-            statusText = `RADAALLA: ${activeRunnerOnCourse.name.toUpperCase()}`;
+            statusText = `RADALLA: ${activeRunnerOnCourse.name.toUpperCase()}`;
 
-            // ETA Calculation
-            const elapsed = (getSyncedTime() - activeRunnerOnCourse.startTime) / 1000; // seconds
-            const avgSpeed = 18; // Default 18 m/s (approx 65 km/h) if no stats
+            // 1. PRIMARY: Predictive ETA (Math)
+            const elapsed = (getSyncedTime() - activeRunnerOnCourse.startTime) / 1000;
+            const avgSpeed = 18; // m/s
             const etaTotal = dist / avgSpeed;
             const remaining = etaTotal - elapsed;
 
             if (remaining > 0) {
                 countdownText = `Ennuste: Ohitus n. ${remaining.toFixed(1)}s päästä`;
             } else if (remaining > -5) {
-                countdownText = "LASKIJA KOHDALLA / JUURI OHITTANUT";
+                countdownText = "LASKIJA KOHDALLA";
             } else {
                 countdownText = "OHITETTU";
+            }
+
+            // 2. SECONDARY: GPS Verification (Optional)
+            const runnerDevice = currentSession.devices[activeRunnerOnCourse.id];
+            if (runnerDevice && runnerDevice.location) {
+                const runnerDist = getDistanceBetween(startLoc.lat, startLoc.lon, runnerDevice.location.lat, runnerDevice.location.lon);
+                const myDistToRunner = getDistanceBetween(myLoc.lat, myLoc.lon, runnerDevice.location.lat, runnerDevice.location.lon);
+
+                countdownText += `<br><span style="font-size: 10px; color: var(--success); opacity: 0.8;">🛰️ GPS VARMISTETTU: ${myDistToRunner.toFixed(0)}m etäisyys</span>`;
             }
         }
 
