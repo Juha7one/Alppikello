@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.6 - "VIILAUKSET" (2026-03-04)
+*   **Keskityskorjaus:** Roolivalinnan ruudukko ja otsikko on nyt keskitetty kauniisti näytön keskelle.
+*   **Ruudukon viilaus:** Optimoitu roolikorttien kokoa ja välejä mobiilikäytön helpottamiseksi.
+
 ## v1.7.5 - "LÄHISTÖ-LIITTYMINEN" (2026-03-04)
 *   **Discovery-toiminto:** Tunnistaa GPS:n avulla lähistöllä (5km) olevat aktiiviset harjoitukset ja tarjoaa niitä listana aloitussivulla.
 *   **Laitteiden Hallinta:** Valmentajan näkymä näyttää nyt kaikki yhdistetyt laitteet (valmentajat, laskijat, katsomo) kategorisoituna.
