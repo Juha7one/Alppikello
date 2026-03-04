@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.1 - "GIT-KÄYTTÖÖNOTTO" (2026-03-04)
+*   **Automaattinen käyttönotto:** Lisätty `.cpanel.yml`-tiedosto tukemaan palvelimen Git-pohjaista deploymentia.
+*   **Palvelinvalmius:** Lisätty `tmp/restart.txt` sovelluksen automaattista uudelleenkäynnistystä varten (Phusion Passenger / StackCP tuki).
+
 ## v1.7.0 - "GPS-VALMIUS" (2026-03-03)
 *   **Automaattinen GPS-seuranta:** Kaikki laitteet lähettävät nyt sijaintitietonsa palvelimelle 5 sekunnin välein.
 *   **Sijaintitiedon tallennus:** Palvelin tallentaa kunkin laitteen koordinaatit ja tarkkuuden osaksi laitteen statusta.

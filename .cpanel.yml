@@ -1,0 +1,7 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/sites/30a/6/66fe5dad3b/public_html/alppikello
+    - /bin/cp -R * $DEPLOYPATH
+    - /bin/cp .gitignore $DEPLOYPATH
+    - /bin/cp README.md $DEPLOYPATH
