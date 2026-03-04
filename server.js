@@ -3,6 +3,24 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const fs = require('fs');
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer config
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 const app = express();
 const server = http.createServer(app);
@@ -32,6 +50,34 @@ function getDistance(lat1, lon1, lat2, lon2) {
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(uploadDir));
+
+app.post('/upload', upload.single('video'), (req, res) => {
+    if (!req.file) return res.status(400).send('No file uploaded.');
+
+    const { sessionId, runnerId, runnerName } = req.body;
+    const videoUrl = `/uploads/${req.file.filename}`;
+
+    console.log(`Video uploaded for session ${sessionId}, runner ${runnerName}: ${videoUrl}`);
+
+    if (sessionId) {
+        const payload = { sessionId, runnerId, runnerName, videoUrl };
+        io.to(sessionId).emit('video_available', payload);
+
+        // Update session object
+        const session = sessions[sessionId];
+        if (session) {
+            const res = session.results.find(r => r.id === runnerId);
+            if (res) res.videoUrl = videoUrl;
+            const pend = session.pendingResults.find(r => r.id === runnerId);
+            if (pend) pend.videoUrl = videoUrl;
+
+            io.to(sessionId).emit('device_status_update', { session });
+        }
+    }
+
+    res.json({ success: true, url: videoUrl });
+});
 
 io.on('connection', (socket) => {
     console.log(`Device connected: ${socket.id}`);
@@ -156,6 +202,20 @@ io.on('connection', (socket) => {
             });
         } else {
             socket.emit('session_joined', { success: false, error: "Istuntoa ei löytynyt" });
+        }
+    });
+
+    socket.on('video_available_internal', (data) => {
+        const { sessionId, runnerId, videoUrl } = data;
+        const session = sessions[sessionId];
+        if (session) {
+            // Update the URL in results or pendingResults
+            const res = session.results.find(r => r.id === runnerId);
+            if (res) res.videoUrl = videoUrl;
+            const pend = session.pendingResults.find(r => r.id === runnerId);
+            if (pend) pend.videoUrl = videoUrl;
+
+            io.to(sessionId).emit('device_status_update', { session });
         }
     });
 

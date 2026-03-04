@@ -2,6 +2,12 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v2.0.0 - "ALV-ARCHIVE" (2026-03-04)
+*   **Keskusarkisto:** Videot ladataan nyt automaattisesti palvelimen `uploads/` -hakemistoon heti tallennuksen jälkeen.
+*   **Valmentajan arkisto:** Valmentaja ja katsomo näkevät nyt "VIDEO 🎬" -painikkeen suoraan tuloslistassa kunkin laskijan kohdalla.
+*   **Reaaliaikainen päivitys:** Heti kun video on latautunut palvelimelle, se ilmestyy katsomonäytöille näkyviin.
+*   **Varmuus-arkistointi:** Video säilyy sekä paikallisesti videolaitteessa että palvelimella.
+
 ## v1.9.6 - "HYBRID-TRACK" (2026-03-04)
 *   **Hybridiseuranta:** Yhdistetty matemaattinen ETA (ensisijainen) ja valinnainen GPS-varmennus (laskijan omasta laitteesta).
 *   **GPS-Varmennus:** Jos laskijalla on laite mukana, videolaite näyttää etäisyyden suoraan laskijaan vihreällä statuksella.

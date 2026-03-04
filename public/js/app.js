@@ -750,8 +750,36 @@ function finalizeVideoSave() {
     renderVideoGallery();
     showVideoNotification(`VIDEO TALLESSA: ${runner.name.toUpperCase()} 🎬`);
 
+    // UPLOAD TO SERVER (Central Archive)
+    uploadVideoToServer(blob, runner);
+
     // Restart buffer immediately
     if (cvStream) startVideoBuffer(cvStream);
+}
+
+function uploadVideoToServer(blob, runner) {
+    if (!currentSession) return;
+
+    console.log("Uploading video to central archive...");
+    const formData = new FormData();
+    formData.append('video', blob, `Alppikello_${runner.name}.mp4`);
+    formData.append('sessionId', currentSession.id);
+    formData.append('runnerId', runner.id);
+    formData.append('runnerName', runner.name);
+
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+        .then(res => res.json())
+        .then(data => {
+            console.log("Central archive upload success:", data.url);
+            // Optionally update the recordedClips with the server URL if needed
+            // For now, we'll assume the server handles storage and we just log success.
+        })
+        .catch(err => {
+            console.error("Central archive upload failed:", err);
+        });
 }
 
 function renderVideoGallery() {
@@ -1080,7 +1108,9 @@ function renderValmentajaView() {
                         <span style="font-weight:700;">${r.name}</span>
                         <span style="color:var(--danger); margin-left:10px; font-weight:900;">${formatDuration(r.totalTime)}</span>
                     </div>
-                    <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${r.videoUrl ? `
+                        <button class="btn-mini" onclick="window.open('${r.videoUrl}')" style="background: var(--accent); padding:2px 8px;">VIDEO 🎬</button>` : ''}
                         <button class="btn-mini" style="background:var(--success); padding:2px 8px;" onclick="confirmResult('${r.id}')">HYVÄKSY</button>
                         <button class="btn-mini" style="background:var(--danger); padding:2px 8px;" onclick="rejectResult('${r.id}')">HYLKÄÄ</button>
                     </div>
@@ -1117,6 +1147,10 @@ function renderValmentajaView() {
                             </div>
                         </div>
                         <div style="text-align: right;">
+                            ${r.videoUrl ? `
+                            <button class="btn-mini" onclick="window.open('${r.videoUrl}')" style="background: var(--accent); margin-right: 10px;">
+                                VIDEO 🎬
+                            </button>` : ''}
                             <div style="font-size: 32px; font-weight: 900; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'}; font-family: monospace;">${formatDuration(r.totalTime)}</div>
                             <div style="font-size: 16px; font-weight: 800; color: ${delta === 0 ? 'var(--success)' : 'var(--danger)'};">
                                 ${delta === 0 ? 'KÄRKI' : `+${formatDuration(delta)}`}
