@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.9.4 - "GPS-READY" (2026-03-04)
+*   **Etäisyyslaskenta:** Videolaite laskee nyt etäisyytensä lähtöön (`L-arvo`) GPS:n perusteella.
+*   **Sijaintitiedot:** Kaikki laitteet lähettävät sijaintiaan säännöllisesti taustalla.
+*   **Status-näyttö:** Videonäytöllä näkyy nyt, kuinka kaukana se on radan alkupisteestä.
+
 ## v1.9.3 - "STABLE-BUFFER" (2026-03-04)
 *   **Korjaus 0s videoon:** Uudistettu puskurointilogiikka, joka varmistaa, että videon header-tiedot säilyvät aina.
 *   **Rolling Buffer:** Tallennin nollaa itsensä 20 sekunnin välein ollessaan joutilaana, taaten puhtaan aloituksen jokaiselle suoritukselle.

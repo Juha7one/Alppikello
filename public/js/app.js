@@ -938,6 +938,44 @@ function updateUI() {
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();
+    if (currentRole === 'VIDEO') renderVideoView();
+}
+
+function renderVideoView() {
+    const infoEl = document.getElementById('video-node-info');
+    if (!infoEl || !currentSession || !currentSession.devices) return;
+
+    // 1. Find Start Location
+    let startLoc = null;
+    for (let id in currentSession.devices) {
+        if (currentSession.devices[id].role === 'LÄHTÖ' && currentSession.devices[id].location) {
+            startLoc = currentSession.devices[id].location;
+            break;
+        }
+    }
+
+    // 2. Find My Location
+    let myLoc = null;
+    const myDevice = currentSession.devices[socket.id];
+    if (myDevice && myDevice.location) myLoc = myDevice.location;
+
+    // 3. Calculate Distance
+    if (startLoc && myLoc) {
+        const dist = getDistanceBetween(startLoc.lat, startLoc.lon, myLoc.lat, myLoc.lon);
+        const distText = `Sijainti: ${dist.toFixed(0)}m lähdöstä`;
+
+        // Update UI info
+        let statusText = activeRunnerOnCourse ? `LASKIJA RADALLA: ${activeRunnerOnCourse.name.toUpperCase()}` : "VALMIINA";
+        if (hasRecordedForCurrentRunner) statusText = "TALLENNUS VALMIS ✅";
+
+        infoEl.innerHTML = `
+            <div style="font-size: 18px; color: var(--accent); font-weight: 900; margin-bottom: 5px;">${statusText}</div>
+            <div style="font-size: 12px; opacity: 0.6; font-weight: 700; text-transform: uppercase;">${distText}</div>
+        `;
+    } else {
+        const msg = !startLoc ? "ODOTTAA LÄHTÖÄ (GPS)" : "HAKEE OMAA GPS...";
+        infoEl.innerText = msg;
+    }
 }
 
 function renderValmentajaView() {
