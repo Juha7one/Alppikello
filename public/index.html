@@ -24,8 +24,8 @@
     <!-- Deployment Splash Screen (Identification for new pushes) -->
     <div id="deployment-splash" style="background: #34d399;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">MOBILE-FIX</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.7.9</div>
+        <h1 class="splash-title">BUG-FIX</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v1.8.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -229,157 +229,154 @@
                     KENNO</button>
             </div>
         </div>
+    </div>
 
-        <!-- Valmentaja / Control View -->
-        <div id="view-valmentaja" class="view container">
-            <div class="view-header">
-                <span id="coach-role-badge" class="role-badge">VALMENTAJA</span>
-                <h1 class="session-title" id="coach-session-name">Treeni</h1>
-            </div>
-            <div class="card" style="padding: 24px; text-align: left;">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
-                    <div>
-                        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px; font-weight: 700;">
-                            KOODI:
-                            <span id="session-code" style="color: var(--text-primary);">--</span>
-                        </p>
-                    </div>
-                    <div style="text-align: center;">
-                        <button class="btn-mini" onclick="showQRModal()"
-                            style="padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1);">
-                            <span style="font-size: 32px;">📱</span>
-                        </button>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; font-weight: 700;">JAA
-                        </p>
-                    </div>
-                </div>
-
-                <!-- QR Modal Overlay -->
-                <div id="qr-modal" class="view"
-                    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 2000; align-items: center; justify-content: center; display: none; flex-direction: column;">
-                    <div class="container" style="text-align: center;">
-                        <h2 style="margin-bottom: 20px;">JAA HARJOITUS</h2>
-                        <div style="background: white; padding: 20px; border-radius: 20px; display: inline-block;">
-                            <canvas id="session-qr-large"></canvas>
-                        </div>
-                        <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">Skannaa koodi liittyäksesi</p>
-                        <button class="btn btn-primary" onclick="hideQRModal()">VALMIS</button>
-                    </div>
-                </div>
-
-                <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
-                    Laskija Radalla</p>
-                <div id="active-skier"
-                    style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; margin-top: 8px;">
-                    <h3 style="font-size: 24px;">Ei Laukaisua</h3>
-                    <p style="color: var(--text-secondary); font-size: 14px;">Odotetaan lähtöä...</p>
-                </div>
-
-                <div id="coach-controls">
-                    <p
-                        style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
-                        Laskijoiden Hallinta</p>
-                    <div id="coach-athlete-list"
-                        style="margin-top: 12px; max-height: 150px; overflow-y: auto; margin-bottom: 20px;">
-                        <!-- Master list -->
-                    </div>
-                    <button class="btn btn-outline btn-mini"
-                        style="width: 100%; margin: 8px 0 32px 0; border-style: dashed;"
-                        onclick="addManualAthletePrompt()">
-                        + LISÄÄ NIMI LISTALLE
-                    </button>
-                </div>
-
-                <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
-                    Päivän
-                    Tulokset</p>
-                <div id="result-list" style="margin-top: 12px; margin-bottom: 24px;">
-                    <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Odotetaan suorituksia...
+    <!-- Valmentaja / Control View -->
+    <div id="view-valmentaja" class="view container">
+        <div class="view-header">
+            <span id="coach-role-badge" class="role-badge">VALMENTAJA</span>
+            <h1 class="session-title" id="coach-session-name">Treeni</h1>
+        </div>
+        <div class="card" style="padding: 24px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
+                <div>
+                    <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px; font-weight: 700;">
+                        KOODI:
+                        <span id="session-code" style="color: var(--text-primary);">--</span>
                     </p>
                 </div>
-
-                <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
-                    Laitteiden Tila</p>
-                <div id="device-status-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <!-- Devices injected by JS -->
+                <div style="text-align: center;">
+                    <button class="btn-mini" onclick="showQRModal()"
+                        style="padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 32px;">📱</span>
+                    </button>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; font-weight: 700;">JAA
+                    </p>
                 </div>
+            </div>
 
-                <button class="btn btn-danger" onclick="confirmEndSession()" style="margin-top: 60px;">
-                    <span
-                        style="font-size: 11px; display: block; opacity: 0.6; font-weight: 500; margin-bottom: -4px;">VAIN
-                        VALMENTAJILLE</span>
-                    LOPETA TREENI KAIKILTA
+            <!-- QR Modal Overlay -->
+            <div id="qr-modal" class="view"
+                style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 2000; align-items: center; justify-content: center; display: none; flex-direction: column;">
+                <div class="container" style="text-align: center;">
+                    <h2 style="margin-bottom: 20px;">JAA HARJOITUS</h2>
+                    <div style="background: white; padding: 20px; border-radius: 20px; display: inline-block;">
+                        <canvas id="session-qr-large"></canvas>
+                    </div>
+                    <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">Skannaa koodi liittyäksesi</p>
+                    <button class="btn btn-primary" onclick="hideQRModal()">VALMIS</button>
+                </div>
+            </div>
+
+            <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
+                Laskija Radalla</p>
+            <div id="active-skier"
+                style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; margin-top: 8px;">
+                <h3 style="font-size: 24px;">Ei Laukaisua</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">Odotetaan lähtöä...</p>
+            </div>
+
+            <div id="coach-controls">
+                <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
+                    Laskijoiden Hallinta</p>
+                <div id="coach-athlete-list"
+                    style="margin-top: 12px; max-height: 150px; overflow-y: auto; margin-bottom: 20px;">
+                    <!-- Master list -->
+                </div>
+                <button class="btn btn-outline btn-mini"
+                    style="width: 100%; margin: 8px 0 32px 0; border-style: dashed;" onclick="addManualAthletePrompt()">
+                    + LISÄÄ NIMI LISTALLE
                 </button>
             </div>
-        </div>
 
-        <div id="view-urheilija" class="view container">
-            <div class="view-header">
-                <span class="role-badge">URHEILIJA</span>
-                <h1 class="session-title" id="athlete-session-name">Treeni</h1>
-            </div>
-            <div class="card">
-                <h2 id="athlete-welcome" style="font-size: 32px; margin-bottom: 10px;">TERVE!</h2>
-                <div id="athlete-status" class="card"
-                    style="margin-top: 24px; border-color: var(--accent); border-width: 3px;">
-                    <p style="font-size: 16px; font-weight: 900; text-transform: uppercase; opacity: 0.6;">TILANNE</p>
-                    <h3 id="athlete-queue-status" style="font-size: 48px;">EI JONOSSA</h3>
-                </div>
-
-                <button id="ready-btn" class="btn btn-success" onclick="markReady()">OLEN VALMIINA LÄHTÖÖN</button>
-
-                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 24px;">VIIMEISIMMÄT AIKASI</p>
-                <div id="athlete-results-list" style="margin-top: 12px;">
-                    <!-- List of times will appear here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Video View -->
-        <div id="view-video" class="view container">
-            <div class="card">
-                <h2 style="color: var(--danger);">VIDEO-TALLENNIN</h2>
-                <div id="video-status" style="font-size: 100px; margin: 30px 0;">📹</div>
-                <p style="font-weight: 700;">VALMIINA TALLENNUKSEEN</p>
-                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Automaattinen tallennus
-                    lähdöstä
+            <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
+                Päivän
+                Tulokset</p>
+            <div id="result-list" style="margin-top: 12px; margin-bottom: 24px;">
+                <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Odotetaan suorituksia...
                 </p>
             </div>
-        </div>
 
-        <!-- Katsomo View -->
-        <div id="view-katsomo" class="view container">
-            <div class="card">
-                <h2>LIVE TULOKSET</h2>
-                <div id="viewer-results" style="margin-top: 24px;">
-                    <p style="color: var(--text-secondary);">Harjoitus ei ole vielä alkanut.</p>
-                </div>
+            <p style="color: var(--text-secondary); font-size:12px; font-weight: 700; text-transform: uppercase;">
+                Laitteiden Tila</p>
+            <div id="device-status-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <!-- Devices injected by JS -->
+            </div>
+
+            <button class="btn btn-danger" onclick="confirmEndSession()" style="margin-top: 60px;">
+                <span style="font-size: 11px; display: block; opacity: 0.6; font-weight: 500; margin-bottom: -4px;">VAIN
+                    VALMENTAJILLE</span>
+                LOPETA TREENI KAIKILTA
+            </button>
+        </div>
+    </div>
+
+    <div id="view-urheilija" class="view container">
+        <div class="view-header">
+            <span class="role-badge">URHEILIJA</span>
+            <h1 class="session-title" id="athlete-session-name">Treeni</h1>
+        </div>
+        <div class="card">
+            <h2 id="athlete-welcome" style="font-size: 32px; margin-bottom: 10px;">TERVE!</h2>
+            <div id="athlete-status" class="card"
+                style="margin-top: 24px; border-color: var(--accent); border-width: 3px;">
+                <p style="font-size: 16px; font-weight: 900; text-transform: uppercase; opacity: 0.6;">TILANNE</p>
+                <h3 id="athlete-queue-status" style="font-size: 48px;">EI JONOSSA</h3>
+            </div>
+
+            <button id="ready-btn" class="btn btn-success" onclick="markReady()">OLEN VALMIINA LÄHTÖÖN</button>
+
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 24px;">VIIMEISIMMÄT AIKASI</p>
+            <div id="athlete-results-list" style="margin-top: 12px;">
+                <!-- List of times will appear here -->
             </div>
         </div>
+    </div>
 
-        <!-- Footer Status & Role Change -->
-        <div class="status-bar">
-            <button id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()"
-                style="display:none;">VAIHDA
-                LAITTEEN ROOLI</button>
-            <button id="btn-change-name" class="btn-mini-link" onclick="showOnboardingStep('name')"
-                style="display:none;">VAIHDA NIMI (ID: <span id="current-user-name-display"></span>)</button>
-
-            <div style="display: flex; gap: 30px; opacity: 0.4;">
-                <div class="status-indicator">
-                    <span id="conn-dot" class="dot"></span>
-                    <span id="conn-text">Yhdistetty</span>
-                </div>
-                <div class="sync-info">
-                    Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
-                </div>
-            </div>
-            <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.7.9 | © 2026</p>
+    <!-- Video View -->
+    <div id="view-video" class="view container">
+        <div class="card">
+            <h2 style="color: var(--danger);">VIDEO-TALLENNIN</h2>
+            <div id="video-status" style="font-size: 100px; margin: 30px 0;">📹</div>
+            <p style="font-weight: 700;">VALMIINA TALLENNUKSEEN</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Automaattinen tallennus
+                lähdöstä
+            </p>
         </div>
+    </div>
 
-        <!-- Core App Logic -->
-        <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-        <script src="js/app.js?v=1.7.9"></script>
+    <!-- Katsomo View -->
+    <div id="view-katsomo" class="view container">
+        <div class="card">
+            <h2>LIVE TULOKSET</h2>
+            <div id="viewer-results" style="margin-top: 24px;">
+                <p style="color: var(--text-secondary);">Harjoitus ei ole vielä alkanut.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Status & Role Change -->
+    <div class="status-bar">
+        <button id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()" style="display:none;">VAIHDA
+            LAITTEEN ROOLI</button>
+        <button id="btn-change-name" class="btn-mini-link" onclick="showOnboardingStep('name')"
+            style="display:none;">VAIHDA NIMI (ID: <span id="current-user-name-display"></span>)</button>
+
+        <div style="display: flex; gap: 30px; opacity: 0.4;">
+            <div class="status-indicator">
+                <span id="conn-dot" class="dot"></span>
+                <span id="conn-text">Yhdistetty</span>
+            </div>
+            <div class="sync-info">
+                Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
+            </div>
+        </div>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v1.8.0 | © 2026</p>
+    </div>
+
+    <!-- Core App Logic -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="js/app.js?v=1.8.0"></script>
 </body>
 
 </html>

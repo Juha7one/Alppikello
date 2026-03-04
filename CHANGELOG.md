@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.8.0 - "BUG-FIX" (2026-03-04)
+*   **Näkymäkorjaus:** Korjattu kriittinen HTML-rakennevirhe, jossa valmentajanäkymä oli vahingossa jäänyt väliaikanäkymän sisälle. Tämä aiheutti mustan ruudun harjoitusta luotaessa.
+*   **Versiopäivitys:** Valmistaudutaan videologikan integrointiin.
+
 ## v1.7.9 - "MOBILE-FIX" (2026-03-04)
 *   **iOS Notch -tuki:** Lisätty `viewport-fit=cover` ja dynaamiset `safe-area-inset` -paddingit, jotta käyttöliittymä ei jää loven alle.
 *   **Keskityskorjaus:** Pienennetty korttien paddingia ja optimoitu säiliöiden leveydet, jotta sisältö pysyy täydellisesti keskellä kaikilla iPhone-malleilla.
