@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.9.5 - "PREDICT-FIX" (2026-03-04)
+*   **Ennustava videolaukaisija:** Kamera laskee nyt laskijan saapumisajan (`ETA`) starttihetken ja kelloetäisyyden perusteella.
+*   **Laskija-riippumaton:** Urheilijan ei tarvitse kantaa puhelinta – kaikki laskenta perustuu kiinteisiin ratakameroihin ja ajanottolaitteisiin.
+*   **T-plus laskenta:** Videonäytöllä näkyy reaaliaikainen laskuri: "Ennuste: Ohitus n. XXs päästä".
+
 ## v1.9.4 - "GPS-READY" (2026-03-04)
 *   **Etäisyyslaskenta:** Videolaite laskee nyt etäisyytensä lähtöön (`L-arvo`) GPS:n perusteella.
 *   **Sijaintitiedot:** Kaikki laitteet lähettävät sijaintiaan säännöllisesti taustalla.

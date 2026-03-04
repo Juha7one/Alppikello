@@ -959,17 +959,40 @@ function renderVideoView() {
     const myDevice = currentSession.devices[socket.id];
     if (myDevice && myDevice.location) myLoc = myDevice.location;
 
-    // 3. Calculate Distance
+    // 3. Calculate Distance & Speed
     if (startLoc && myLoc) {
         const dist = getDistanceBetween(startLoc.lat, startLoc.lon, myLoc.lat, myLoc.lon);
         const distText = `Sijainti: ${dist.toFixed(0)}m lähdöstä`;
 
-        // Update UI info
-        let statusText = activeRunnerOnCourse ? `LASKIJA RADALLA: ${activeRunnerOnCourse.name.toUpperCase()}` : "VALMIINA";
-        if (hasRecordedForCurrentRunner) statusText = "TALLENNUS VALMIS ✅";
+        let statusText = "VALMIINA";
+        let countdownText = "";
+
+        if (activeRunnerOnCourse) {
+            statusText = `RADAALLA: ${activeRunnerOnCourse.name.toUpperCase()}`;
+
+            // ETA Calculation
+            const elapsed = (getSyncedTime() - activeRunnerOnCourse.startTime) / 1000; // seconds
+            const avgSpeed = 18; // Default 18 m/s (approx 65 km/h) if no stats
+            const etaTotal = dist / avgSpeed;
+            const remaining = etaTotal - elapsed;
+
+            if (remaining > 0) {
+                countdownText = `Ennuste: Ohitus n. ${remaining.toFixed(1)}s päästä`;
+            } else if (remaining > -5) {
+                countdownText = "LASKIJA KOHDALLA / JUURI OHITTANUT";
+            } else {
+                countdownText = "OHITETTU";
+            }
+        }
+
+        if (hasRecordedForCurrentRunner) {
+            statusText = "TALLENNUS VALMIS ✅";
+            countdownText = "Odotetaan seuraavaa...";
+        }
 
         infoEl.innerHTML = `
-            <div style="font-size: 18px; color: var(--accent); font-weight: 900; margin-bottom: 5px;">${statusText}</div>
+            <div style="font-size: 22px; color: var(--accent); font-weight: 900; margin-bottom: 5px;">${statusText}</div>
+            <div style="font-size: 16px; color: #fff; font-weight: 700; margin-bottom: 10px;">${countdownText}</div>
             <div style="font-size: 12px; opacity: 0.6; font-weight: 700; text-transform: uppercase;">${distText}</div>
         `;
     } else {
