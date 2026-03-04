@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.2 - "HYBRID-MALLI" (2026-03-04)
+*   **Hybridiratkaisu:** Sovelluksen käyttöliittymä hostattu `luodut.com`:ssa ja kello-moottori (backend) `render.com`:ssa.
+*   **CORS-valmius:** Palvelin sallii nyt ristiinyhteydet eri domaineista.
+*   **Dynaaminen palvelinosoite:** Sovellus tunnistaa ympäristön ja yhdistää automaattisesti oikeaan taustajärjestelmään.
+
 ## v1.7.1 - "GIT-KÄYTTÖÖNOTTO" (2026-03-04)
 *   **Automaattinen käyttönotto:** Lisätty `.cpanel.yml`-tiedosto tukemaan palvelimen Git-pohjaista deploymentia.
 *   **Palvelinvalmius:** Lisätty `tmp/restart.txt` sovelluksen automaattista uudelleenkäynnistystä varten (Phusion Passenger / StackCP tuki).
