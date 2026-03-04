@@ -1,10 +1,10 @@
-# StackCP / cPanel Node.js Helper
-Options +FollowSymLinks
-RewriteEngine On
+DirectoryIndex public/index.html
 
-# Redirect all requests to the Node.js server (local port)
-# Huom: Tämä vaatii, että palvelin tukee Passenger- tai vastaavaa moduulia.
-RewriteRule ^$ http://127.0.0.1:3000/ [P,L]
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^$ public/index.html [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
