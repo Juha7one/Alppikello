@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.8.1 - "LÄHISTÖ-FIX" (2026-03-04)
+*   **Discovery-korjaus:** Korjattu bugi, jossa harjoituksen luoja (admin) ei automaattisesti reksitöitynyt laitelistalle. Tämä esti harjoituksen sijainnin pivityksen ja siten sen näkymisen muille "Lähistöllä olevat" -listassa.
+*   **GPS-varmistus:** Varmistettu, että admin-laite alkaa heti lähettää koordinaatteja harjoituksen luonnin jälkeen.
+
 ## v1.8.0 - "BUG-FIX" (2026-03-04)
 *   **Näkymäkorjaus:** Korjattu kriittinen HTML-rakennevirhe, jossa valmentajanäkymä oli vahingossa jäänyt väliaikanäkymän sisälle. Tämä aiheutti mustan ruudun harjoitusta luotaessa.
 *   **Versiopäivitys:** Valmistaudutaan videologikan integrointiin.

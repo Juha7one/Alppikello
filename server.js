@@ -55,6 +55,17 @@ io.on('connection', (socket) => {
             forerunnerCount: 0,
             location: null
         };
+
+        // Automatically add the creator as VALMENTAJA to the devices list
+        sessions[sessionId].devices[socket.id] = {
+            id: socket.id,
+            role: 'VALMENTAJA',
+            name: data.creatorName || "Valmentaja",
+            lastHeartbeat: Date.now(),
+            battery: 100,
+            location: null
+        };
+
         socket.join(sessionId);
         socket.emit('session_created', sessions[sessionId]);
     });
