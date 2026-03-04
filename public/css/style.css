@@ -74,8 +74,14 @@ h3 {
 /* Layout Containers */
 .container {
     padding: 24px;
-    max-width: 600px;
+    padding-top: calc(env(safe-area-inset-top) + 24px);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+    width: 100%;
+    max-width: 480px;
     margin: 0 auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .view {
@@ -103,11 +109,13 @@ h3 {
 .card {
     background-color: var(--card-bg);
     border-radius: var(--border-radius);
-    padding: 32px;
+    padding: 24px 16px;
     margin-bottom: 24px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     text-align: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .logo-container {
@@ -205,12 +213,10 @@ input:focus {
 /* Role Selector Grid */
 .role-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    box-sizing: border-box;
+    margin-top: 10px;
 }
 
 .role-card {

@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.9 - "MOBILE-FIX" (2026-03-04)
+*   **iOS Notch -tuki:** Lisätty `viewport-fit=cover` ja dynaamiset `safe-area-inset` -paddingit, jotta käyttöliittymä ei jää loven alle.
+*   **Keskityskorjaus:** Pienennetty korttien paddingia ja optimoitu säiliöiden leveydet, jotta sisältö pysyy täydellisesti keskellä kaikilla iPhone-malleilla.
+*   **Layout-parannus:** Varmistettu, että rooliruudukko ei aiheuta sivuttaista skrollausta pienillä näytöillä.
+
 ## v1.7.8 - "HANSKAYSTÄVÄLLINEN" (2026-03-04)
 *   **Iso lopetuspainike:** Valmentajan "Lopeta treeni" -painike on siirretty alareunaan ja tehty huomattavasti suuremmaksi, jotta sitä on helppo käyttää hanskat kädessä.
 *   **iOS-Layout korjaus:** Roolivalinnan ruudukkoa on parannettu käyttämällä `aspect-ratio: 1/1` -asetusta, mikä varmistaa symmetriset ja toimivat painikkeet kaikilla iOS-laitteilla.
