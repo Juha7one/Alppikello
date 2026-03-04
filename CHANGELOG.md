@@ -2,6 +2,11 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.8 - "HANSKAYSTÄVÄLLINEN" (2026-03-04)
+*   **Iso lopetuspainike:** Valmentajan "Lopeta treeni" -painike on siirretty alareunaan ja tehty huomattavasti suuremmaksi, jotta sitä on helppo käyttää hanskat kädessä.
+*   **iOS-Layout korjaus:** Roolivalinnan ruudukkoa on parannettu käyttämällä `aspect-ratio: 1/1` -asetusta, mikä varmistaa symmetriset ja toimivat painikkeet kaikilla iOS-laitteilla.
+*   **Parempi keskitys:** Kaikki aloitussivun ja roolivalinnan elementit on pakotettu täydellisesti keskelle näyttöä.
+
 ## v1.7.6 - "VIILAUKSET" (2026-03-04)
 *   **Keskityskorjaus:** Roolivalinnan ruudukko ja otsikko on nyt keskitetty kauniisti näytön keskelle.
 *   **Ruudukon viilaus:** Optimoitu roolikorttien kokoa ja välejä mobiilikäytön helpottamiseksi.

@@ -148,15 +148,34 @@ h3 {
     color: white;
 }
 
+.btn-primary:active {
+    background-color: #2563eb;
+    transform: scale(0.96);
+}
+
 .btn-success {
     background-color: var(--success);
     color: white;
 }
 
-.btn-outline {
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+.btn-danger {
+    background-color: var(--danger);
     color: white;
+    margin-top: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-danger:active {
+    background-color: #dc2626;
+    transform: scale(0.96);
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    font-size: 16px;
+    padding: 20px;
 }
 
 .btn:active {
@@ -186,14 +205,16 @@ input:focus {
 /* Role Selector Grid */
 .role-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
-    max-width: 400px;
+    width: 100%;
+    max-width: 420px;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .role-card {
-    padding: 20px 10px;
+    aspect-ratio: 1 / 1;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--border-radius);
@@ -204,6 +225,9 @@ input:focus {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .role-card.selected {
