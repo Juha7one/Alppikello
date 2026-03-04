@@ -2,6 +2,9 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.8.3 - "NAME-FIX" (2026-03-04)
+*   **Nimen vaihto korjattu:** Nimen vaihto -painike aktivoi nyt oikeaoppisesti asennusnäkymän, jolloin käyttäjä voi vaihtaa nimensä kesken harjoituksen.
+
 ## v1.8.2 - "CENTER-FIX" (2026-03-04)
 *   **Absoluuttinen keskitys:** Päivitetty CSS-säiliöt käyttämään `align-items: center` ja `text-align: center` pakotuksia. Tämä takaa, että roolivalinta ja logo ovat täsmälleen keskellä myös iOS Safarilla.
 *   **Lovituki (Notch):** Lisätty dynaamiset sivupaddingit (`safe-area-inset-left/right`), jotta sisältö ei valu reunoista yli, kun puhelin on vaaka-asennossa.

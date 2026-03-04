@@ -190,6 +190,10 @@ function saveName() {
 }
 
 function showOnboardingStep(step) {
+    // Ensure onboarding view is active when showing a step
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-onboarding').classList.add('active');
+
     document.getElementById('setup-initial').style.display = (step === 'initial' ? 'block' : 'none');
     document.getElementById('setup-name').style.display = (step === 'name' ? 'block' : 'none');
     document.getElementById('setup-role').style.display = (step === 'role' ? 'block' : 'none');
