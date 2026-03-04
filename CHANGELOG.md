@@ -2,6 +2,10 @@
 
 Tämä tiedosto sisältää kuvauksen kaikista Alppikello-projektin merkittävistä päivityksistä ja ominaisuusmuutoksista.
 
+## v1.7.4 - "GPS-MONITORI" (2026-03-04)
+*   **GPS-Visualisointi:** Valmentajan laitelistassa näkyy nyt kunkin laitteen tarkat GPS-koordinaatit ja mittaustarkkuus.
+*   **Seurantavalmius:** Tämä helpottaa radan kalibrointia ja laitteiden sijoittelun varmistamista.
+
 ## v1.7.3 - "HIENOSÄÄTÖ" (2026-03-04)
 *   **Katsomo-näkymän korjaus:** Katsomo-roolilla näkyy nyt selkeästi "KATSOMO / LIVE" -otsikko valmentaja-näkymän sijaan.
 *   **Nimen vaihtaminen:** Lisätty mahdollisuus vaihtaa omaa nimeä suoraan sovelluksen alareunasta ilman sivun uudelleenlatausta.

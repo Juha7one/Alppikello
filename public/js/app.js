@@ -824,6 +824,15 @@ function renderValmentajaView() {
             if (d.role === 'VÄLIAIKA') { icon = '⏱️'; roleName = 'VÄLIAIKA'; }
             if (d.role === 'VIDEO') { icon = '📹'; roleName = 'VIDEO'; }
 
+            const loc = d.location;
+            const gpsInfo = loc ? `
+                <div style="font-size: 8px; opacity: 0.5; margin-top: 2px; font-family: monospace;">
+                    GPS: ${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)} (+/-${Math.round(loc.accuracy)}m)
+                </div>
+            ` : `
+                <div style="font-size: 8px; color: var(--danger); opacity: 0.5; margin-top: 2px;">ODOTETAAN GPS...</div>
+            `;
+
             return `
                 <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; padding: 10px; border-radius: 10px; display: flex; align-items: center; gap: 10px; overflow: hidden;">
                     <div style="font-size: 20px;">${icon}</div>
@@ -835,6 +844,7 @@ function renderValmentajaView() {
                             <div style="width: 6px; height: 6px; border-radius: 50%; background: ${isOnline ? 'var(--success)' : 'var(--danger)'};"></div>
                             <span style="font-size: 9px; opacity: 0.6; font-weight: 700;">${isOnline ? 'LINJOILLA' : 'EI YHTEYTTÄ'}</span>
                         </div>
+                        ${gpsInfo}
                     </div>
                 </div>
             `;
