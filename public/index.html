@@ -162,36 +162,64 @@
 
     <!-- Starttikello (Trigger) View -->
     <div id="view-lahto" class="view container">
-        <div id="lahto-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">HARJOITUS</div>
-        <div class="card" style="text-align: center; padding: 40px 20px;">
-            <div style="font-size: 60px; margin-bottom: 20px;">⏲️</div>
-            <h2 style="font-size: 24px; font-weight: 900; margin-bottom: 30px;">STARTTIKELLO</h2>
-            <button id="btn-trigger-start" class="btn btn-primary"
-                style="width: 200px; height: 200px; border-radius: 50%; font-size: 32px; font-weight: 900; margin: 20px auto; display: block; background: var(--danger); box-shadow: 0 0 40px rgba(239, 44, 44, 0.4); border: 10px solid rgba(255,255,255,0.1);"
-                onclick="sendManualTrigger('start')">LÄHETÄ!</button>
-            <p id="start-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
+        <div id="lahto-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">HARJOITUS</div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 15px;">STARTTIKELLO</h2>
+            
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px;">
+                <video id="start-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="start-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="start-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="btn-start-cv" class="btn btn-primary" style="margin:0; font-size: 14px; padding: 15px;" onclick="initTriggerCV('lähtö')">AKTIVOI KENNO</button>
+                <button class="btn btn-outline" style="margin:0; font-size: 14px; padding: 15px; border-color: var(--danger); color: var(--danger);" onclick="simulateTrigger('start')">MANUAALI</button>
+            </div>
+
+            <p id="start-node-info" style="font-size: 14px; opacity: 0.6;">VALMIINA</p>
         </div>
     </div>
 
     <!-- Maali View -->
     <div id="view-maali" class="view container">
-        <div class="card" style="text-align: center; padding: 60px 20px;">
-            <div id="finish-status-icon" style="font-size: 80px; margin-bottom: 20px;">🏁</div>
-            <h2 id="finish-status-text" style="font-size: 32px; font-weight: 900;">MAALIKELLO</h2>
-            <button id="btn-trigger-finish" class="btn btn-primary"
-                style="width: 200px; height: 200px; border-radius: 50%; font-size: 24px; font-weight: 900; margin: 40px auto; display: block; border: 10px solid rgba(255,255,255,0.1);"
-                onclick="sendManualTrigger('finish')">MAALIIN!</button>
+        <div id="maali-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">HARJOITUS</div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 15px;">MAALIKELLO</h2>
+
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px;">
+                <video id="maali-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="maali-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="maali-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="btn-maali-cv" class="btn btn-success" style="margin:0; font-size: 14px; padding: 15px;" onclick="initTriggerCV('maali')">AKTIVOI KENNO</button>
+                <button class="btn btn-outline" style="margin:0; font-size: 14px; padding: 15px; border-color: var(--danger); color: var(--danger);" onclick="simulateTrigger('finish')">MANUAALI</button>
+            </div>
+
+            <p id="finish-node-info" style="font-size: 14px; opacity: 0.6;">VALMIINA</p>
         </div>
     </div>
 
     <!-- Väliaika View -->
     <div id="view-valiaika" class="view container">
-        <div class="card" style="text-align: center; padding: 60px 20px;">
-            <div style="font-size: 80px; margin-bottom: 20px;">⏱️</div>
-            <h2 style="font-size: 32px; font-weight: 900;">VÄLIAIKAPORTTI</h2>
-            <button id="btn-trigger-split" class="btn btn-outline"
-                style="width: 150px; height: 150px; border-radius: 50%; font-size: 20px; font-weight: 900; margin: 40px auto; display: block; color: var(--accent); border-color: var(--accent);"
-                onclick="sendManualTrigger('split')">VÄLIAIKA</button>
+        <div id="split-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">HARJOITUS</div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 15px;">VÄLIAIKAPORTTI</h2>
+
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px;">
+                <video id="väliaika-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="väliaika-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="väliaika-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="btn-väliaika-cv" class="btn btn-warning" style="margin:0; font-size: 14px; padding: 15px;" onclick="initTriggerCV('väliaika')">AKTIVOI KENNO</button>
+                <button class="btn btn-outline" style="margin:0; font-size: 14px; padding: 15px; border-color: var(--accent); color: var(--accent);" onclick="simulateTrigger('split')">MANUAALI</button>
+            </div>
+
+            <p id="split-node-info" style="font-size: 14px; opacity: 0.6;">VALMIINA</p>
         </div>
     </div>
 
