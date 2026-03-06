@@ -12,7 +12,7 @@ function updateUI() {
     }
     const videoS3 = document.getElementById('video-s3-status');
     if (videoS3) {
-        videoS3.innerText = s3Active ? "S3: OK" : "S3: EI LAINDETTU";
+        videoS3.innerText = s3Active ? "S3: PILVITALLENNUS ✅" : "S3: EI KÄYTÖSSÄ ⚠️";
         videoS3.style.color = s3Active ? "var(--success)" : "var(--warning)";
     }
 

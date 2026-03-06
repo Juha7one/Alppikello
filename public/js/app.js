@@ -34,6 +34,11 @@ async function createSession() {
             if (place) sessionName = `${place} ${timeStr}`;
         } catch (e) { }
     }
+    const btn = document.querySelector('#ob-step-session .btn-primary');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "LUODAAN...";
+    }
     socket.emit('create_session', { name: sessionName, creatorName: userName });
 }
 
@@ -86,6 +91,12 @@ function handleSessionJoin(session, role) {
         const el = document.getElementById(`${id}-session-name`);
         if (el) el.innerText = session.name;
     });
+
+    const coachBadge = document.getElementById('coach-role-badge');
+    if (coachBadge) {
+        coachBadge.innerText = (role === 'KATSOMO') ? 'KATSOMO / LIVE' : 'VALMENTAJA';
+        coachBadge.style.background = (role === 'KATSOMO') ? 'var(--success)' : 'var(--accent)';
+    }
 
     if (role === 'VALMENTAJA') {
         const sNameEl = document.getElementById('session-name');
