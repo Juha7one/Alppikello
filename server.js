@@ -133,6 +133,23 @@ app.get('/run/:runId', (req, res) => {
         res.send(result);
     });
 });
+// --- Automatic Housekeeping ---
+// Remove sessions with no heartbeats for > 12 hours
+setInterval(() => {
+    const now = Date.now();
+    const MAX_IDLE = 12 * 60 * 60 * 1000; // 12 hours
+    for (const sid in sessions) {
+        const session = sessions[sid];
+        const lastActivity = Math.max(
+            session.startTime,
+            ...Object.values(session.devices).map(d => d.lastHeartbeat || 0)
+        );
+        if (now - lastActivity > MAX_IDLE) {
+            console.log(`[HOUSEKEEPING] Removing idle session: ${sid}`);
+            delete sessions[sid];
+        }
+    }
+}, 60000); // Check every minute
 
 io.on('connection', (socket) => {
     console.log(`Device connected: ${socket.id}`);
@@ -180,30 +197,17 @@ io.on('connection', (socket) => {
             console.log(`[SESSION END] ${sessionId} explicitly ended by admin.`);
             io.to(sessionId).emit('session_ended');
             
-            // Give clients a moment to receive the event before deletion
+            // Critical: Remove from public view immediately
+            const sessionData = sessions[sessionId];
+            sessionData.ended = true; 
+
+            // Deletion delay to allow final packets to clear
             setTimeout(() => {
                 delete sessions[sessionId];
-            }, 1000);
+            }, 2000);
         }
     });
 
-    // --- Automatic Housekeeping ---
-    // Remove sessions with no heartbeats for > 12 hours
-    setInterval(() => {
-        const now = Date.now();
-        const MAX_IDLE = 12 * 60 * 60 * 1000; // 12 hours
-        for (const sid in sessions) {
-            const session = sessions[sid];
-            const lastActivity = Math.max(
-                session.startTime,
-                ...Object.values(session.devices).map(d => d.lastHeartbeat || 0)
-            );
-            if (now - lastActivity > MAX_IDLE) {
-                console.log(`[HOUSEKEEPING] Removing idle session: ${sid}`);
-                delete sessions[sid];
-            }
-        }
-    }, 60000); // Check every minute
 
     socket.on('find_nearby_sessions', (data) => {
         const { lat, lon } = data;
@@ -216,7 +220,7 @@ io.on('connection', (socket) => {
             const s = sessions[sid];
             if (s.location && s.location.lat) {
                 const dist = getDistance(lat, lon, s.location.lat, s.location.lon);
-                if (dist <= radius) {
+                if (dist <= radius && !s.ended) {
                     nearby.push({
                         id: s.id,
                         name: s.name,
