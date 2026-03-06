@@ -5,6 +5,8 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const fs = require('fs');
+const AWS = require('aws-sdk');
+const multerS3 = require('multer-s3');
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, 'public', 'uploads');
@@ -13,13 +15,36 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Multer config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
+let storage;
+const useS3 = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_S3_BUCKET;
+
+if (useS3) {
+    const s3 = new AWS.S3({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: process.env.AWS_REGION
+    });
+    storage = multerS3({
+        s3: s3,
+        bucket: process.env.AWS_S3_BUCKET,
+        acl: 'public-read',
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        key: function (req, file, cb) {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, 'videos/' + uniqueSuffix + path.extname(file.originalname));
+        }
+    });
+    console.log("Using S3 for video storage.");
+} else {
+    storage = multer.diskStorage({
+        destination: (req, file, cb) => cb(null, uploadDir),
+        filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+        }
+    });
+    console.log("Using local disk for video storage.");
+}
 const upload = multer({ storage: storage });
 
 const app = express();
@@ -58,7 +83,7 @@ app.post('/upload', upload.single('video'), (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded.');
 
     const { sessionId, runnerId, runnerName } = req.body;
-    const videoUrl = `/uploads/${req.file.filename}`;
+    const videoUrl = req.file.location ? req.file.location : `/uploads/${req.file.filename}`;
 
     console.log(`Video uploaded for session ${sessionId}, runner ${runnerName}: ${videoUrl}`);
 
