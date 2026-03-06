@@ -139,6 +139,9 @@ socket.on('session_names_list', (data) => {
         itemsToShow = data.athletes || [];
     }
 
+    if (userName) inputEl.value = userName;
+    showOnboardingStep('setup-name');
+
     const uniqueNames = [...new Set(itemsToShow.map(item => item.name))].filter(n => n);
 
     if (uniqueNames.length > 0) {

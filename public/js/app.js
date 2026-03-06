@@ -55,6 +55,14 @@ function joinSession() {
     });
 }
 
+function joinNearbySession(sid) {
+    const input = document.getElementById('input-session-id');
+    if (input) {
+        input.value = sid;
+        joinSession();
+    }
+}
+
 function handleSessionJoin(session, role) {
     currentSession = session;
     currentRole = role;
@@ -75,6 +83,8 @@ function handleSessionJoin(session, role) {
     if (role === 'KATSOMO') viewId = 'view-valmentaja';
     if (role === 'LÄHTÖ') viewId = 'view-lahto';
     if (role === 'LÄHETTÄJÄ') viewId = 'view-lahettaja';
+    if (role === 'VÄLIAIKA') viewId = 'view-valiaika';
+    if (role === 'MAALI') viewId = 'view-maali';
 
     const viewEl = document.getElementById(viewId);
     if (viewEl) viewEl.classList.add('active');

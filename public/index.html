@@ -95,6 +95,18 @@
 
             <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('role')">← TAKAISIN</button>
         </div>
+
+        <!-- Step 4: Name Selection (within session) -->
+        <div id="ob-step-setup-name" class="ob-step" style="display:none;">
+            <h2 id="setup-name-instruction" style="margin-bottom: 20px; font-weight: 900;">VALITSE NIMI</h2>
+            <div id="valitse-nimi-lista" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px;"></div>
+            
+            <p id="setup-name-new-label" style="font-size: 12px; opacity: 0.5; margin-bottom: 10px;">TAI KIRJOITA UUSI:</p>
+            <input type="text" id="name-input" class="premium-input" placeholder="Oma nimi" autocomplete="off">
+            <button class="btn btn-primary" onclick="saveName()">JATKA</button>
+            
+            <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('session')">← TAKAISIN</button>
+        </div>
     </div>
 
     <!-- Valmentaja / Keskus View -->
