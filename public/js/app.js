@@ -86,17 +86,6 @@ function handleSessionJoin(session, role) {
 
     if (!uiUpdateTimer) uiUpdateTimer = setInterval(updateUI, 100);
 
-    // Update session name headers
-    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'coach', 'athlete'].forEach(id => {
-        const el = document.getElementById(`${id}-session-name`);
-        if (el) el.innerText = session.name;
-    });
-
-    const coachBadge = document.getElementById('coach-role-badge');
-    if (coachBadge) {
-        coachBadge.innerText = (role === 'KATSOMO') ? 'KATSOMO / LIVE' : 'VALMENTAJA';
-        coachBadge.style.background = (role === 'KATSOMO') ? 'var(--success)' : 'var(--accent)';
-    }
 
     if (role === 'VALMENTAJA') {
         const sNameEl = document.getElementById('session-name');
@@ -126,8 +115,18 @@ function showOnboardingStep(step) {
 
     if (step === 'session') {
         const isCoach = selectedRole === 'VALMENTAJA';
-        document.getElementById('coach-only-create').style.display = isCoach ? 'block' : 'none';
-        document.getElementById('session-step-title').innerText = isCoach ? 'LUO HARJOITUS' : 'LIITY HARJOITUKSEEN';
+        const coachCreate = document.getElementById('coach-only-create');
+        if (coachCreate) coachCreate.style.display = isCoach ? 'block' : 'none';
+        
+        const titleEl = document.getElementById('session-step-title');
+        if (titleEl) titleEl.innerText = isCoach ? 'LUO HARJOITUS' : 'LIITY HARJOITUKSEEN';
+        
+        // RESET BUTTON from previous "LUODAAN..." state
+        const createBtn = document.querySelector('#ob-step-session .btn-primary');
+        if (createBtn) {
+            createBtn.disabled = false;
+            createBtn.innerText = "LUO UUSI HARJOITUS";
+        }
     }
 }
 

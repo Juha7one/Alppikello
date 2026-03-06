@@ -16,6 +16,24 @@ function updateUI() {
         videoS3.style.color = s3Active ? "var(--success)" : "var(--warning)";
     }
 
+    // Update Role Badge (Coach/Katsomo)
+    const coachBadge = document.getElementById('coach-role-badge');
+    if (coachBadge) {
+        if (currentRole === 'KATSOMO') {
+            coachBadge.innerText = 'KATSOMO / LIVE';
+            coachBadge.style.background = 'var(--success)';
+        } else if (currentRole === 'VALMENTAJA') {
+            coachBadge.innerText = 'VALMENTAJA';
+            coachBadge.style.background = 'var(--accent)';
+        }
+    }
+
+    // Update session name headers across all views
+    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'coach', 'athlete'].forEach(id => {
+        const el = document.getElementById(`${id}-session-name`);
+        if (el) el.innerText = currentSession.name;
+    });
+
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();

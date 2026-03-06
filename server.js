@@ -177,11 +177,33 @@ io.on('connection', (socket) => {
 
     socket.on('end_session', (sessionId) => {
         if (sessions[sessionId]) {
-            console.log(`Session ${sessionId} ended by admin.`);
+            console.log(`[SESSION END] ${sessionId} explicitly ended by admin.`);
             io.to(sessionId).emit('session_ended');
-            delete sessions[sessionId];
+            
+            // Give clients a moment to receive the event before deletion
+            setTimeout(() => {
+                delete sessions[sessionId];
+            }, 1000);
         }
     });
+
+    // --- Automatic Housekeeping ---
+    // Remove sessions with no heartbeats for > 12 hours
+    setInterval(() => {
+        const now = Date.now();
+        const MAX_IDLE = 12 * 60 * 60 * 1000; // 12 hours
+        for (const sid in sessions) {
+            const session = sessions[sid];
+            const lastActivity = Math.max(
+                session.startTime,
+                ...Object.values(session.devices).map(d => d.lastHeartbeat || 0)
+            );
+            if (now - lastActivity > MAX_IDLE) {
+                console.log(`[HOUSEKEEPING] Removing idle session: ${sid}`);
+                delete sessions[sid];
+            }
+        }
+    }, 60000); // Check every minute
 
     socket.on('find_nearby_sessions', (data) => {
         const { lat, lon } = data;
