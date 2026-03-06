@@ -35,6 +35,8 @@ const PORT = process.env.PORT || 3000;
 
 // Store for sessions and devices
 const sessions = {};
+// Store for shareable Run Cards (in-memory for now)
+const runCards = {};
 
 // Helper for nearby sessions
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -68,15 +70,43 @@ app.post('/upload', upload.single('video'), (req, res) => {
         const session = sessions[sessionId];
         if (session) {
             const res = session.results.find(r => r.id === runnerId);
-            if (res) res.videoUrl = videoUrl;
+            if (res) {
+                res.videoUrl = videoUrl;
+                if (runCards[res.runId]) runCards[res.runId].videoUrl = videoUrl;
+            }
             const pend = session.pendingResults.find(r => r.id === runnerId);
-            if (pend) pend.videoUrl = videoUrl;
+            if (pend) {
+                pend.videoUrl = videoUrl;
+                if (runCards[pend.runId]) runCards[pend.runId].videoUrl = videoUrl;
+            }
 
             io.to(sessionId).emit('device_status_update', { session });
         }
     }
 
     res.json({ success: true, url: videoUrl });
+});
+
+app.get('/run/:runId', (req, res) => {
+    const run = runCards[req.params.runId];
+    if (!run) {
+        return res.status(404).send('Tunnusta ei löydy. Linkki saattaa olla vanhentunut.');
+    }
+
+    const templatePath = path.join(__dirname, 'public', 'run_template.html');
+    fs.readFile(templatePath, 'utf8', (err, data) => {
+        if (err) return res.status(500).send('Palvelinvirhe');
+        
+        // Simple formatting for duration
+        const duration = (run.totalTime / 1000).toFixed(2);
+        const displayData = {
+            ...run,
+            totalTime: duration + 's'
+        };
+
+        const result = data.replace('{{RUN_DATA}}', JSON.stringify(displayData));
+        res.send(result);
+    });
 });
 
 io.on('connection', (socket) => {
@@ -211,9 +241,15 @@ io.on('connection', (socket) => {
         if (session) {
             // Update the URL in results or pendingResults
             const res = session.results.find(r => r.id === runnerId);
-            if (res) res.videoUrl = videoUrl;
+            if (res) {
+                res.videoUrl = videoUrl;
+                if (runCards[res.runId]) runCards[res.runId].videoUrl = videoUrl;
+            }
             const pend = session.pendingResults.find(r => r.id === runnerId);
-            if (pend) pend.videoUrl = videoUrl;
+            if (pend) {
+                pend.videoUrl = videoUrl;
+                if (runCards[pend.runId]) runCards[pend.runId].videoUrl = videoUrl;
+            }
 
             io.to(sessionId).emit('device_status_update', { session });
         }
@@ -262,6 +298,7 @@ io.on('connection', (socket) => {
 
             const runner = {
                 id: athlete.id,
+                runId: uuidv4(), // Unique ID for this specific run
                 name: athlete.name,
                 startTime: timestamp,
                 splits: [],
@@ -301,6 +338,16 @@ io.on('connection', (socket) => {
                 session.pendingResults.push(runner);
             } else {
                 session.results.unshift(runner);
+                // Save to run cards
+                runCards[runner.runId] = {
+                    id: runner.runId,
+                    name: runner.name,
+                    totalTime: runner.totalTime,
+                    videoUrl: runner.videoUrl,
+                    sessionName: session.name,
+                    timestamp: Date.now()
+                };
+
                 if (session.forerunnerCount < 5) {
                     if (!session.expectedDuration) session.expectedDuration = duration;
                     else session.expectedDuration = (session.expectedDuration * session.forerunnerCount + duration) / (session.forerunnerCount + 1);

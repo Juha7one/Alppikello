@@ -40,6 +40,37 @@ let isRecordingActive = false;
 let recordedClips = [];
 let bufferResetTimer = null;
 
+// --- Global Helper Functions ---
+
+function shareRun(runId) {
+    if (!runId || runId === 'undefined') return alert("Hups! Tämä tallenne on vielä matkalla pilveen tai se on liian vanha.");
+    
+    const url = window.location.origin + '/run/' + runId;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Alppikello Run Card',
+            text: 'Tsekkaa lasku Alppikellosta!',
+            url: url,
+        }).catch(err => {
+            console.error("Jakaminen epäonnistui:", err);
+            copyToClipboard(url);
+        });
+    } else {
+        copyToClipboard(url);
+    }
+}
+
+function copyToClipboard(text) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showVideoNotification("Linkki kopioitu leikepöydälle! 🔗");
+}
+
 // --- Initialization & Socket Events ---
 
 socket.on('connect', () => {
@@ -1148,9 +1179,12 @@ function renderValmentajaView() {
                         </div>
                         <div style="text-align: right;">
                             ${r.videoUrl ? `
-                            <button class="btn-mini" onclick="window.open('${r.videoUrl}')" style="background: var(--accent); margin-right: 10px;">
-                                VIDEO 🎬
+                            <button class="btn-mini" onclick="window.open('${r.videoUrl}')" style="background: var(--accent); margin-right: 5px;">
+                                KATSO 🎬
                             </button>` : ''}
+                            <button class="btn-mini" onclick="shareRun('${r.runId}')" style="background: rgba(255,255,255,0.1); margin-right: 10px;">
+                                JAA 🔗
+                            </button>
                             <div style="font-size: 32px; font-weight: 900; color: ${isBest ? 'var(--success)' : 'var(--text-primary)'}; font-family: monospace;">${formatDuration(r.totalTime)}</div>
                             <div style="font-size: 16px; font-weight: 800; color: ${delta === 0 ? 'var(--success)' : 'var(--danger)'};">
                                 ${delta === 0 ? 'KÄRKI' : `+${formatDuration(delta)}`}
