@@ -3,20 +3,21 @@
 function updateUI() {
     if (!currentSession) return;
     
-    // Update S3 Status Badges
+    // 1. Update S3 Status Badges
+    const s3ActiveNow = !!(s3Active); // Ensure boolean
     const coachS3 = document.getElementById('s3-status-badge');
     if (coachS3) {
-        coachS3.innerText = s3Active ? "S3: PILVITALLENNUS AKTIIVINEN ✅" : "S3: PAIKALLINEN TALLENNUS (VÄLIAIKAINEN) ⚠️";
-        coachS3.style.color = s3Active ? "var(--success)" : "var(--warning)";
-        coachS3.style.borderColor = s3Active ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)";
+        coachS3.innerText = s3ActiveNow ? "S3: PILVITALLENNUS AKTIIVINEN ✅" : "S3: PAIKALLINEN TALLENNUS (VÄLIAIKAINEN) ⚠️";
+        coachS3.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
+        coachS3.style.borderColor = s3ActiveNow ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)";
     }
     const videoS3 = document.getElementById('video-s3-status');
     if (videoS3) {
-        videoS3.innerText = s3Active ? "S3: PILVITALLENNUS ✅" : "S3: EI KÄYTÖSSÄ ⚠️";
-        videoS3.style.color = s3Active ? "var(--success)" : "var(--warning)";
+        videoS3.innerText = s3ActiveNow ? "S3: PILVITALLENNUS ✅" : "S3: EI KÄYTÖSSÄ ⚠️";
+        videoS3.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
     }
 
-    // Update Role Badge (Coach/Katsomo)
+    // 2. Update Role Badge (Coach/Katsomo)
     const coachBadge = document.getElementById('coach-role-badge');
     if (coachBadge) {
         if (currentRole === 'KATSOMO') {
@@ -28,6 +29,27 @@ function updateUI() {
         }
     }
 
+    // 3. Update Timers (Dynamic parts only)
+    const now = getSyncedTime();
+    const onCourse = currentSession.onCourse || [];
+    onCourse.forEach(r => {
+        const timeEl = document.getElementById(`timer-${r.id}`);
+        if (timeEl) {
+            timeEl.innerText = formatDuration(now - r.startTime);
+        }
+    });
+
+    if (currentRole === 'VIDEO') renderVideoView();
+}
+
+/**
+ * Re-renders structural parts of the UI ONLY when data actually changes.
+ * This prevents losing focus or cancelling clicks due to innerHTML overwrites.
+ */
+function refreshStaticViews() {
+    if (!currentSession) return;
+    console.log("[UI] Refreshing static views...");
+
     // Update session name headers across all views
     ['start', 'finish', 'lahettaja', 'lahto', 'split', 'coach', 'athlete'].forEach(id => {
         const el = document.getElementById(`${id}-session-name`);
@@ -37,7 +59,6 @@ function updateUI() {
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();
-    if (currentRole === 'VIDEO') renderVideoView();
 }
 
 function renderValmentajaView() {
@@ -54,14 +75,12 @@ function renderValmentajaView() {
     if (endBtnContainer) endBtnContainer.style.display = isCoach ? 'block' : 'none';
 
     // 1. Athlete List
-    const athletes = currentSession.allAthletes || [];
-    if (coachListEl && (athletes.length !== lastAthletesCount)) {
+    if (coachListEl) {
         coachListEl.innerHTML = athletes.length ? athletes.map(a => `
             <button class="btn btn-outline" style="padding: 15px; margin-bottom: 8px; font-size: 20px; text-align: center; display: block; width: 100%;" onclick="addToQueue('${a.id}')">
                 ${a.name.toUpperCase()}
             </button>
         `).join('') : '<p>Ei nimiä listalla.</p>';
-        lastAthletesCount = athletes.length;
     }
 
     // 2. Active Runners
@@ -78,7 +97,7 @@ function renderValmentajaView() {
                             <p style="color: var(--accent); font-weight: 900; margin: 8px 0; font-size: 18px;">LASKEE...</p>
                         </div>
                         <div style="text-align: right;">
-                            <h2 style="margin: 0; font-family: monospace; font-size: 54px; font-weight: 800;">${formatDuration(runningTime)}</h2>
+                            <h2 id="timer-${r.id}" style="margin: 0; font-family: monospace; font-size: 54px; font-weight: 800;">${formatDuration(runningTime)}</h2>
                         </div>
                     </div>
                     ${isCoach ? `<div style="display:flex; gap:10px; margin-top:15px;">

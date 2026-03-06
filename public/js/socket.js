@@ -51,6 +51,7 @@ socket.on('device_status_update', (data) => {
         activeRunnerOnCourse = null;
         hasRecordedForCurrentRunner = false;
     }
+    refreshStaticViews();
     updateUI();
 });
 
@@ -61,6 +62,7 @@ socket.on('session_ended', () => {
 
 socket.on('timing_update', (data) => {
     currentSession = data.session;
+    refreshStaticViews();
     updateUI();
 
     if (currentRole === 'VIDEO' && data.type === 'START') {
