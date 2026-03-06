@@ -20,6 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
 async function createSession() {
     if (!userName) return showOnboardingStep('name');
 
+    const btn = document.querySelector('#ob-step-session .btn-primary');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "LUODAAN...";
+    }
+
     const days = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'];
     const now = new Date();
     const timeStr = `${days[now.getDay()]} ${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()} klo ${now.getHours()}`;
@@ -33,11 +39,6 @@ async function createSession() {
             const place = data.address.suburb || data.address.city || data.address.town;
             if (place) sessionName = `${place} ${timeStr}`;
         } catch (e) { }
-    }
-    const btn = document.querySelector('#ob-step-session .btn-primary');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerText = "LUODAAN...";
     }
     socket.emit('create_session', { name: sessionName, creatorName: userName });
 }
@@ -127,6 +128,12 @@ function showOnboardingStep(step) {
             createBtn.disabled = false;
             createBtn.innerText = "LUO UUSI HARJOITUS";
         }
+
+        // RESET Manual Join Toggle
+        const manualContainer = document.getElementById('manual-join-container');
+        const manualToggle = document.getElementById('btn-toggle-manual');
+        if (manualContainer) manualContainer.style.display = 'none';
+        if (manualToggle) manualToggle.style.display = 'block';
     }
 }
 

@@ -85,11 +85,13 @@
                 <div id="nearby-sessions-list"></div>
             </div>
 
-            <div id="manual-join-container">
-                <p style="font-size: 12px; opacity: 0.5; margin-bottom: 10px;">SYÖTÄ KOODI:</p>
+            <div id="manual-join-container" style="display:none; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                <p style="font-size: 11px; opacity: 0.5; margin-bottom: 10px;">SYÖTÄ KOODI MANUAALISESTI:</p>
                 <input type="text" id="input-session-id" class="premium-input" placeholder="XYZ-123" autocomplete="off" style="text-transform: uppercase;">
                 <button class="btn btn-outline" onclick="joinSession()">LIITY HARJOITUKSEEN</button>
             </div>
+
+            <button id="btn-toggle-manual" class="btn-mini-link" style="margin-top: 20px; opacity: 0.4;" onclick="document.getElementById('manual-join-container').style.display='block'; this.style.display='none';">TAI SYÖTÄ KOODI MANUAALISESTI</button>
 
             <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('role')">← TAKAISIN</button>
         </div>
@@ -293,7 +295,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.1.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.3.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
