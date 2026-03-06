@@ -97,16 +97,13 @@
 
     <!-- Valmentaja / Keskus View -->
     <div id="view-valmentaja" class="view container">
-        <header style="margin-bottom: 40px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <span id="coach-role-badge" class="role-badge">VALMENTAJA</span>
-                    <h1 id="coach-session-name" style="margin: 0; font-weight: 900; font-size: 32px;">HARJOITUS</h1>
-                    <p id="coach-runner-count" style="margin: 5px 0 0 0; color: var(--text-secondary); font-weight: 700;">
-                        LADATAAN...</p>
-                </div>
-                <div id="sync-badge" class="sync-badge">SYNCHRONIZED</div>
+        <header id="coach-header" style="margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 id="session-name" style="margin: 0; font-size: 32px; font-weight: 900; letter-spacing: -1px;">TREENI</h1>
+                <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.6; font-weight: 700;">KOODI: <span id="session-code" style="color: #fff;">------</span></p>
+                <div id="s3-status-badge" style="display:inline-block; margin-top: 10px; font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3: POIS PÄÄLTÄ</div>
             </div>
+            <div id="coach-role-badge" style="background: var(--accent); padding: 8px 15px; border-radius: 12px; font-size: 12px; font-weight: 900;">VALMENTAJA</div>
         </header>
 
         <section id="coach-athlete-management" style="margin-bottom: 40px;">
@@ -230,7 +227,10 @@
     <!-- Video View -->
     <div id="view-video" class="view container">
         <div class="card" style="text-align: center;">
-            <h2 style="margin-bottom: 20px; font-weight: 900;">VIDEOTALLENNIN</h2>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-weight: 900;">VIDEOTALLENNIN</h2>
+                <div id="video-s3-status" style="font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3: POIS</div>
+            </div>
 
             <div id="video-info-overlay"
                 style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--accent);">

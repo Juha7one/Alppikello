@@ -15,6 +15,7 @@ let selectedRole = null;
 let userName = localStorage.getItem('alppikello_user_name') || "";
 let activeRunnerOnCourse = null; // Track who is currently running
 let hasRecordedForCurrentRunner = false; // Prevent multiple clips per runner
+let s3Active = false; // Is cloud storage available?
 
 // Rendering optimization locks
 let lastAthletesCount = -1;
@@ -147,6 +148,11 @@ window.addEventListener('DOMContentLoaded', () => {
             }, 800);
         }, 2500);
     }
+});
+
+socket.on('s3_status', (data) => {
+    s3Active = data.active;
+    updateUI();
 });
 
 socket.on('session_created', (session) => {
@@ -1006,6 +1012,20 @@ function manualFinish(runnerId) {
 
 function updateUI() {
     if (!currentSession) return;
+    
+    // Update S3 Status Badges
+    const coachS3 = document.getElementById('s3-status-badge');
+    if (coachS3) {
+        coachS3.innerText = s3Active ? "S3: PILVITALLENNUS AKTIIVINEN ✅" : "S3: PAIKALLINEN TALLENNUS (VÄLIAIKAINEN) ⚠️";
+        coachS3.style.color = s3Active ? "var(--success)" : "var(--warning)";
+        coachS3.style.borderColor = s3Active ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)";
+    }
+    const videoS3 = document.getElementById('video-s3-status');
+    if (videoS3) {
+        videoS3.innerText = s3Active ? "S3: OK" : "S3: EI LAINDETTU";
+        videoS3.style.color = s3Active ? "var(--success)" : "var(--warning)";
+    }
+
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();
@@ -1073,11 +1093,13 @@ function renderVideoView() {
         infoEl.innerHTML = `
             <div style="font-size: 22px; color: var(--accent); font-weight: 900; margin-bottom: 5px;">${statusText}</div>
             <div style="font-size: 16px; color: #fff; font-weight: 700; margin-bottom: 10px;">${countdownText}</div>
-            <div style="font-size: 12px; opacity: 0.6; font-weight: 700; text-transform: uppercase;">${distText}</div>
+            <div style="font-size: 10px; opacity: 0.6; font-weight: 700; text-transform: uppercase;">
+                ${distText} | ROOLI: ${currentRole}
+            </div>
         `;
     } else {
         const msg = !startLoc ? "ODOTTAA LÄHTÖÄ (GPS)" : "HAKEE OMAA GPS...";
-        infoEl.innerText = msg;
+        infoEl.innerHTML = `<div style="padding: 20px; opacity: 0.5;">${msg}<br><span style="font-size:10px;">Varmista että GPS on päällä</span></div>`;
     }
 }
 

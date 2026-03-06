@@ -136,6 +136,10 @@ app.get('/run/:runId', (req, res) => {
 
 io.on('connection', (socket) => {
     console.log(`Device connected: ${socket.id}`);
+    
+    // Check S3 status and notify client
+    const isS3 = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_S3_BUCKET);
+    socket.emit('s3_status', { active: isS3 });
 
     // --- Onboarding & Session Management ---
 
