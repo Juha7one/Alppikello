@@ -23,56 +23,71 @@
 
     <!-- Onboarding View -->
     <div id="view-onboarding" class="view container active">
+        <!-- Step 1: Name -->
         <div id="ob-step-name" class="ob-step active">
-            <h1 class="premium-title">ALPPIKELLO</h1>
+            <h1 class="premium-title">TERVETULOA</h1>
             <p style="color: var(--text-secondary); margin-bottom: 40px;">Kirjoita nimesi aloittaaksesi.</p>
-            <input type="text" id="input-user-name" class="premium-input" placeholder="Nimi tai nimimerkki..."
-                autocomplete="off">
+            <input type="text" id="input-user-name" class="premium-input" placeholder="Nimesi..." autocomplete="off">
             <button class="btn btn-primary" onclick="saveNameAndNext()">JATKA</button>
         </div>
 
-        <div id="ob-step-role" class="ob-step">
-            <h2 style="margin-bottom: 30px; font-weight: 900; letter-spacing: -1px;">VALITSE LAITTEEN ROOLI</h2>
+        <!-- Step 2: Role -->
+        <div id="ob-step-role" class="ob-step" style="display:none;">
+            <h2 style="margin-bottom: 30px; font-weight: 900; letter-spacing: -1px;">VALITSE ROOLI</h2>
             <div class="role-grid">
-                <div class="role-card" onclick="selectRole('LÄHTÖ')">
+                <div class="role-card" data-role="LÄHTÖ" onclick="selectRole('LÄHTÖ')">
                     <span class="role-icon">⏲️</span>
-                    <span class="role-title">LÄHTÖ</span>
+                    <span class="role-title">STARTTIKELLO</span>
                 </div>
-                <div class="role-card" onclick="selectRole('MAALI')">
+                <div class="role-card" data-role="MAALI" onclick="selectRole('MAALI')">
                     <span class="role-icon">🏁</span>
                     <span class="role-title">MAALI</span>
                 </div>
-                <div class="role-card" onclick="selectRole('VÄLIAIKA')">
+                <div class="role-card" data-role="VÄLIAIKA" onclick="selectRole('VÄLIAIKA')">
                     <span class="role-icon">⏱️</span>
                     <span class="role-title">VÄLIAIKA</span>
                 </div>
-                <div class="role-card" onclick="selectRole('VIDEO')">
+                <div class="role-card" data-role="VIDEO" onclick="selectRole('VIDEO')">
                     <span class="role-icon">📹</span>
                     <span class="role-title">VIDEO</span>
                 </div>
-                <div class="role-card" onclick="selectRole('VALMENTAJA')">
+                <div class="role-card" data-role="VALMENTAJA" onclick="selectRole('VALMENTAJA')">
                     <span class="role-icon">📋</span>
                     <span class="role-title">VALMENTAJA</span>
                 </div>
-                <div class="role-card" onclick="selectRole('URHEILIJA')">
+                <div class="role-card" data-role="URHEILIJA" onclick="selectRole('URHEILIJA')">
                     <span class="role-icon">⛷️</span>
                     <span class="role-title">URHEILIJA</span>
                 </div>
+                <div class="role-card" data-role="KATSOMO" onclick="selectRole('KATSOMO')">
+                    <span class="role-icon">👁️</span>
+                    <span class="role-title">KATSOMO</span>
+                </div>
             </div>
+            <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('name')">← TAKAISIN</button>
         </div>
 
-        <div id="ob-step-session" class="ob-step">
-            <h2 style="margin-bottom: 30px; font-weight: 900;">LIITY HARJOITUKSEEN</h2>
-            <div id="nearby-sessions-list" style="display:none; margin-bottom: 30px;">
-                <p style="font-size: 12px; color: var(--accent); font-weight: 900; margin-bottom: 15px;">LÄHISTÖLLÄ:
-                </p>
-                <div id="nearby-items"></div>
+        <!-- Step 3: Session Selection -->
+        <div id="ob-step-session" class="ob-step" style="display:none;">
+            <h2 id="session-step-title" style="margin-bottom: 30px; font-weight: 900;">HARJOITUS</h2>
+            
+            <div id="coach-only-create" style="display:none;">
+                <button class="btn btn-primary" onclick="createSession()">LUO UUSI HARJOITUS</button>
+                <p style="font-size: 12px; opacity: 0.5; margin: 20px 0;">TAI LIITY OLEMASSA OLEVAAN:</p>
             </div>
-            <p style="font-size: 12px; opacity: 0.5; margin-bottom: 10px;">TAI LUO UUSI:</p>
-            <input type="text" id="input-session-name" class="premium-input" placeholder="Harjoituksen nimi..."
-                autocomplete="off">
-            <button class="btn btn-outline" style="border-color: var(--accent); color: var(--accent);"
-                onclick="joinSession(true)">LUO UUSI HARJOITUS</button>
+
+            <div id="nearby-sessions-container" style="display:none; margin-bottom: 30px;">
+                <p style="font-size: 12px; color: var(--accent); font-weight: 900; margin-bottom: 15px;">LÄHISTÖLLÄ:</p>
+                <div id="nearby-sessions-list"></div>
+            </div>
+
+            <div id="manual-join-container">
+                <p style="font-size: 12px; opacity: 0.5; margin-bottom: 10px;">SYÖTÄ KOODI:</p>
+                <input type="text" id="input-session-id" class="premium-input" placeholder="XYZ-123" autocomplete="off" style="text-transform: uppercase;">
+                <button class="btn btn-outline" onclick="joinSession()">LIITY HARJOITUKSEEN</button>
+            </div>
+
+            <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('role')">← TAKAISIN</button>
         </div>
     </div>
 
@@ -81,6 +96,7 @@
         <header style="margin-bottom: 40px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
+                    <span id="coach-role-badge" class="role-badge">VALMENTAJA</span>
                     <h1 id="coach-session-name" style="margin: 0; font-weight: 900; font-size: 32px;">HARJOITUS</h1>
                     <p id="coach-runner-count" style="margin: 5px 0 0 0; color: var(--text-secondary); font-weight: 700;">
                         LADATAAN...</p>

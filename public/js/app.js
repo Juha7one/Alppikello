@@ -78,25 +78,29 @@ socket.on('connect', () => {
     connText.innerText = 'Yhdistetty';
     startTimeSync();
     checkDeepLink();
-    startDiscoveryGPS(); // Start looking for nearby sessions
+    startDiscoveryGPS(); 
+    
+    // Set stored name if any
+    if (userName) document.getElementById('input-user-name').value = userName;
+    showOnboardingStep('name');
 });
 
 socket.on('nearby_sessions_found', (sessions) => {
-    const container = document.getElementById('nearby-sessions-list');
-    const items = document.getElementById('nearby-items');
-    if (!container || !items) return;
+    const listEl = document.getElementById('nearby-sessions-list');
+    const container = document.getElementById('nearby-sessions-container');
+    if (!listEl || !container) return;
 
     if (sessions && sessions.length > 0) {
         container.style.display = 'block';
-        items.innerHTML = sessions.map(s => `
-            <div class="card" onclick="joinNearbySession('${s.id}')" style="padding: 16px; margin: 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.1); border-color: var(--accent);">
+        listEl.innerHTML = sessions.map(s => `
+            <div class="card" onclick="joinNearbySession('${s.id}')" style="padding: 16px; margin: 0 0 10px 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.1); border-color: var(--accent);">
                 <div>
                     <div style="font-weight: 800; font-size: 16px;">${s.name.toUpperCase()}</div>
                     <div style="font-size: 11px; opacity: 0.6; font-weight: 700;">KOODI: ${s.id} • ${s.athleteCount} LASKIJAA</div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-weight: 900; color: var(--accent); font-size: 14px;">${s.distance} km</div>
-                    <div style="font-size: 9px; opacity: 0.5;">ETAISYYS</div>
+                    <div style="font-size: 9px; opacity: 0.5;">ETÄISYYS</div>
                 </div>
             </div>
         `).join('');
@@ -106,8 +110,8 @@ socket.on('nearby_sessions_found', (sessions) => {
 });
 
 function joinNearbySession(sid) {
-    document.getElementById('session-input').value = sid;
-    enterSessionManually();
+    document.getElementById('input-session-id').value = sid;
+    joinSession();
 }
 
 let discoveryWatchId = null;
@@ -154,7 +158,7 @@ socket.on('session_joined', (data) => {
         handleSessionJoin(data.session, data.role);
     } else {
         alert('Liittyminen epäonnistui: ' + data.error);
-        showOnboardingStep('initial');
+        showOnboardingStep('name');
     }
 });
 
@@ -214,24 +218,12 @@ function checkDeepLink() {
     const params = new URLSearchParams(window.location.search);
     const sid = params.get('s');
     if (sid) {
-        document.getElementById('session-input').value = sid.toUpperCase();
-        document.getElementById('session-join-title').innerText = `Liitytään: ${sid.toUpperCase()}`;
-
-        socket.emit('get_session_names', sid.toUpperCase());
-        showOnboardingStep('role');
+        document.getElementById('input-session-id').value = sid.toUpperCase();
+        showOnboardingStep('name'); // Start from name, but session is pre-filled
     }
 }
 
-function enterSessionManually() {
-    const sid = document.getElementById('session-input').value.trim().toUpperCase();
-    if (!sid) return alert('Syötä SESSION ID');
-
-    // Attempt to join with a dummy role first to check if exists, 
-    // or just emit join_session with URHEILIJA as default if we didn't pick role yet?
-    // Actually, we usually go to role selection first.
-    socket.emit('get_session_names', sid);
-    showOnboardingStep('role');
-}
+// --- Onboarding Helpers ---
 
 function confirmEndSession() {
     if (confirm('Haluatko varmasti lopettaa harjoituksen? Tämä poistaa kaikki tiedot ja katkaisee yhteyden muilta laitteilta.')) {
@@ -241,37 +233,27 @@ function confirmEndSession() {
     }
 }
 
-function saveName() {
-    const inputName = document.getElementById('name-input').value.trim();
-    if (!inputName) return alert("Anna nimi!");
-
-    const isDeviceRole = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'].includes(selectedRole);
-
-    if (!isDeviceRole) {
-        userName = inputName;
-        localStorage.setItem('alppikello_user_name', userName);
-    } else {
-        localStorage.setItem('alppikello_device_name', inputName);
-    }
-
-    // Pass the typed name explicitly to joinSession
-    joinSession(inputName);
+function saveNameAndNext() {
+    const val = document.getElementById('input-user-name').value.trim();
+    if (!val) return alert("Kirjoita nimesi ensin!");
+    userName = val;
+    localStorage.setItem('alppikello_user_name', userName);
+    showOnboardingStep('role');
 }
 
 function showOnboardingStep(step) {
-    // Ensure onboarding view is active when showing a step
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-onboarding').classList.add('active');
+    // Hide all steps
+    document.querySelectorAll('.ob-step').forEach(el => el.style.display = 'none');
+    
+    const stepEl = document.getElementById('ob-step-' + step);
+    if (stepEl) {
+        stepEl.style.display = 'block';
+    }
 
-    document.getElementById('setup-initial').style.display = (step === 'initial' ? 'block' : 'none');
-    document.getElementById('setup-name').style.display = (step === 'name' ? 'block' : 'none');
-    document.getElementById('setup-role').style.display = (step === 'role' ? 'block' : 'none');
-
-    if (step === 'name') {
-        const isDeviceRole = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'].includes(selectedRole);
-        document.getElementById('name-input').value = isDeviceRole ? (localStorage.getItem('alppikello_device_name') || '') : userName;
-        const sid = document.getElementById('session-input').value.trim().toUpperCase();
-        if (sid) socket.emit('get_session_names', sid);
+    if (step === 'session') {
+        const isCoach = selectedRole === 'VALMENTAJA';
+        document.getElementById('coach-only-create').style.display = isCoach ? 'block' : 'none';
+        document.getElementById('session-step-title').innerText = isCoach ? 'LUO HARJOITUS' : 'LIITY HARJOITUKSEEN';
     }
 }
 
@@ -390,26 +372,11 @@ function selectRole(role) {
         if (card.dataset.role === role) card.classList.add('selected');
     });
 
-    // Device-specific roles should always verify their name, so they don't accidentally join as "Juha"
-    const requiresDeviceName = role === 'VÄLIAIKA' || role === 'VIDEO';
-
-    // If we already have a name and a session, and it's a personal role, we can join immediately
-    if (userName && currentSession && !requiresDeviceName) {
-        joinSession();
-    } else {
-        // Go to Name/Identity step
-        showOnboardingStep('name');
-    }
+    showOnboardingStep('session');
 }
 
 async function createSession() {
-    const sidInput = document.getElementById('session-input');
-    // If we don't have a name yet, go to name step first
-    if (!userName) {
-        selectedRole = 'VALMENTAJA';
-        showOnboardingStep('name');
-        return;
-    }
+    if (!userName) return showOnboardingStep('name');
 
     const days = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'];
     const now = new Date();
@@ -428,18 +395,15 @@ async function createSession() {
     socket.emit('create_session', { name: sessionName, creatorName: userName });
 }
 
-function joinSession(specificName) {
-    let sid = document.getElementById('session-input').value.trim().toUpperCase();
-
-    // If empty but we're switching roles, use currentSession id
-    if (!sid && currentSession) sid = currentSession.id;
-
-    if (!sid || !selectedRole) return alert('Valitse rooli!');
+function joinSession() {
+    let sid = document.getElementById('input-session-id').value.trim().toUpperCase();
+    if (!sid) return alert('Syötä harjoituksen koodi!');
+    if (!selectedRole) return alert('Valitse ensin rooli!');
 
     socket.emit('join_session', {
         sessionId: sid,
         role: selectedRole,
-        deviceName: specificName || userName || "Laite"
+        deviceName: userName || "Laite"
     });
 }
 
@@ -448,7 +412,7 @@ function handleSessionJoin(session, role) {
     currentRole = role;
 
     // Sync session input so switching role works even if it was empty
-    const input = document.getElementById('session-input');
+    const input = document.getElementById('input-session-id');
     if (input) input.value = session.id;
 
     // Stop discovery GPS when joined
