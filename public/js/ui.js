@@ -131,11 +131,15 @@ function renderStarterView() {
         queueEl.innerHTML = `<div style="padding: 40px; text-align:center; opacity:0.3;">JONO TYHJÄ</div>`;
     }
 
-    listEl.innerHTML = athletes.map(a => `
-        <button class="btn btn-outline" style="padding:15px; width:100%; margin-bottom:10px;" onclick="addToQueue('${a.id}')">
-            ${a.name.toUpperCase()}
-        </button>
-    `).join('');
+    listEl.innerHTML = athletes.map(a => {
+        const isInQueue = queue.some(q => q.id === a.id);
+        const style = isInQueue ? 'background: var(--accent); border-color: var(--accent);' : '';
+        return `
+            <button class="btn btn-outline" style="padding:15px; width:100%; margin-bottom:10px; ${style}" onclick="addToQueue('${a.id}')">
+                ${a.name.toUpperCase()}
+            </button>
+        `;
+    }).join('');
 }
 
 function renderAthleteView() {

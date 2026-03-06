@@ -76,3 +76,17 @@ function selectExistingName(name) {
         saveName();
     }
 }
+
+function addAthleteManually() {
+    const input = document.getElementById('input-manual-athlete');
+    const name = input ? input.value.trim() : "";
+    if (!currentSession || !name) return alert("Anna urheilijan nimi!");
+
+    socket.emit('add_athlete', {
+        sessionId: currentSession.id,
+        name: name,
+        autoQueue: true // Starter adds directly to queue
+    });
+
+    if (input) input.value = '';
+}
