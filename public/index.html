@@ -140,6 +140,12 @@
             <div id="device-status-list"
                 style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 40px;"></div>
         </section>
+
+        <!-- End Session Button (Coach only) -->
+        <div id="coach-only-end" style="margin-top: 40px; border-top: 2px solid rgba(239, 68, 68, 0.2); padding-top: 40px;">
+            <button class="btn btn-danger" onclick="confirmEndSession()" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); color: var(--danger);">LOPETA HARJOITUS</button>
+            <p style="text-align: center; font-size: 11px; opacity: 0.5; margin-top: 10px;">HUOM: Tämä poistaa kaiken datan ja katkaisee yhteydet.</p>
+        </div>
     </div>
 
     <!-- Urheilija View -->
@@ -151,12 +157,19 @@
     <!-- Lähtöjärjestys / Lähettäjä View -->
     <div id="view-lahettaja" class="view container">
         <div id="lahettaja-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">HARJOITUS</div>
+        <h1 style="font-weight: 900; margin-bottom: 30px;">LÄHTÖPAIKKA</h1>
         <div id="starter-queue-view"></div>
         <div style="margin-top: 40px;">
             <p style="font-size: 12px; color: var(--text-secondary); font-weight: 900; text-transform: uppercase; margin-bottom: 20px;">
-                Seuraavaksi lähtevä (Valitse nimi):</p>
+                Seuraavaksi lähtevä:</p>
             <div id="starter-skier-list"
-                style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 100px;"></div>
+                style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 30px;"></div>
+            
+            <div class="card" style="padding: 20px; background: rgba(255,255,255,0.02); border: 2px dashed rgba(255,255,255,0.1);">
+                <p style="font-size: 11px; font-weight: 900; opacity: 0.5; margin-bottom: 15px;">LISÄÄ UUSI URHEILIJA LENNOSSA:</p>
+                <input type="text" id="input-manual-athlete" class="premium-input" placeholder="URHEILIJAN NIMI" style="font-size: 18px; padding: 12px; margin-bottom: 15px;">
+                <button class="btn btn-outline btn-mini" style="width: 100%; border-color: var(--accent); color: var(--accent);" onclick="addAthleteManually()">LISÄÄ JONOON</button>
+            </div>
         </div>
     </div>
 
@@ -172,12 +185,9 @@
                 <div id="start-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button id="btn-start-cv" class="btn btn-primary" style="margin:0; font-size: 14px; padding: 15px;" onclick="initTriggerCV('lähtö')">AKTIVOI KENNO</button>
-                <button class="btn btn-outline" style="margin:0; font-size: 14px; padding: 15px; border-color: var(--danger); color: var(--danger);" onclick="simulateTrigger('start')">MANUAALI</button>
-            </div>
+            <button id="btn-start-cv" class="btn btn-primary" style="margin:0; font-size: 16px; padding: 20px;" onclick="initTriggerCV('lähtö')">AKTIVOI KENNO</button>
 
-            <p id="start-node-info" style="font-size: 14px; opacity: 0.6;">VALMIINA</p>
+            <p id="start-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
         </div>
     </div>
 
@@ -193,12 +203,9 @@
                 <div id="maali-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button id="btn-maali-cv" class="btn btn-success" style="margin:0; font-size: 14px; padding: 15px;" onclick="initTriggerCV('maali')">AKTIVOI KENNO</button>
-                <button class="btn btn-outline" style="margin:0; font-size: 14px; padding: 15px; border-color: var(--danger); color: var(--danger);" onclick="simulateTrigger('finish')">MANUAALI</button>
-            </div>
+            <button id="btn-maali-cv" class="btn btn-success" style="margin:0; font-size: 16px; padding: 20px;" onclick="initTriggerCV('maali')">AKTIVOI KENNO</button>
 
-            <p id="finish-node-info" style="font-size: 14px; opacity: 0.6;">VALMIINA</p>
+            <p id="finish-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
         </div>
     </div>
 
@@ -214,12 +221,9 @@
                 <div id="väliaika-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button id="btn-väliaika-cv" class="btn btn-warning" style="margin:0; font-size: 14px; padding: 15px;" onclick="initTriggerCV('väliaika')">AKTIVOI KENNO</button>
-                <button class="btn btn-outline" style="margin:0; font-size: 14px; padding: 15px; border-color: var(--accent); color: var(--accent);" onclick="simulateTrigger('split')">MANUAALI</button>
-            </div>
+            <button id="btn-väliaika-cv" class="btn btn-warning" style="margin:0; font-size: 16px; padding: 20px;" onclick="initTriggerCV('väliaika')">AKTIVOI KENNO</button>
 
-            <p id="split-node-info" style="font-size: 14px; opacity: 0.6;">VALMIINA</p>
+            <p id="split-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
         </div>
     </div>
 

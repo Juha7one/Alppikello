@@ -412,7 +412,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('add_athlete', (data) => {
-        const { sessionId, name } = data;
+        const { sessionId, name, autoQueue } = data;
         const session = sessions[sessionId];
         if (session && name) {
             let uniqueName = name;
@@ -421,7 +421,13 @@ io.on('connection', (socket) => {
                 count++;
                 uniqueName = `${name} ${count}`;
             }
-            session.allAthletes.push({ id: 'MANUAL-' + Date.now(), name: uniqueName });
+            const newAthlete = { id: 'MANUAL-' + Date.now(), name: uniqueName };
+            session.allAthletes.push(newAthlete);
+            
+            if (autoQueue) {
+                session.activeQueue = [newAthlete];
+            }
+
             io.to(sessionId).emit('device_status_update', { session });
         }
     });

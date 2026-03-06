@@ -225,8 +225,30 @@ function checkDeepLink() {
 
 // --- Onboarding Helpers ---
 
+let endSessionStep = 0;
 function confirmEndSession() {
-    if (confirm('Haluatko varmasti lopettaa harjoituksen? Tämä poistaa kaikki tiedot ja katkaisee yhteyden muilta laitteilta.')) {
+    if (endSessionStep === 0) {
+        if (confirm('Haluatko varmasti lopettaa harjoituksen? Tämä poistaa kaikki tiedot ja katkaisee yhteyden muilta laitteilta.')) {
+            endSessionStep = 1;
+            const btn = document.querySelector('#coach-only-end .btn-danger');
+            if (btn) {
+                btn.innerText = "VAHVISTA LOPETUS!";
+                btn.style.background = "var(--danger)";
+                btn.style.color = "white";
+                btn.style.boxShadow = "0 0 30px rgba(239, 68, 68, 0.5)";
+            }
+            // Auto-reset after 5 seconds if not clicked again
+            setTimeout(() => {
+                endSessionStep = 0;
+                if (btn) {
+                    btn.innerText = "LOPETA HARJOITUS";
+                    btn.style.background = "";
+                    btn.style.color = "";
+                    btn.style.boxShadow = "";
+                }
+            }, 5000);
+        }
+    } else {
         if (currentSession) {
             socket.emit('end_session', currentSession.id);
         }
@@ -595,7 +617,20 @@ function simulateTrigger(type) {
     }
 }
 
-// --- Simulator ---
+// --- Lähettäjä Logic ---
+
+function addAthleteManually() {
+    const input = document.getElementById('input-manual-athlete');
+    const name = input.value.trim();
+    if (!name) return alert("Kirjoita nimi!");
+    
+    if (currentSession) {
+        socket.emit('add_athlete', { sessionId: currentSession.id, name: name, autoQueue: true });
+        input.value = "";
+        // Optional: provide feedback
+        showVideoNotification(`URHEILIJA LISÄTTY: ${name.toUpperCase()} ⛷️`);
+    }
+}
 
 // --- Computer Vision (Digital Photocell) ---
 
@@ -1045,6 +1080,9 @@ function renderValmentajaView() {
     // Toggle management controls based on role
     const isCoach = currentRole === 'VALMENTAJA';
     if (coachCtrlEl) coachCtrlEl.style.display = isCoach ? 'block' : 'none';
+
+    const endBtnContainer = document.getElementById('coach-only-end');
+    if (endBtnContainer) endBtnContainer.style.display = isCoach ? 'block' : 'none';
 
     // 0. Master Athlete List - CHUNKY BUTTONS (Only re-render if count change)
     const athletes = currentSession.allAthletes || [];
