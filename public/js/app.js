@@ -425,8 +425,10 @@ function handleSessionJoin(session, role) {
     document.getElementById('view-onboarding').classList.remove('active');
 
     let viewId = `view-${role.toLowerCase()}`;
-    // Map Katsomo to use the same view as Valmentaja
+    // Explicit mapping for roles with special characters or specific IDs
     if (role === 'KATSOMO') viewId = 'view-valmentaja';
+    if (role === 'LÄHTÖ') viewId = 'view-lahto';
+    if (role === 'LÄHETTÄJÄ') viewId = 'view-lahettaja';
 
     const viewEl = document.getElementById(viewId);
     if (viewEl) viewEl.classList.add('active');
@@ -459,7 +461,7 @@ function handleSessionJoin(session, role) {
     lastOnCourseCount = -1;
 
     // Update all potential session-name headers
-    ['start', 'finish', 'starter', 'split', 'coach', 'athlete'].forEach(id => {
+    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'coach', 'athlete'].forEach(id => {
         const el = document.getElementById(`${id}-session-name`);
         if (el) el.innerText = session.name;
     });
@@ -1168,7 +1170,7 @@ function renderValmentajaView() {
     if (deviceEl) {
         const devices = Object.values(currentSession.devices || {});
         // Show ALL devices in the status list for Valmentaja, but sort track nodes first
-        const trackNodes = ['LÄHTÖ', 'MAALI', 'VÄLIAIKA', 'VIDEO'];
+        const trackNodes = ['LÄHTÖ', 'MAALI', 'LÄHETTÄJÄ', 'VÄLIAIKA', 'VIDEO'];
         devices.sort((a, b) => {
             const aIsTrack = trackNodes.includes(a.role);
             const bIsTrack = trackNodes.includes(b.role);
@@ -1181,8 +1183,9 @@ function renderValmentajaView() {
             const isOnline = (Date.now() - d.lastHeartbeat) < 15000;
             let icon = '📱';
             let roleName = d.role;
-            if (d.role === 'LÄHTÖ') { icon = '⏲️'; roleName = 'STARTTI'; }
-            if (d.role === 'MAALI') { icon = '🏁'; roleName = 'MAALI'; }
+            if (d.role === 'LÄHTÖ') { icon = '⏲️'; roleName = 'STARTTIKELLO'; }
+            if (d.role === 'MAALI') { icon = '🏁'; roleName = 'MAALIKELLO'; }
+            if (d.role === 'LÄHETTÄJÄ') { icon = '📋'; roleName = 'LÄHTÖPAIKKA'; }
             if (d.role === 'VÄLIAIKA') { icon = '⏱️'; roleName = 'VÄLIAIKA'; }
             if (d.role === 'VIDEO') { icon = '📹'; roleName = 'VIDEO'; }
             if (d.role === 'URHEILIJA') { icon = '⛷️'; roleName = 'LASKIJA'; }
