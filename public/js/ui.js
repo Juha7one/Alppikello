@@ -94,20 +94,33 @@ function renderValmentajaView() {
 
     // 3. Results
     const results = currentSession.results || [];
-    const pending = currentSession.pendingResults || [];
-    if (results.length > 0 || pending.length > 0) {
-        resultEl.innerHTML = results.map((r, i) => `
-            <div class="card" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <span style="opacity:0.3;">#${results.length - i}</span>
-                    <span style="font-weight: 800; margin-left: 10px;">${r.name.toUpperCase()}</span>
+    if (results.length > 0) {
+        resultEl.innerHTML = results.map((r, i) => {
+            const splitList = (r.splits || []).map(s => 
+                `<div style="font-size: 11px; opacity: 0.6;">⏱️ ${s.deviceName || 'VÄLIAIKA'}: ${formatDuration(s.duration)}</div>`
+            ).join('');
+
+            return `
+                <div class="card" style="margin-bottom:12px; border-left: 4px solid #fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span style="opacity:0.3; font-size: 12px;">#${results.length - i}</span>
+                            <div style="font-weight: 900; font-size: 20px; margin: 4px 0;">${r.name.toUpperCase()}</div>
+                            <div style="margin-top: 8px;">${splitList}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size: 28px; font-weight: 900; color: var(--accent);">${formatDuration(r.totalTime)}</div>
+                            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
+                                ${r.videoUrl ? `<button class="btn-mini" onclick="window.open('${r.videoUrl}')" style="background: #fff; color: #000;">KATSO 🎬</button>` : ''}
+                                <button class="btn-mini" onclick="shareRun('${r.id}')" style="background: rgba(255,255,255,0.1);">JAA 🔗</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div style="text-align:right;">
-                    <div style="font-size: 24px; font-weight: 900;">${formatDuration(r.totalTime)}</div>
-                    ${r.videoUrl ? `<button class="btn-mini" onclick="window.open('${r.videoUrl}')">VIDEO 🎬</button>` : ''}
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    } else {
+        resultEl.innerHTML = `<p style="text-align:center; opacity:0.3; padding:20px;">Ei tuloksia vielä.</p>`;
     }
 }
 

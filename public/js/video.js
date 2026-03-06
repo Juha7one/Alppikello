@@ -51,11 +51,25 @@ function finalizeVideoSave() {
         size: Math.round(blob.size / 1024)
     });
 
+    // Limit stored clips to 20 to prevent memory bloat
+    if (recordedClips.length > 20) {
+        const removed = recordedClips.pop();
+        if (removed && removed.url) URL.revokeObjectURL(removed.url);
+    }
+
     renderVideoGallery();
     showVideoNotification(`VIDEO TALLESSA: ${runner.name.toUpperCase()} 🎬`);
     uploadVideoToServer(blob, runner);
 
     if (cvStream) startVideoBuffer(cvStream);
+}
+
+function clearVideoGallery() {
+    if (confirm("Tyhjennetäänkö laitteen välimuisti videoista?")) {
+        recordedClips.forEach(r => URL.revokeObjectURL(r.url));
+        recordedClips = [];
+        renderVideoGallery();
+    }
 }
 
 function uploadVideoToServer(blob, runner) {

@@ -15,10 +15,10 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #10b981;">
+    <div id="deployment-splash" style="background: #eab308;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">START-LFIX</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.5.0</div>
+        <h1 class="splash-title">COACH-ULTRA</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.6.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -153,9 +153,9 @@
         </section>
 
         <!-- End Session Button (Coach only) -->
-        <div id="coach-only-end" style="margin-top: 40px; border-top: 2px solid rgba(239, 68, 68, 0.2); padding-top: 40px;">
-            <button class="btn btn-danger" onclick="confirmEndSession()" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); color: var(--danger);">LOPETA HARJOITUS</button>
-            <p style="text-align: center; font-size: 11px; opacity: 0.5; margin-top: 10px;">HUOM: Tämä poistaa kaiken datan ja katkaisee yhteydet.</p>
+        <div id="coach-only-end" style="margin-top: 80px; border-top: 2px solid rgba(239, 68, 68, 0.2); padding-top: 50px; padding-bottom: 50px;">
+            <button class="btn btn-danger" onclick="confirmEndSession()" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); color: var(--danger); width: 100%; height: 70px; font-size: 20px;">LOPETA HARJOITUS</button>
+            <p style="text-align: center; font-size: 11px; opacity: 0.5; margin-top: 15px;">HUOM: Tämä poistaa kaiken datan ja katkaisee yhteydet.</p>
         </div>
     </div>
 
@@ -271,9 +271,10 @@
         </div>
 
         <div class="card" style="text-align: left;">
-            <p
-                style="color: var(--text-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">
-                Tallenteet laitteessa:</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <p style="color: var(--text-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase;">Tallenteet laitteessa:</p>
+                <button class="btn-mini-link" style="font-size: 10px; opacity: 0.5;" onclick="clearVideoGallery()">TYHJENNÄ 🗑️</button>
+            </div>
             <div id="video-gallery" style="display: flex; flex-direction: column; gap: 10px;">
                 <p style="font-size: 14px; opacity: 0.5; text-align: center; padding: 10px;">Ei tallenteita tässä
                     istunnossa.</p>
@@ -307,7 +308,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.5.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.6.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
@@ -319,7 +320,7 @@
     <script src="js/cv.js"></script>
     <script src="js/timing.js"></script>
     <script src="js/ui.js"></script>
-    <script src="js/app.js?v=2.5.0"></script>
+    <script src="js/app.js?v=2.6.0"></script>
 </body>
 
 </html>

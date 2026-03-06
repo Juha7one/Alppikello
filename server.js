@@ -197,14 +197,8 @@ io.on('connection', (socket) => {
             console.log(`[SESSION END] ${sessionId} explicitly ended by admin.`);
             io.to(sessionId).emit('session_ended');
             
-            // Critical: Remove from public view immediately
-            const sessionData = sessions[sessionId];
-            sessionData.ended = true; 
-
-            // Deletion delay to allow final packets to clear
-            setTimeout(() => {
-                delete sessions[sessionId];
-            }, 2000);
+            // Remove from memory immediately to prevent ghosting
+            delete sessions[sessionId];
         }
     });
 
