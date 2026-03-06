@@ -135,9 +135,10 @@ function renderStarterView() {
     if (queue.length > 0) {
         const next = queue[0];
         queueEl.innerHTML = `
-            <div style="background: var(--accent); padding: 40px; border-radius: 24px; text-align: center;">
+            <div onclick="clearQueue()" style="background: var(--accent); padding: 40px; border-radius: 24px; text-align: center; cursor: pointer; border: 2px solid rgba(255,255,255,0.2);">
                 <p style="font-weight:900; opacity:0.8; margin:0 0 10px 0;">SEURAAVA LÄHTIJÄ:</p>
-                <h1 style="font-size: 72px; margin:0;">${next.name.toUpperCase()}</h1>
+                <h1 style="font-size: 72px; margin:0; line-height: 1;">${next.name.toUpperCase()}</h1>
+                <p style="font-size: 11px; margin-top: 15px; opacity: 0.6;">(Paina peruaksesi)</p>
             </div>
         `;
     } else {

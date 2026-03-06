@@ -90,3 +90,8 @@ function addAthleteManually() {
 
     if (input) input.value = '';
 }
+
+function clearQueue() {
+    if (!currentSession) return;
+    socket.emit('clear_queue', { sessionId: currentSession.id });
+}

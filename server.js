@@ -498,13 +498,27 @@ io.on('connection', (socket) => {
         const session = sessions[sessionId];
         if (session) {
             const currentAttendee = session.activeQueue[0];
-            if (currentAttendee && currentAttendee.id === athleteId) {
+            // Toggle off if same athlete, otherwise replace
+            if (currentAttendee && String(currentAttendee.id) === String(athleteId)) {
                 session.activeQueue = [];
+                console.log(`[QUEUE] ${athleteId} removed from queue (toggled off).`);
             } else {
-                const athlete = session.allAthletes.find(a => a.id === athleteId);
-                if (athlete) session.activeQueue = [athlete];
+                const athlete = session.allAthletes.find(a => String(a.id) === String(athleteId));
+                if (athlete) {
+                    session.activeQueue = [athlete];
+                    console.log(`[QUEUE] ${athlete.name} set as next starter.`);
+                }
             }
             io.to(sessionId).emit('device_status_update', { session });
+        }
+    });
+
+    socket.on('clear_queue', (data) => {
+        const { sessionId } = data;
+        if (sessions[sessionId]) {
+            sessions[sessionId].activeQueue = [];
+            io.to(sessionId).emit('device_status_update', { session: sessions[sessionId] });
+            console.log(`[QUEUE] Queue cleared manually.`);
         }
     });
 
