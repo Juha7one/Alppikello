@@ -1,8 +1,12 @@
 // --- Alppikello Timing Actions ---
 
 function addToQueue(athleteId) {
-    if (!currentSession) return;
-    socket.emit('move_to_queue', { sessionId: currentSession.id, athleteId });
+    if (!currentSession) return console.error("[CLIENT] No active session!");
+    console.log("[CLIENT] Emitting move_to_queue for athlete:", athleteId);
+    socket.emit('move_to_queue', { 
+        sessionId: currentSession.id, 
+        athleteId: String(athleteId) 
+    });
 }
 
 function markReady() {

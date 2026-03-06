@@ -496,26 +496,32 @@ io.on('connection', (socket) => {
     socket.on('move_to_queue', (data) => {
         const { sessionId, athleteId } = data;
         const session = sessions[sessionId];
-        if (!session) return;
-        
-        const athlete = session.allAthletes.find(a => String(a.id) === String(athleteId));
-        if (!athlete) {
-            console.log(`[QUEUE ERROR] Athlete ${athleteId} not found in session ${sessionId}`);
+        if (!session) {
+            console.log(`[QUEUE ERROR] Session not found: ${sessionId}`);
             return;
         }
 
-        const currentInQueue = session.activeQueue && session.activeQueue.length > 0 ? session.activeQueue[0] : null;
-
-        if (currentInQueue && String(currentInQueue.id) === String(athlete.id)) {
-            // TOGGLE OFF: Same athlete clicked, empty the queue
-            session.activeQueue = [];
-            console.log(`[QUEUE] Toggled OFF: ${athlete.name} removed from queue.`);
-        } else {
-            // REPLACE: New athlete clicked, set as ONLY one in queue
-            session.activeQueue = [athlete];
-            console.log(`[QUEUE] Set NEXT: ${athlete.name} is now the next starter.`);
+        const aid = String(athleteId);
+        const athlete = session.allAthletes.find(a => String(a.id) === aid);
+        
+        if (!athlete) {
+            console.log(`[QUEUE ERROR] Athlete ${aid} not in session ${sessionId}!`);
+            return;
         }
 
+        const currentInQueue = (session.activeQueue && session.activeQueue.length > 0) ? session.activeQueue[0] : null;
+
+        if (currentInQueue && String(currentInQueue.id) === aid) {
+            // Already there -> REMOVE
+            session.activeQueue = [];
+            console.log(`[QUEUE] Toggled OFF: ${athlete.name} removed.`);
+        } else {
+            // Not there OR different -> SET AS NEXT
+            session.activeQueue = [athlete];
+            console.log(`[QUEUE] Set NEXT: ${athlete.name} is now the single next starter.`);
+        }
+
+        // Broadast the updated session state to everyone
         io.to(sessionId).emit('device_status_update', { session });
     });
 
