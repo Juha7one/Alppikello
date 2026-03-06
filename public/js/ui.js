@@ -146,8 +146,8 @@ function renderStarterView() {
     }
 
     listEl.innerHTML = athletes.map(a => {
-        const isInQueue = queue.some(q => q.id === a.id);
-        const style = isInQueue ? 'background: var(--accent); border-color: var(--accent);' : '';
+        const isInQueue = queue.some(q => String(q.id) === String(a.id));
+        const style = isInQueue ? 'background: var(--accent); border-color: var(--accent); color: #fff;' : '';
         return `
             <button class="btn btn-outline" style="padding:15px; width:100%; margin-bottom:10px; ${style}" onclick="addToQueue('${a.id}')">
                 ${a.name.toUpperCase()}

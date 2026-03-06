@@ -93,5 +93,11 @@ function addAthleteManually() {
 
 function clearQueue() {
     if (!currentSession) return;
+    console.log("[CLIENT] Clearing queue for session:", currentSession.id);
     socket.emit('clear_queue', { sessionId: currentSession.id });
 }
+
+// Global exposure
+window.addToQueue = addToQueue;
+window.clearQueue = clearQueue;
+window.addAthleteManually = addAthleteManually;
