@@ -41,14 +41,15 @@ function updateUI() {
     
     // Attach clock logic to any newly rendered result videos
     if (currentSession && currentSession.results) {
-        currentSession.results.forEach(r => {
-            const vEl = document.getElementById(`res-video-${r.runId}`);
-            const vClock = document.getElementById(`res-clock-${r.runId}`);
+        currentSession.results.forEach((r, i) => {
+            const safeRunId = r.runId || `run-${i}`;
+            const vEl = document.getElementById(`res-video-${safeRunId}`);
+            const vClock = document.getElementById(`res-clock-${safeRunId}`);
             if (vEl && vClock) {
                 const clockVal = vClock.querySelector('.clock-val');
                 vEl.ontimeupdate = () => {
                     vClock.style.opacity = '1';
-                    const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime);
+                    const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime || 0);
                     if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2);
                 };
                 vEl.onpause = () => vClock.style.opacity = '0.5';
@@ -145,20 +146,23 @@ function renderValmentajaView() {
 
             const videoHtml = r.videoUrl ? `
                 <div class="video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative;">
-                    <video id="res-video-${r.runId}" src="${r.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
-                    <div id="res-clock-${r.runId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
-                        <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${r.name.toUpperCase()}</div>
+                    <video id="res-video-${safeRunId}" src="${r.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
+                    <div id="res-clock-${safeRunId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
+                        <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${(r.name || 'LASKIJA').toUpperCase()}</div>
                         <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
                     </div>
                 </div>
             ` : '';
 
+            const startTimeStr = r.startTime ? new Date(r.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+            const safeRunId = r.runId || `run-${i}`;
+
             return `
                 <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff; padding-bottom: 20px;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
                         <div>
-                            <span style="opacity:0.3; font-size: 11px;">#${results.length - i} • ${new Date(r.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            <div style="font-weight: 900; font-size: 22px; margin: 4px 0;">${r.name.toUpperCase()}</div>
+                            <span style="opacity:0.3; font-size: 11px;">#${results.length - i} • ${startTimeStr}</span>
+                            <div style="font-weight: 900; font-size: 22px; margin: 4px 0;">${(r.name || 'TUNTEMATON').toUpperCase()}</div>
                         </div>
                         <div style="text-align:right;">
                             <div style="font-size: 28px; font-weight: 900; color: var(--accent);">${formatDuration(r.totalTime)}</div>
@@ -169,7 +173,7 @@ function renderValmentajaView() {
 
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px;">
                         <div style="display: flex; flex-direction: column; gap: 4px;">${splitList}</div>
-                        <button class="btn-mini" onclick="shareRun('${r.runId}')" style="background: rgba(255,255,255,0.1); padding: 8px 15px;">JAA TULOSKORTTI 🔗</button>
+                        <button class="btn-mini" onclick="shareRun('${safeRunId}')" style="background: rgba(255,255,255,0.1); padding: 8px 15px;">JAA TULOSKORTTI 🔗</button>
                     </div>
                 </div>
             `;
