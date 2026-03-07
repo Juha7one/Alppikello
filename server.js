@@ -296,15 +296,6 @@ io.on('connection', (socket) => {
         socket.emit('session_created', sessions[sessionId]);
     });
 
-    socket.on('end_session', (sessionId) => {
-        if (sessions[sessionId]) {
-            console.log(`[SESSION END] ${sessionId} explicitly ended by admin.`);
-            io.to(sessionId).emit('session_ended');
-            
-            // Remove from memory immediately to prevent ghosting
-            delete sessions[sessionId];
-        }
-    });
 
 
     socket.on('find_nearby_sessions', (data) => {
@@ -662,13 +653,15 @@ io.on('connection', (socket) => {
     });
 
     socket.on('end_session', (data) => {
-        const { sessionId } = data;
-        const session = sessions[sessionId];
-        if (session && session.adminId === socket.id) {
-            console.log(`[SESSION] Coach closed session ${sessionId}`);
+        // Support both string ID or object {sessionId}
+        const sid = (data && typeof data === 'object') ? data.sessionId : data;
+        const session = sessions[sid];
+        
+        if (session) {
+            console.log(`[SESSION] Coach closed session ${sid}`);
             archiveSession(session);
-            io.to(sessionId).emit('session_ended');
-            delete sessions[sessionId];
+            io.to(sid).emit('session_ended');
+            delete sessions[sid];
         }
     });
 
