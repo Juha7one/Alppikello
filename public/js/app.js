@@ -170,14 +170,14 @@ function showOnboardingStep(step) {
         if (manualContainer) manualContainer.style.display = 'none';
         if (manualToggle) manualToggle.style.display = 'block';
 
-        // NEW: If already in a session, offer to continue there
+        // NEW: If already in a session, offer to continue there (Coach can also rejoin)
         const contCont = document.getElementById('continue-session-container');
         if (contCont) {
-            if (currentSession && !isCoach) {
+            if (currentSession) {
                 contCont.style.display = 'block';
                 contCont.innerHTML = `
-                    <button class="btn btn-outline" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; border-color: var(--success); color: var(--success); margin-bottom: 25px;">
-                        JATKA HARJOITUKSESSA:<br>
+                    <button class="btn btn-outline" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; border-color: var(--success); color: var(--success); margin-bottom: 25px; background: rgba(34, 197, 94, 0.05);">
+                        JATKA NYKYISESSÄ:<br>
                         <span style="font-size: 18px; font-weight: 900;">${currentSession.name.toUpperCase()}</span>
                     </button>
                 `;
