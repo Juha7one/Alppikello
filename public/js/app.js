@@ -31,16 +31,22 @@ async function createSession() {
     const timeStr = `${days[now.getDay()]} ${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()} klo ${now.getHours()}`;
     let sessionName = `Treeni ${timeStr}`;
 
+    let initialLocation = null;
     if ("geolocation" in navigator) {
         try {
             const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 3000 }));
+            initialLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
             const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
             const data = await resp.json();
             const place = data.address.suburb || data.address.city || data.address.town;
             if (place) sessionName = `${place} ${timeStr}`;
         } catch (e) { }
     }
-    socket.emit('create_session', { name: sessionName, creatorName: userName });
+    socket.emit('create_session', { 
+        name: sessionName, 
+        creatorName: userName,
+        location: initialLocation 
+    });
 }
 
 function joinSession() {

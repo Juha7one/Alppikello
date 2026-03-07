@@ -270,7 +270,7 @@ io.on('connection', (socket) => {
             pendingResults: [],
             expectedDuration: null,
             forerunnerCount: 0,
-            location: null
+            location: data.location || null
         };
 
         // Automatically add the creator as VALMENTAJA to the devices list
@@ -280,7 +280,7 @@ io.on('connection', (socket) => {
             name: data.creatorName || "Valmentaja",
             lastHeartbeat: Date.now(),
             battery: 100,
-            location: null
+            location: data.location || null
         };
 
         socket.join(sessionId);
