@@ -136,33 +136,61 @@ app.post('/upload', upload.single('video'), (req, res) => {
     console.log(`[UPLOAD] Video for ${runnerName} (Run: ${runId}): ${videoUrl} (S3: ${!!req.file.location})`);
 
     if (sessionId) {
-        const payload = { sessionId, runnerId, runId, runnerName, videoUrl };
-        io.to(sessionId).emit('video_available', payload);
-
+        let finalRunId = runId;
         const session = sessions[sessionId];
+        
         if (session) {
-            // Search in ALL lists using the unique runId
+            // Find the run
             const allLists = [session.results, session.pendingResults, session.onCourse];
-            let found = false;
-            
-            allLists.forEach(list => {
-                const r = list.find(it => it.runId === runId);
-                if (r) {
-                    r.videoUrl = videoUrl;
-                    found = true;
-                    // Update the shareable card store too
-                    if (runCards[runId]) {
-                        runCards[runId].videoUrl = videoUrl;
-                    }
-                }
-            });
+            let runnerEntry = null;
 
-            if (!found && runCards[runId]) {
-                // Edge case: run finished and cleared from active lists but card exists
-                runCards[runId].videoUrl = videoUrl;
+            // 1. Try finding by runId exactly
+            if (runId && runId !== 'N/A') {
+                for (const list of allLists) {
+                    runnerEntry = list.find(it => it.runId === runId);
+                    if (runnerEntry) break;
+                }
             }
 
-            io.to(sessionId).emit('device_status_update', { session });
+            // 2. Fallback: Find by runnerId if runId was missing/invalid
+            if (!runnerEntry && runnerId && runnerId !== 'N/A') {
+                console.log(`[UPLOAD] Falling back to lookup by runnerId: ${runnerId}`);
+                for (const list of allLists) {
+                    // Find latest entry for this runner in this list
+                    const entries = list.filter(it => it.id === runnerId);
+                    if (entries.length > 0) {
+                        // Take the most recent one (assuming latest is better)
+                        runnerEntry = entries[entries.length - 1];
+                        finalRunId = runnerEntry.runId;
+                        break;
+                    }
+                }
+            }
+
+            if (runnerEntry) {
+                console.log(`[UPLOAD] Successfully paired video with ${runnerEntry.name} (Run: ${runnerEntry.runId})`);
+                runnerEntry.videoUrl = videoUrl;
+                
+                // Update shareable card
+                if (runCards[runnerEntry.runId]) {
+                    runCards[runnerEntry.runId].videoUrl = videoUrl;
+                }
+                
+                const payload = { 
+                    sessionId, 
+                    runnerId: runnerEntry.id, 
+                    runId: runnerEntry.runId, 
+                    runnerName: runnerEntry.name, 
+                    videoUrl 
+                };
+                io.to(sessionId).emit('video_available', payload);
+                io.to(sessionId).emit('device_status_update', { session });
+            } else {
+                console.warn(`[UPLOAD WARNING] Could not find run for runner ${runnerName} (RID: ${runnerId}, RunID: ${runId})`);
+                // Still notify clients that a video exists, maybe they can match it
+                const payload = { sessionId, runnerId, runId, runnerName, videoUrl };
+                io.to(sessionId).emit('video_available', payload);
+            }
         }
     }
 

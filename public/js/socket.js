@@ -201,6 +201,7 @@ socket.on('video_available', (payload) => {
         }
 
         // Trigger a UI refresh if we found it
+        refreshStaticViews();
         updateUI();
     }
 });
