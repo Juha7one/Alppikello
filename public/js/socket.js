@@ -166,3 +166,12 @@ socket.on('sync_response', (data) => {
     const syncOffsetEl = document.getElementById('sync-offset');
     if (syncOffsetEl) syncOffsetEl.innerText = `${Math.round(serverTimeOffset)}ms (RTT: ${rtt}ms)`;
 });
+
+socket.on('video_available', (payload) => {
+    console.log("[VIDEO] New video available for:", payload.runnerName);
+    if (typeof showVideoNotification === 'function') {
+        showVideoNotification(`VIDEO VALMIS: ${payload.runnerName.toUpperCase()} 🎬`);
+    } else {
+        console.warn("showVideoNotification not found");
+    }
+});

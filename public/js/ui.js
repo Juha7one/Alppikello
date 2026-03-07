@@ -171,6 +171,9 @@ function renderValmentajaView() {
     const results = currentSession.results || [];
     if (results.length > 0) {
         resultEl.innerHTML = results.map((r, i) => {
+            const safeRunId = r.runId || `run-${i}`;
+            const startTimeStr = r.startTime ? new Date(r.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+            
             const splitList = (r.splits || []).map((s, idx) => 
                 `<div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">
                     <span style="color: var(--accent); font-weight: 800;">⏱️ V${idx + 1}:</span> 
@@ -188,9 +191,6 @@ function renderValmentajaView() {
                     </div>
                 </div>
             ` : '';
-
-            const startTimeStr = r.startTime ? new Date(r.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
-            const safeRunId = r.runId || `run-${i}`;
 
             return `
                 <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff; padding-bottom: 20px;">
