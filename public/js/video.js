@@ -41,9 +41,9 @@ function startVideoBuffer(stream) {
     }
 }
 
-function saveVideoClip() {
+function saveVideoClip(explicitRunner = null) {
     if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-    pendingRunnerMetadata = activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null;
+    pendingRunnerMetadata = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
     if (pendingRunnerMetadata) {
         mediaRecorder.stop();
     }

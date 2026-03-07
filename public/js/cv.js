@@ -140,7 +140,9 @@ function startCVLogic(roleType, video, canvas) {
                             lastTriggerTime = now;
                             hasRecordedForCurrentRunner = true; 
                             showVideoNotification("TALLENNETAAN... 📹");
-                            setTimeout(() => saveVideoClip(), 5000);
+                            // Capture metadata IMMEDIATELY before the delay
+                            const runnerToSave = { ...currentSession.onCourse[0] };
+                            setTimeout(() => saveVideoClip(runnerToSave), 5000);
                             ctx.fillStyle = "rgba(16, 185, 129, 0.6)"; 
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
                         }
@@ -155,7 +157,9 @@ function startCVLogic(roleType, video, canvas) {
                             simulateTrigger(triggerType);
                             if (mediaRecorder && mediaRecorder.state === 'recording') {
                                 showVideoNotification("TALLENNETAAN... 📹");
-                                setTimeout(() => saveVideoClip(), 5000);
+                                // Capture metadata IMMEDIATELY
+                                const runnerToSave = { ...currentSession.onCourse[0] };
+                                setTimeout(() => saveVideoClip(runnerToSave), 5000);
                             }
                             ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
