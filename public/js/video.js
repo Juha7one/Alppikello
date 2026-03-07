@@ -1,5 +1,7 @@
 // --- Alppikello Video Recording & Uploads ---
 
+let pendingRunnerMetadata = null;
+
 function startVideoBuffer(stream) {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') return;
 
@@ -12,36 +14,43 @@ function startVideoBuffer(stream) {
         recordingChunks = [];
 
         mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordingChunks.push(e.data); };
-        mediaRecorder.onstop = () => finalizeVideoSave();
+        mediaRecorder.onstop = () => {
+            const runner = pendingRunnerMetadata;
+            pendingRunnerMetadata = null; // Clear immediately
+            
+            if (runner && recordingChunks.length > 0) {
+                processAndSaveVideo(runner, recordingChunks);
+            }
+            
+            // Always restart buffer if stream is active
+            if (cvStream) {
+                setTimeout(() => startVideoBuffer(cvStream), 100);
+            }
+        };
         mediaRecorder.start(1000);
 
         if (bufferResetTimer) clearTimeout(bufferResetTimer);
         bufferResetTimer = setTimeout(() => {
+            // Buffer reset - just stop, onstop will restart it and skip saving since runner is null
             if (!activeRunnerOnCourse && mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
-                setTimeout(() => startVideoBuffer(stream), 100);
             }
-        }, 20000);
+        }, 30000); // 30s buffer
     } catch (e) {
         console.error("MediaRecorder start failed:", e);
     }
 }
 
-let pendingRunnerMetadata = null;
-
 function saveVideoClip() {
     if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-    pendingRunnerMetadata = activeRunnerOnCourse ? { ...activeRunnerOnCourse } : { name: "Tuntematon" };
-    mediaRecorder.stop();
+    pendingRunnerMetadata = activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null;
+    if (pendingRunnerMetadata) {
+        mediaRecorder.stop();
+    }
 }
 
-function finalizeVideoSave() {
-    if (recordingChunks.length === 0 && !pendingRunnerMetadata) return;
-
-    const runner = pendingRunnerMetadata || { name: "Tuntematon" };
-    pendingRunnerMetadata = null;
-
-    const blob = new Blob(recordingChunks, { type: recordingChunks[0].type });
+function processAndSaveVideo(runner, chunks) {
+    const blob = new Blob(chunks, { type: chunks[0].type });
     const url = URL.createObjectURL(blob);
 
     recordedClips.unshift({
@@ -60,8 +69,6 @@ function finalizeVideoSave() {
     renderVideoGallery();
     showVideoNotification(`VIDEO TALLESSA: ${runner.name.toUpperCase()} 🎬`);
     uploadVideoToServer(blob, runner);
-
-    if (cvStream) startVideoBuffer(cvStream);
 }
 
 function clearVideoGallery() {

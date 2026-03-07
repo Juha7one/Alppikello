@@ -196,8 +196,8 @@ function renderVideoView() {
     const infoEl = document.getElementById('video-node-info');
     if (!infoEl || !currentSession || !currentSession.devices) return;
 
-    // 1. Find Start Location
-    let startLoc = null;
+    // 1. Find Start Location (Fallback to session location if no active starter device)
+    let startLoc = currentSession.location || null;
     for (let id in currentSession.devices) {
         if (currentSession.devices[id].role === 'LÄHTÖ' && currentSession.devices[id].location) {
             startLoc = currentSession.devices[id].location;
@@ -239,6 +239,7 @@ function renderVideoView() {
             <div style="font-size: 10px; opacity: 0.6; margin-top:5px;">${distText}</div>
         `;
     } else {
-        infoEl.innerHTML = `<div style="opacity:0.5; font-size:12px;">ODOTTAA GPS-YHTEYTTÄ...</div>`;
+        const missing = !startLoc ? "LÄHTÖPISTE" : "KAMERAN GPS";
+        infoEl.innerHTML = `<div style="opacity:0.5; font-size:12px;">ODOTTAA: ${missing}...</div>`;
     }
 }
