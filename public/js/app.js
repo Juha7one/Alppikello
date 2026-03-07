@@ -28,7 +28,8 @@ async function createSession() {
 
     const days = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'];
     const now = new Date();
-    const timeStr = `${days[now.getDay()]} ${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()} klo ${now.getHours()}`;
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeStr = `${days[now.getDay()]} ${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()} klo ${now.getHours()}:${minutes}`;
     let sessionName = `Treeni ${timeStr}`;
 
     let initialLocation = null;
