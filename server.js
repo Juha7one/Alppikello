@@ -141,16 +141,25 @@ app.post('/upload', upload.single('video'), (req, res) => {
 
         const session = sessions[sessionId];
         if (session) {
-            // Find by EXACT runId
-            const foundResult = session.results.find(r => r.runId === runId);
-            if (foundResult) {
-                foundResult.videoUrl = videoUrl;
-                if (runCards[foundResult.runId]) runCards[foundResult.runId].videoUrl = videoUrl;
-            }
-            const foundPending = session.pendingResults.find(r => r.id === runnerId);
-            if (foundPending) {
-                foundPending.videoUrl = videoUrl;
-                if (runCards[foundPending.runId]) runCards[foundPending.runId].videoUrl = videoUrl;
+            // Search in ALL lists using the unique runId
+            const allLists = [session.results, session.pendingResults, session.onCourse];
+            let found = false;
+            
+            allLists.forEach(list => {
+                const r = list.find(it => it.runId === runId);
+                if (r) {
+                    r.videoUrl = videoUrl;
+                    found = true;
+                    // Update the shareable card store too
+                    if (runCards[runId]) {
+                        runCards[runId].videoUrl = videoUrl;
+                    }
+                }
+            });
+
+            if (!found && runCards[runId]) {
+                // Edge case: run finished and cleared from active lists but card exists
+                runCards[runId].videoUrl = videoUrl;
             }
 
             io.to(sessionId).emit('device_status_update', { session });

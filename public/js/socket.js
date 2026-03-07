@@ -43,7 +43,8 @@ socket.on('device_status_update', (data) => {
     currentSession = data.session;
     if (currentSession.onCourse && currentSession.onCourse.length > 0) {
         const firstRunner = currentSession.onCourse[0];
-        if (!activeRunnerOnCourse || activeRunnerOnCourse.id !== firstRunner.id) {
+        // CRITICAL: Must use runId, as athlete id remains same across multiple runs
+        if (!activeRunnerOnCourse || activeRunnerOnCourse.runId !== firstRunner.runId) {
             activeRunnerOnCourse = firstRunner;
             hasRecordedForCurrentRunner = false;
         }
