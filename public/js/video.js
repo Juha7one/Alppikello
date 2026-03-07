@@ -86,9 +86,13 @@ function uploadVideoToServer(blob, runner) {
     const safeRole = (currentRole || 'VIDEO').replace(/[ÄÖ]/g, (m) => m === 'Ä' ? 'A' : 'O').replace(/[^a-zA-Z0-9]/g, '_');
     formData.append('video', blob, `${safeRole}_${runner.name}.mp4`);
     formData.append('sessionId', currentSession.id);
-    formData.append('runnerId', runner.id);
-    formData.append('runId', runner.runId);
-    formData.append('runnerName', runner.name);
+    formData.append('runnerId', runner.id || 'N/A');
+    formData.append('runId', runner.runId || 'N/A');
+    formData.append('runnerName', runner.name || 'Tuntematon');
+
+    if (!runner.runId) {
+        console.warn("[VIDEO UPLOAD] Runner runId is missing! Video might not pair correctly.", runner);
+    }
 
     const uploadUrl = (typeof SERVER_URL !== 'undefined' && SERVER_URL) ? `${SERVER_URL}/upload` : '/upload';
 
@@ -110,7 +114,7 @@ function renderVideoGallery() {
     gallery.innerHTML = recordedClips.map((clip) => `
         <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); margin-bottom: 8px;">
             <div>
-                <div style="font-weight: 800; font-size: 14px;">${clip.name.toUpperCase()}</div>
+                <div style="font-weight: 800; font-size: 14px;">${(clip.name || 'TUNTEMATON').toUpperCase()}</div>
                 <div style="font-size: 10px; opacity: 0.5;">${clip.time} • ${clip.size} KB</div>
             </div>
             <div style="display: flex; gap: 8px;">

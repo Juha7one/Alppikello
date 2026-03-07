@@ -79,26 +79,38 @@ function updateUI() {
         }
     });
     
-    // Attach clock logic to any newly rendered result videos
-    if (currentSession && currentSession.results) {
-        currentSession.results.forEach((r, i) => {
-            const safeRunId = r.runId || `run-${i}`;
-            const vEl = document.getElementById(`res-video-${safeRunId}`);
-            const vClock = document.getElementById(`res-clock-${safeRunId}`);
-            if (vEl && vClock) {
-                const clockVal = vClock.querySelector('.clock-val');
-                vEl.ontimeupdate = () => {
-                    vClock.style.opacity = '1';
-                    const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime || 0);
-                    if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2);
-                };
-                vEl.onpause = () => vClock.style.opacity = '0.5';
-                vEl.onplay = () => vClock.style.opacity = '1';
-            }
-        });
+    // 3. Update Clocks for ALL types of result videos (Live, Archive, Shared Card)
+    const prefixes = ['res-video-', 'arc-video-', 'card-video']; // card-video uses direct ID or prefix
+    
+    // Unified clock logic for any video element that should have an overlay
+    document.querySelectorAll('video[id^="res-video-"], video[id^="arc-video-"], video#card-video').forEach(vEl => {
+        const idFull = vEl.id;
+        let overlayId = idFull.replace('video', 'clock');
+        if (idFull === 'card-video') overlayId = 'card-video-overlay';
+        
+        const vClock = document.getElementById(overlayId);
+        if (vEl && vClock) {
+            const clockVal = vClock.querySelector('.clock-val') || document.getElementById('card-video-clock');
+            
+            // Extract runId/runner info if possible to get totalTime
+            // For card-video, it's global 'currentRun', for others we might need to find it
+            let totalTime = 60000; // default 1m
+            if (idFull === 'card-video' && typeof currentRun !== 'undefined') totalTime = currentRun.totalTime;
+            
+            vEl.ontimeupdate = () => {
+                vClock.style.opacity = '1';
+                const displayMs = vEl.currentTime * 1000;
+                if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2);
+            };
+            vEl.onpause = () => vClock.style.opacity = '0.5';
+            vEl.onplay = () => vClock.style.opacity = '1';
+        }
+    });
+    // 4. Update Video View if active
+    if (currentRole === 'VIDEO') {
+        renderVideoView();
+        if (typeof renderVideoGallery === 'function') renderVideoGallery();
     }
-
-    if (currentRole === 'VIDEO') renderVideoView();
 }
 
 /**
@@ -118,6 +130,7 @@ function refreshStaticViews() {
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();
+    if (currentRole === 'VIDEO') renderVideoView();
 }
 
 function renderValmentajaView() {

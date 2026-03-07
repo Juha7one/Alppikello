@@ -153,14 +153,21 @@ function startCVLogic(roleType, video, canvas) {
                         if (roleType === 'väliaika' && onCourseCount > 0) shouldTrigger = true;
 
                         if (shouldTrigger) {
+                            // 1. Capture metadata FIRST, before simulateTrigger moves the runner
+                            let runnerToSave = null;
+                            if (onCourseCount > 0) {
+                                runnerToSave = { ...currentSession.onCourse[0] };
+                            }
+
                             lastTriggerTime = now;
                             simulateTrigger(triggerType);
-                            if (mediaRecorder && mediaRecorder.state === 'recording') {
+
+                            // 2. Start recording if mediaRecorder is active
+                            if (mediaRecorder && mediaRecorder.state === 'recording' && runnerToSave) {
                                 showVideoNotification("TALLENNETAAN... 📹");
-                                // Capture metadata IMMEDIATELY
-                                const runnerToSave = { ...currentSession.onCourse[0] };
                                 setTimeout(() => saveVideoClip(runnerToSave), 5000);
                             }
+
                             ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
                         }
