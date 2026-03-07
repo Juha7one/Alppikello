@@ -17,8 +17,8 @@
     <!-- Deployment Splash Screen (Identification for new pushes) -->
     <div id="deployment-splash" style="background: #fbbf24;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">AUTO-CAM</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.13.0</div>
+        <h1 class="splash-title">RANGE-ALPHA</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.14.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -117,7 +117,10 @@
                 <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.6; font-weight: 700;">KOODI: <span id="session-code" style="color: #fff;">------</span></p>
                 <div id="s3-status-badge" style="display:inline-block; margin-top: 10px; font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3: POIS PÄÄLTÄ</div>
             </div>
-            <div id="coach-role-badge" style="background: var(--accent); padding: 8px 15px; border-radius: 12px; font-size: 12px; font-weight: 900;">VALMENTAJA</div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                <div id="coach-role-badge" style="background: var(--accent); padding: 8px 15px; border-radius: 12px; font-size: 12px; font-weight: 900;">VALMENTAJA</div>
+                <button class="btn btn-mini" onclick="toggleRangefinder()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); margin: 0; padding: 5px 10px;">MITTARI 📏</button>
+            </div>
         </header>
 
         <section id="coach-athlete-management" style="margin-bottom: 40px;">
@@ -235,7 +238,37 @@
         </div>
     </div>
 
-    <!-- Video View -->
+    <!-- Video View ... unchanged ... -->
+    
+    <!-- Rangefinder View -->
+    <div id="view-rangefinder" class="view" style="padding:0; margin:0; position: fixed; inset: 0; background: #000; z-index: 1000;">
+        <video id="rf-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <canvas id="rf-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+        
+        <div style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
+            <div style="background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 10px; opacity: 0.6; font-weight: 900;">ETÄISYYS:</div>
+                <div id="rf-distance" style="font-size: 32px; font-weight: 900; color: #fbbf24;">-- m</div>
+            </div>
+            <button class="btn-mini" onclick="toggleRangefinder()" style="pointer-events: auto; background: #ef4444; margin:0;">SULJE</button>
+        </div>
+
+        <div style="position: absolute; bottom: 40px; left: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button class="btn-mini" onclick="setRFColor('red')" id="btn-rf-red" style="background: #ef4444; border: 2px solid #fff;">PUNAINEN</button>
+                <button class="btn-mini" onclick="setRFColor('blue')" id="btn-rf-blue" style="background: #3b82f6; opacity: 0.5;">SININEN</button>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.8); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn-mini" onclick="adjustRFCalibration(-0.05)" style="font-size: 24px;">-</button>
+                <div style="text-align: center;">
+                    <div style="font-size: 10px; opacity: 0.5;">KALIBROINTI</div>
+                    <div id="rf-calib-val" style="font-weight: 900;">1.00</div>
+                </div>
+                <button class="btn-mini" onclick="adjustRFCalibration(0.05)" style="font-size: 24px;">+</button>
+            </div>
+        </div>
+    </div>
     <div id="view-video" class="view container">
         <div class="card" style="text-align: center;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
@@ -301,7 +334,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.13.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.14.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
@@ -311,9 +344,10 @@
     <script src="js/socket.js"></script>
     <script src="js/video.js"></script>
     <script src="js/cv.js"></script>
-    <script src="js/timing.js?v=2.13.0"></script>
-    <script src="js/ui.js?v=2.13.0"></script>
-    <script src="js/app.js?v=2.13.0"></script>
+    <script src="js/timing.js?v=2.14.0"></script>
+    <script src="js/ui.js?v=2.14.0"></script>
+    <script src="js/rangefinder.js?v=2.14.0"></script>
+    <script src="js/app.js?v=2.14.0"></script>
 </body>
 
 </html>
