@@ -15,10 +15,10 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #10b981;">
+    <div id="deployment-splash" style="background: #fbbf24;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">CAM-CLEANUP</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.12.0</div>
+        <h1 class="splash-title">AUTO-CAM</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.13.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -196,7 +196,6 @@
                 <div id="start-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-            <button id="btn-start-cv" class="btn btn-primary" style="margin:0; font-size: 16px; padding: 20px;" onclick="initTriggerCV('lähtö')">AKTIVOI KENNO</button>
 
             <p id="start-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
         </div>
@@ -214,7 +213,6 @@
                 <div id="maali-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-            <button id="btn-maali-cv" class="btn btn-success" style="margin:0; font-size: 16px; padding: 20px;" onclick="initTriggerCV('maali')">AKTIVOI KENNO</button>
 
             <p id="finish-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
         </div>
@@ -232,7 +230,6 @@
                 <div id="väliaika-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-            <button id="btn-väliaika-cv" class="btn btn-warning" style="margin:0; font-size: 16px; padding: 20px;" onclick="initTriggerCV('väliaika')">AKTIVOI KENNO</button>
 
             <p id="split-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
         </div>
@@ -262,10 +259,6 @@
                     EIKAAPPAUSTA</div>
             </div>
             <p id="video-node-info" style="font-size: 16px; font-weight: 700;">ODOTTAA</p>
-            <div style="display: flex; gap: 10px; margin-top: 24px;">
-                <button id="btn-video-cv" class="btn btn-danger" style="width: 100%;"
-                    onclick="initTriggerCV('video')">AKTIVOI KAMERA</button>
-            </div>
             <p style="font-size: 12px; color: var(--text-secondary); margin-top: 16px;">Tämä laite toimii automaattisena
                 puskuritallentimena.</p>
         </div>
@@ -308,7 +301,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.12.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.13.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
@@ -318,9 +311,9 @@
     <script src="js/socket.js"></script>
     <script src="js/video.js"></script>
     <script src="js/cv.js"></script>
-    <script src="js/timing.js?v=2.12.0"></script>
-    <script src="js/ui.js?v=2.12.0"></script>
-    <script src="js/app.js?v=2.12.0"></script>
+    <script src="js/timing.js?v=2.13.0"></script>
+    <script src="js/ui.js?v=2.13.0"></script>
+    <script src="js/app.js?v=2.13.0"></script>
 </body>
 
 </html>

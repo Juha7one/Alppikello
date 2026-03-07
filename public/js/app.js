@@ -99,13 +99,30 @@ function handleSessionJoin(session, role) {
 
 
     if (role === 'VALMENTAJA') {
-        const sNameEl = document.getElementById('session-name');
+        const sNameEl = document.getElementById('coach-session-name'); // Updated to use correct ID
         if (sNameEl) sNameEl.innerText = session.name;
-        document.getElementById('session-code').innerText = session.id;
+        const codeEl = document.getElementById('session-code');
+        if (codeEl) codeEl.innerText = session.id;
         generateQR(session.id);
     }
 
     startGPSTracking();
+
+    // AUTO-ACTIVATE CAMERA/CV based on role
+    if (typeof stopCV === 'function') stopCV(); 
+    
+    const roleForCV = {
+        'LÄHTÖ': 'lähtö',
+        'MAALI': 'maali',
+        'VÄLIAIKA': 'väliaika',
+        'VIDEO': 'video'
+    }[role];
+
+    if (roleForCV && typeof startCV === 'function') {
+        console.log(`[AUTO-CV] Activating for ${role}`);
+        startCV(roleForCV);
+    }
+
     refreshStaticViews();
     updateUI();
 }

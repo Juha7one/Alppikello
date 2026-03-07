@@ -1,6 +1,39 @@
 // --- Alppikello Computer Vision (Digital Photocell) ---
 
+function stopCV() {
+    if (cvStream) {
+        cvStream.getTracks().forEach(track => track.stop());
+        cvStream = null;
+        console.log("[CV] Stopped stream.");
+    }
+    // Reset overlays across all possible views
+    ['start', 'maali', 'väliaika', 'video'].forEach(prefix => {
+        const status = document.getElementById(`${prefix}-status-overlay`);
+        if (status) {
+            status.innerText = "CV POIS PÄÄLTÄ";
+            status.style.background = "rgba(0,0,0,0.6)";
+        }
+    });
+
+    if (bufferResetTimer) {
+        clearTimeout(bufferResetTimer);
+        bufferResetTimer = null;
+    }
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder = null;
+    }
+}
+
 async function initTriggerCV(roleType) {
+    if (cvStream) {
+        stopCV();
+        return;
+    }
+    await startCV(roleType);
+}
+
+async function startCV(roleType) {
     const isStart = roleType === 'lähtö';
     const isFinish = roleType === 'maali';
     const isSplit = roleType === 'väliaika';
@@ -9,53 +42,28 @@ async function initTriggerCV(roleType) {
     const videoId = isStart ? 'start-video' : (isFinish ? 'maali-video' : (isSplit ? 'väliaika-video' : 'video-video'));
     const canvasId = isStart ? 'start-overlay' : (isFinish ? 'maali-overlay' : (isSplit ? 'väliaika-overlay' : 'video-overlay'));
     const statusId = isStart ? 'start-status-overlay' : (isFinish ? 'maali-status-overlay' : (isSplit ? 'väliaika-status-overlay' : 'video-status-overlay'));
-    const btnId = isStart ? 'btn-start-cv' : (isFinish ? 'btn-maali-cv' : (isSplit ? 'btn-väliaika-cv' : 'btn-video-cv'));
 
     const video = document.getElementById(videoId);
     const canvas = document.getElementById(canvasId);
     const status = document.getElementById(statusId);
-    const btn = document.getElementById(btnId);
 
     if (!video || !canvas) return;
 
-    if (cvStream) {
-        cvStream.getTracks().forEach(track => track.stop());
-        cvStream = null;
-        if (status) {
-            status.innerText = "CV POIS PÄÄLTÄ";
-            status.style.background = "rgba(0,0,0,0.6)";
-        }
-        if (btn) {
-            btn.innerText = isVideo ? "AKTIVOI KAMERA" : "AKTIVOI KENNO";
-            btn.classList.remove('btn-danger');
-            btn.classList.add(isStart ? 'btn-primary' : (isFinish ? 'btn-success' : (isSplit ? 'btn-warning' : 'btn-danger')));
-        }
-        return;
-    }
-
     try {
-        try {
-            cvStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: 640, height: 480 },
-                audio: false
-            });
-        } catch (e) {
-            cvStream = await navigator.mediaDevices.getUserMedia({
-                video: { width: 640, height: 480 },
-                audio: false
-            });
-        }
+        cvStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: 640, height: 480 },
+            audio: false
+        }).catch(() => navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 480 },
+            audio: false
+        }));
 
         video.srcObject = cvStream;
         video.play().catch(e => console.warn("Video play failed:", e));
+        
         if (status) {
             status.innerText = "CV AKTIIVINEN";
             status.style.background = "var(--success)";
-        }
-        if (btn) {
-            btn.innerText = "SULJE KAMERA";
-            btn.classList.remove('btn-primary', 'btn-success', 'btn-warning');
-            btn.classList.add('btn-danger');
         }
 
         startVideoBuffer(cvStream);
@@ -65,6 +73,9 @@ async function initTriggerCV(roleType) {
         alert("Kameran avaaminen epäonnistui. Varmista luvat.");
     }
 }
+
+window.stopCV = stopCV;
+window.startCV = startCV;
 
 function startCVLogic(roleType, video, canvas) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
