@@ -333,6 +333,115 @@ async function loadRunCard(runId) {
     }
 }
 
+async function loadArchives() {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-onboarding').classList.remove('active');
+    document.getElementById('view-archive').classList.add('active');
+
+    const listEl = document.getElementById('archive-list');
+    listEl.innerHTML = '<p style="opacity:0.4; text-align:center; padding:40px;">Ladataan arkistoa...</p>';
+
+    try {
+        const baseUrl = SERVER_URL || window.location.origin;
+        const resp = await fetch(`${baseUrl}/api/archives`);
+        const archives = await resp.json();
+
+        if (archives.length === 0) {
+            listEl.innerHTML = '<p style="opacity:0.4; text-align:center; padding:40px;">Ei vielä arkistoituja harjoituksia.</p>';
+            return;
+        }
+
+        listEl.innerHTML = archives.map(a => `
+            <div class="card" onclick="openArchive('${a.filename}')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-weight:900; font-size:18px;">${a.name.toUpperCase()}</div>
+                    <div style="font-size:11px; opacity:0.5; font-weight:700;">${new Date(a.date).toLocaleDateString()} • ${a.athleteCount} SUORITUSTA</div>
+                </div>
+                <div style="color:var(--accent); font-weight:900;">KATSO →</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        listEl.innerHTML = '<p style="color:var(--danger); text-align:center;">Virhe ladattaessa arkistoa.</p>';
+    }
+}
+
+async function openArchive(filename) {
+    const listEl = document.getElementById('archive-list');
+    const resultsEl = document.getElementById('archive-results');
+    const resultsList = document.getElementById('archive-results-list');
+    const titleEl = document.getElementById('archive-session-title');
+
+    try {
+        const baseUrl = SERVER_URL || window.location.origin;
+        const resp = await fetch(`${baseUrl}/api/archives/${filename}`);
+        const session = await resp.json();
+
+        titleEl.innerText = session.name.toUpperCase();
+        listEl.style.display = 'none';
+        resultsEl.style.display = 'block';
+
+        if (session.results.length === 0) {
+            resultsList.innerHTML = '<p style="opacity:0.4; text-align:center;">Ei tuloksia tässä harjoituksessa.</p>';
+            return;
+        }
+
+        resultsList.innerHTML = session.results.map((r, i) => {
+            const splitList = (r.splits || []).map((s, idx) => 
+                `<div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">
+                    <span style="color: var(--accent); font-weight: 800;">⏱️ V${idx + 1}:</span> 
+                    <span style="font-weight: 700;">${formatDuration(s.duration)} s</span> 
+                </div>`
+            ).join('');
+
+            const videoHtml = r.videoUrl ? `
+                <div class="video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative;">
+                    <video id="arc-video-${r.runId}" src="${r.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
+                    <div id="arc-clock-${r.runId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
+                        <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${r.name.toUpperCase()}</div>
+                        <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
+                    </div>
+                </div>
+            ` : '';
+
+            return `
+                <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
+                        <div>
+                            <span style="opacity:0.3; font-size: 11px;">#${session.results.length - i}</span>
+                            <div style="font-weight: 900; font-size: 22px; margin: 4px 0;">${r.name.toUpperCase()}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size: 28px; font-weight: 900; color: var(--accent);">${formatDuration(r.totalTime)}</div>
+                        </div>
+                    </div>
+                    ${videoHtml}
+                    <div style="margin-top: 10px;">${splitList}</div>
+                    <button class="btn-mini" onclick="shareRun('${r.runId}')" style="margin-top: 15px; width: 100%; background: rgba(255,255,255,0.05);">JAA TULOSKORTTI 🔗</button>
+                </div>
+            `;
+        }).join('');
+
+        // Attach clock logic to archive videos
+        session.results.forEach(r => {
+            const vEl = document.getElementById(`arc-video-${r.runId}`);
+            const vClock = document.getElementById(`arc-clock-${r.runId}`);
+            if (vEl && vClock) {
+                const clockVal = vClock.querySelector('.clock-val');
+                vEl.ontimeupdate = () => {
+                    vClock.style.opacity = '1';
+                    const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime);
+                    if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2);
+                };
+                vEl.onpause = () => vClock.style.opacity = '0.5';
+                vEl.onplay = () => vClock.style.opacity = '1';
+            }
+        });
+
+    } catch (e) {
+        alert("Virhe avattaessa arkistoa.");
+    }
+}
+
 function generateQR(sid) {
     const canvas = document.getElementById('session-qr-large');
     if (!canvas || typeof QRCode === 'undefined') return;

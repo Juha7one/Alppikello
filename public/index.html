@@ -15,10 +15,10 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #22d3ee;">
+    <div id="deployment-splash" style="background: #6366f1;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">VIDEO-SYNC</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.22.0</div>
+        <h1 class="splash-title">ARCHIVE-CORE</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.23.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -77,8 +77,9 @@
             
             <div id="coach-only-create" style="display:none; margin-bottom: 40px;">
                 <button class="btn btn-primary" onclick="createSession()" style="width: 100%; height: 80px; font-size: 20px; margin-bottom: 15px;">LUO UUSI HARJOITUS</button>
-                <button class="btn btn-outline" onclick="toggleRangefinder()" style="width: 100%; height: 80px; font-size: 20px; border-color: var(--accent); color: var(--accent);">ETÄISYYSMITTARI 📏</button>
-                <p style="font-size: 12px; opacity: 0.5; margin: 25px 0 15px 0; text-align: center;">TAI LIITY OLEMASSA OLEVAAN:</p>
+                <button class="btn btn-outline" onclick="toggleRangefinder()" style="width: 100%; height: 80px; font-size: 20px; border-color: var(--accent); color: var(--accent); margin-bottom: 20px;">ETÄISYYSMITTARI 📏</button>
+                <button class="btn btn-outline" onclick="loadArchives()" style="width: 100%; height: 80px; font-size: 20px; margin-bottom: 20px; opacity: 0.6;">HARKKA-ARKISTO 📁</button>
+                <p style="font-size: 12px; opacity: 0.5; margin: 15px 0 15px 0; text-align: center;">TAI LIITY OLEMASSA OLEVAAN:</p>
             </div>
 
             <div id="nearby-sessions-container" style="display:none; margin-bottom: 30px;">
@@ -344,6 +345,22 @@
         </div>
     </div>
 
+    <!-- Archive View -->
+    <div id="view-archive" class="view container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1 style="font-weight: 900; letter-spacing: -1px; margin: 0;">ARKISTO 📁</h1>
+            <button class="btn-mini" onclick="location.reload()" style="background: rgba(255,255,255,0.1);">SULJE</button>
+        </header>
+        <div id="archive-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <p style="opacity:0.4; text-align:center; padding:40px;">Ladataan arkistoa...</p>
+        </div>
+        <div id="archive-results" style="display:none; margin-top: 30px; border-top: 2px solid rgba(255,255,255,0.05); padding-top: 30px;">
+            <button class="btn-mini-link" onclick="document.getElementById('archive-results').style.display='none'; document.getElementById('archive-list').style.display='flex';" style="margin-bottom: 20px;">← TAKAISIN LISTAAN</button>
+            <h2 id="archive-session-title" style="margin-bottom: 20px; font-weight: 900;">SESSION NIMI</h2>
+            <div id="archive-results-list" class="results-container"></div>
+        </div>
+    </div>
+    
     <!-- Footer Status & Role Change -->
     <div class="status-bar">
         <button id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()" style="display:none;">VAIHDA
@@ -360,7 +377,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.22.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.23.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
@@ -370,10 +387,10 @@
     <script src="js/socket.js"></script>
     <script src="js/video.js"></script>
     <script src="js/cv.js"></script>
-    <script src="js/timing.js?v=2.22.0"></script>
-    <script src="js/ui.js?v=2.22.0"></script>
-    <script src="js/rangefinder.js?v=2.22.0"></script>
-    <script src="js/app.js?v=2.22.0"></script>
+    <script src="js/timing.js?v=2.23.0"></script>
+    <script src="js/ui.js?v=2.23.0"></script>
+    <script src="js/rangefinder.js?v=2.23.0"></script>
+    <script src="js/app.js?v=2.23.0"></script>
 </body>
 
 </html>

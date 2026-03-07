@@ -66,6 +66,25 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
+// Archive directory
+const archiveDir = path.join(__dirname, 'archives');
+if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir);
+
+function archiveSession(session) {
+    if (!session || !session.results || session.results.length === 0) return;
+    const filename = `session_${session.id}_${Date.now()}.json`;
+    const filePath = path.join(archiveDir, filename);
+    try {
+        fs.writeFileSync(filePath, JSON.stringify({
+            ...session,
+            archivedAt: Date.now()
+        }, null, 2));
+        console.log(`[ARCHIVE] Saved session ${session.id} to ${filename}`);
+    } catch (err) {
+        console.error(`[ARCHIVE ERROR] Failed to save session ${session.id}:`, err);
+    }
+}
+
 // Store for sessions and devices
 const sessions = {};
 // Store for shareable Run Cards (in-memory for now)
@@ -145,6 +164,31 @@ app.get('/api/run/:runId', (req, res) => {
     const run = runCards[req.params.runId];
     if (!run) return res.status(404).json({ error: 'Not found' });
     res.json(run);
+});
+
+app.get('/api/archives', (req, res) => {
+    try {
+        const files = fs.readdirSync(archiveDir);
+        const archives = files.filter(f => f.endsWith('.json')).map(f => {
+            const data = JSON.parse(fs.readFileSync(path.join(archiveDir, f)));
+            return {
+                id: data.id,
+                name: data.name,
+                date: data.archivedAt || Date.now(),
+                athleteCount: data.results.length,
+                filename: f
+            };
+        }).sort((a, b) => b.date - a.date);
+        res.json(archives);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to list archives" });
+    }
+});
+
+app.get('/api/archives/:filename', (req, res) => {
+    const filePath = path.join(archiveDir, req.params.filename);
+    if (!fs.existsSync(filePath)) return res.status(404).send("Archive not found");
+    res.sendFile(filePath);
 });
 
 app.get(['/run/:runId', '/public/run/:runId'], (req, res) => {
@@ -605,6 +649,17 @@ io.on('connection', (socket) => {
                 if (location) session.location = location;
             }
             io.to(sessionId).emit('device_status_update', { session });
+        }
+    });
+
+    socket.on('end_session', (data) => {
+        const { sessionId } = data;
+        const session = sessions[sessionId];
+        if (session && session.adminId === socket.id) {
+            console.log(`[SESSION] Coach closed session ${sessionId}`);
+            archiveSession(session);
+            io.to(sessionId).emit('session_ended');
+            delete sessions[sessionId];
         }
     });
 
