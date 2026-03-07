@@ -10,7 +10,8 @@ function showPremiumModal(config) {
 
     if (!overlay || !titleEl) return;
 
-    titleEl.innerText = config.title || 'HUOMIO';
+    titleEl.innerText = config.title || '';
+    titleEl.style.display = config.title ? 'block' : 'none';
     textEl.innerText = config.text || '';
     iconEl.innerText = config.icon || '⚠️';
     
