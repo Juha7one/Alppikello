@@ -15,10 +15,10 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #4f46e5;">
+    <div id="deployment-splash" style="background: #e11d48;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">SESSION-EXIT</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.31.0</div>
+        <h1 class="splash-title">MODAL-EXIT</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.32.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -380,7 +380,20 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.31.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.32.0 | © 2026</p>
+    </div>
+
+    <!-- Premium Modal Overlay -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="premium-modal">
+            <span id="modal-icon" class="modal-icon">⚠️</span>
+            <h2 id="modal-title" class="modal-title">HUOMIO</h2>
+            <p id="modal-text" class="modal-text"></p>
+            <div class="modal-footer">
+                <button id="modal-confirm" class="btn btn-danger" style="margin-top: 0; padding: 20px;">VAHVISTA</button>
+                <button id="modal-cancel" class="btn btn-outline" style="margin-bottom: 0;">PERUUTA</button>
+            </div>
+        </div>
     </div>
 
     <!-- Core App Logic -->
@@ -390,10 +403,10 @@
     <script src="js/socket.js"></script>
     <script src="js/video.js"></script>
     <script src="js/cv.js"></script>
-    <script src="js/timing.js?v=2.31.0"></script>
-    <script src="js/ui.js?v=2.31.0"></script>
-    <script src="js/rangefinder.js?v=2.31.0"></script>
-    <script src="js/app.js?v=2.31.0"></script>
+    <script src="js/timing.js?v=2.32.0"></script>
+    <script src="js/ui.js?v=2.32.0"></script>
+    <script src="js/rangefinder.js?v=2.32.0"></script>
+    <script src="js/app.js?v=2.32.0"></script>
 </body>
 
 </html>

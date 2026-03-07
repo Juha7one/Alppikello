@@ -1,5 +1,39 @@
 // --- Alppikello UI Components & Rendering ---
 
+function showPremiumModal(config) {
+    const overlay = document.getElementById('modal-overlay');
+    const titleEl = document.getElementById('modal-title');
+    const textEl = document.getElementById('modal-text');
+    const iconEl = document.getElementById('modal-icon');
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+
+    if (!overlay || !titleEl) return;
+
+    titleEl.innerText = config.title || 'HUOMIO';
+    textEl.innerText = config.text || '';
+    iconEl.innerText = config.icon || '⚠️';
+    
+    confirmBtn.innerText = config.confirmText || 'VAHVISTA';
+    cancelBtn.innerText = config.cancelText || 'PERUUTA';
+
+    overlay.classList.add('active');
+
+    const close = () => {
+        overlay.classList.remove('active');
+    };
+
+    confirmBtn.onclick = () => {
+        close();
+        if (config.onConfirm) config.onConfirm();
+    };
+
+    cancelBtn.onclick = () => {
+        close();
+        if (config.onCancel) config.onCancel();
+    };
+}
+
 function updateUI() {
     if (!currentSession) return;
     

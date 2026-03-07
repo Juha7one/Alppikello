@@ -414,3 +414,67 @@ input:focus {
     border-width: 3px;
     width: 100%;
 }
+/* Premium Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.premium-modal {
+    background: var(--card-bg);
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 24px;
+    text-align: center;
+    transform: translateY(40px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay.active .premium-modal {
+    transform: translateY(0);
+}
+
+.modal-icon {
+    font-size: 56px;
+    margin-bottom: 24px;
+    display: block;
+}
+
+.modal-title {
+    font-size: 28px;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+}
+
+.modal-text {
+    font-size: 16px;
+    opacity: 0.6;
+    margin-bottom: 32px;
+    line-height: 1.6;
+}
+
+.modal-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}

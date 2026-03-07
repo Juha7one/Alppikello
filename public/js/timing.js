@@ -62,9 +62,17 @@ function manualFinish(runnerId) {
 
 function confirmEndSession() {
     if (!currentSession) return;
-    if (confirm(`LOPETETAANKO HARJOITUS? \n\nKaikkien laitteiden yhteys katkaistaan ja tulokset arkistoidaan JSON-tiedostoon.`)) {
-        socket.emit('end_session', currentSession.id);
-    }
+    
+    showPremiumModal({
+        title: 'LOPETETAANKO HARJOITUS?',
+        text: 'Kaikkien laitteiden yhteys katkaistaan ja tulokset arkistoidaan JSON-tiedostoon.',
+        icon: '🏁',
+        confirmText: 'KYLLÄ, LOPETA NYT',
+        cancelText: 'PYSY HARJOITUKSESSA',
+        onConfirm: () => {
+            socket.emit('end_session', currentSession.id);
+        }
+    });
 }
 
 function selectExistingName(name) {
