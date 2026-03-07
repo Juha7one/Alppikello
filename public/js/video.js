@@ -16,10 +16,13 @@ function startVideoBuffer(stream) {
         mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordingChunks.push(e.data); };
         mediaRecorder.onstop = () => {
             const runner = pendingRunnerMetadata;
+            console.log(`[VIDEO] Recorder stopped. Metadata for: ${runner ? runner.name : 'NULL'}, Chunks: ${recordingChunks.length}`);
             pendingRunnerMetadata = null; // Clear immediately
             
             if (runner && recordingChunks.length > 0) {
                 processAndSaveVideo(runner, recordingChunks);
+            } else {
+                console.warn("[VIDEO] Skip save: missing runner or chunks", { hasRunner: !!runner, chunkCount: recordingChunks.length });
             }
             
             // Always restart buffer if stream is active
@@ -42,8 +45,20 @@ function startVideoBuffer(stream) {
 }
 
 function saveVideoClip(explicitRunner = null) {
-    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        console.warn("[VIDEO] saveVideoClip called but recorder NOT active!");
+        return;
+    }
+    
+    // Crucial: Clear buffer reset timer so it doesn't interrupt this clip
+    if (bufferResetTimer) {
+        clearTimeout(bufferResetTimer);
+        bufferResetTimer = null;
+    }
+
     pendingRunnerMetadata = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
+    console.log("[VIDEO] Saving clip for:", pendingRunnerMetadata ? pendingRunnerMetadata.name : 'NONE');
+    
     if (pendingRunnerMetadata) {
         mediaRecorder.stop();
     }

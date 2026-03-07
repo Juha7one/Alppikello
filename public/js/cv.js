@@ -163,10 +163,14 @@ function startCVLogic(roleType, video, canvas) {
                         if (roleType === 'väliaika' && onCourseCount > 0) shouldTrigger = true;
 
                         if (shouldTrigger) {
-                            // 1. Capture metadata FIRST, before simulateTrigger moves the runner
+                            // 1. Capture metadata FIRST based on role
                             let runnerToSave = null;
-                            if (onCourseCount > 0) {
+                            if (roleType === 'lähtö') {
+                                runnerToSave = { ...currentSession.activeQueue[0] };
+                                console.log("[CV] Triggered START for:", runnerToSave.name);
+                            } else {
                                 runnerToSave = { ...currentSession.onCourse[0] };
+                                console.log(`[CV] Triggered ${roleType.toUpperCase()} for:`, runnerToSave.name);
                             }
 
                             lastTriggerTime = now;
@@ -174,8 +178,9 @@ function startCVLogic(roleType, video, canvas) {
 
                             // 2. Start recording if mediaRecorder is active
                             if (mediaRecorder && mediaRecorder.state === 'recording' && runnerToSave) {
-                                showVideoNotification("TALLENNETAAN... 📹");
-                                setTimeout(() => saveVideoClip(runnerToSave), 5000);
+                                showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()} 📹`);
+                                // Start/Maali/Väliaika capture immediately
+                                saveVideoClip(runnerToSave);
                             }
 
                             ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
