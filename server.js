@@ -249,7 +249,8 @@ setInterval(() => {
             ...Object.values(session.devices).map(d => d.lastHeartbeat || 0)
         );
         if (now - lastActivity > MAX_IDLE) {
-            console.log(`[HOUSEKEEPING] Removing idle session: ${sid}`);
+            console.log(`[HOUSEKEEPING] Purging idle session: ${sid}`);
+            archiveSession(session); // Auto-archive before deleting if there are results
             delete sessions[sid];
         }
     }
