@@ -16,7 +16,12 @@ function showPremiumModal(config) {
     iconEl.innerText = config.icon || '⚠️';
     
     confirmBtn.innerText = config.confirmText || 'VAHVISTA';
-    cancelBtn.innerText = config.cancelText || 'PERUUTA';
+    if (config.cancelText === '') {
+        cancelBtn.style.display = 'none';
+    } else {
+        cancelBtn.style.display = 'block';
+        cancelBtn.innerText = config.cancelText || 'PERUUTA';
+    }
 
     overlay.classList.add('active');
 

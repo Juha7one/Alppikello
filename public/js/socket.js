@@ -57,8 +57,16 @@ socket.on('device_status_update', (data) => {
 });
 
 socket.on('session_ended', () => {
-    alert('Harjoitus on lopetettu valmentajan toimesta.');
-    location.reload();
+    showPremiumModal({
+        title: 'HARJOITUS LOPETETTU',
+        text: 'Valmentaja on lopettanut harjoituksen. Kaikki suoritukset on arkistoitu.',
+        icon: '🏁',
+        confirmText: 'SELVÄ',
+        cancelText: '',
+        onConfirm: () => {
+            location.reload();
+        }
+    });
 });
 
 socket.on('timing_update', (data) => {
