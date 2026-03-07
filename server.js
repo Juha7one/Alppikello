@@ -653,15 +653,16 @@ io.on('connection', (socket) => {
     });
 
     socket.on('end_session', (data) => {
-        // Support both string ID or object {sessionId}
         const sid = (data && typeof data === 'object') ? data.sessionId : data;
         const session = sessions[sid];
         
-        if (session) {
+        if (session && session.adminId === socket.id) {
             console.log(`[SESSION] Coach closed session ${sid}`);
             archiveSession(session);
             io.to(sid).emit('session_ended');
             delete sessions[sid];
+        } else if (session) {
+            console.warn(`[SECURITY] Unauthorized end_session attempt for ${sid} by ${socket.id}`);
         }
     });
 

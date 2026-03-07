@@ -61,14 +61,8 @@ function manualFinish(runnerId) {
 }
 
 function confirmEndSession() {
-    if (endSessionStep === 0) {
-        if (confirm('Lopetetaanko harjoitus?')) {
-            endSessionStep = 1;
-            const btn = document.querySelector('#coach-only-end .btn-danger');
-            if (btn) btn.innerText = "VAHVISTA LOPETUS!";
-            setTimeout(() => { endSessionStep = 0; if (btn) btn.innerText = "LOPETA HARJOITUS"; }, 5000);
-        }
-    } else {
+    if (!currentSession) return;
+    if (confirm(`LOPETETAANKO HARJOITUS? \n\nKaikkien laitteiden yhteys katkaistaan ja tulokset arkistoidaan JSON-tiedostoon.`)) {
         socket.emit('end_session', currentSession.id);
     }
 }
