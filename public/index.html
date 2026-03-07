@@ -15,10 +15,10 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #06b6d4;">
+    <div id="deployment-splash" style="background: #f59e0b;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">CARD-KING</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.18.0</div>
+        <h1 class="splash-title">BRIDGE-MODE</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.19.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -306,12 +306,33 @@
         </div>
     </div>
 
-    <!-- Katsomo View -->
-    <div id="view-katsomo" class="view container">
-        <div class="card">
-            <h2>LIVE TULOKSET</h2>
-            <div id="viewer-results" style="margin-top: 24px;">
-                <p style="color: var(--text-secondary);">Harjoitus ei ole vielä alkanut.</p>
+    <!-- Katsomo View ... -->
+    
+    <!-- View: Individual Run Card (Shared Result) -->
+    <div id="view-run-card" class="view container" style="max-width: 500px; padding: 0;">
+        <div id="run-card-loading" style="text-align: center; padding: 50px; opacity: 0.5;">Ladataan suoritusta...</div>
+        <div id="run-card-content" style="display: none;">
+            <div class="card" style="padding: 0; overflow: hidden; border-radius: 24px;">
+                <div id="card-video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; display: none;">
+                    <video id="card-video" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
+                </div>
+                <div style="padding: 24px;">
+                    <div id="card-session-badge" style="background: var(--success); color: #000; font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-bottom: 8px;">HARJOITUS</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                        <div>
+                            <h2 id="card-runner-name" style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase;">LASKIJA</h2>
+                            <p id="card-run-date" style="margin: 4px 0; color: rgba(255,255,255,0.4); font-size: 13px; font-weight: 700;">6. MAALISKUUTA 2026</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="display: block; font-size: 10px; font-weight: 900; color: var(--accent); text-transform: uppercase;">LOPPUAIKA</span>
+                            <div id="card-total-time" style="font-size: 36px; font-weight: 900; font-family: monospace;">--.--</div>
+                        </div>
+                    </div>
+                    
+                    <div id="card-splits" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-bottom: 25px;"></div>
+
+                    <button class="btn btn-outline" onclick="location.href='/'" style="width: 100%;">ALPPIKELLO PÄÄSIVU</button>
+                </div>
             </div>
         </div>
     </div>
@@ -332,7 +353,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.18.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.19.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
@@ -342,10 +363,10 @@
     <script src="js/socket.js"></script>
     <script src="js/video.js"></script>
     <script src="js/cv.js"></script>
-    <script src="js/timing.js?v=2.18.0"></script>
-    <script src="js/ui.js?v=2.18.0"></script>
-    <script src="js/rangefinder.js?v=2.18.0"></script>
-    <script src="js/app.js?v=2.18.0"></script>
+    <script src="js/timing.js?v=2.19.0"></script>
+    <script src="js/ui.js?v=2.19.0"></script>
+    <script src="js/rangefinder.js?v=2.19.0"></script>
+    <script src="js/app.js?v=2.19.0"></script>
 </body>
 
 </html>

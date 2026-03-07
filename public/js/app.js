@@ -226,9 +226,10 @@ function startTimeSync() {
 
 function shareRun(runId) {
     if (!runId || runId === 'undefined') return alert("Tallenne ei ole vielä valmis.");
-    const url = window.location.origin + '/run/' + runId;
+    // Use query parameter so static host doesn't 404/500
+    const url = window.location.origin + window.location.pathname + '?run=' + runId;
     if (navigator.share) {
-        navigator.share({ title: 'Alppikello Run', url: url });
+        navigator.share({ title: 'Alppikello - Tulokortti', url: url });
     } else {
         copyToClipboard(url);
     }
@@ -236,10 +237,78 @@ function shareRun(runId) {
 
 function checkDeepLink() {
     const params = new URLSearchParams(window.location.search);
+    
+    // 1. Session join
     const sid = params.get('s');
     if (sid) {
         document.getElementById('input-session-id').value = sid.toUpperCase();
         showOnboardingStep('name');
+    }
+
+    // 2. Individual Run Card view
+    const runId = params.get('run');
+    if (runId) {
+        loadRunCard(runId);
+    }
+}
+
+async function loadRunCard(runId) {
+    // Show view
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-onboarding').classList.remove('active');
+    document.getElementById('view-run-card').classList.add('active');
+    
+    const loading = document.getElementById('run-card-loading');
+    const content = document.getElementById('run-card-content');
+    
+    try {
+        // Fetch from Render backend
+        const baseUrl = SERVER_URL || window.location.origin;
+        const resp = await fetch(`${baseUrl}/api/run/${runId}`);
+        if (!resp.ok) throw new Error("Suoritusta ei löytynyt");
+        
+        const data = await resp.json();
+        
+        // Populate UI
+        document.getElementById('card-runner-name').innerText = data.name.toUpperCase();
+        document.getElementById('card-session-badge').innerText = (data.sessionName || "Harkat").toUpperCase();
+        
+        const date = new Date(data.timestamp);
+        document.getElementById('card-run-date').innerText = date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+        
+        const duration = (data.totalTime / 1000).toFixed(2);
+        document.getElementById('card-total-time').innerText = duration + 's';
+        
+        // Splits
+        const splitsEl = document.getElementById('card-splits');
+        if (data.splits && data.splits.length > 0) {
+            splitsEl.innerHTML = data.splits.map((s, idx) => `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="opacity: 0.5; font-weight: 700;">VÄLIAIKA ${idx+1}</span>
+                    <span style="font-weight: 900;">${(s.duration / 1000).toFixed(2)}s</span>
+                </div>
+            `).join('');
+            splitsEl.style.display = 'block';
+        } else {
+            splitsEl.style.display = 'none';
+        }
+
+        // Video
+        const vCont = document.getElementById('card-video-container');
+        const vEl = document.getElementById('card-video');
+        if (data.videoUrl) {
+            vEl.src = data.videoUrl;
+            vCont.style.display = 'block';
+        } else {
+            vCont.style.display = 'none';
+        }
+
+        loading.style.display = 'none';
+        content.style.display = 'block';
+
+    } catch (e) {
+        loading.innerHTML = `<div style="color:var(--danger); font-weight:900;">VIRHE: ${e.message}</div>
+        <button class="btn btn-mini" onclick="location.href='/'" style="margin-top:20px;">TAKAISIN</button>`;
     }
 }
 

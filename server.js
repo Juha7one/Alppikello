@@ -49,6 +49,14 @@ const upload = multer({ storage: storage });
 
 const app = express();
 const server = http.createServer(app);
+
+// Enable CORS for frontend API access
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -126,7 +134,14 @@ app.post('/upload', upload.single('video'), (req, res) => {
     res.json({ success: true, url: videoUrl });
 });
 
+app.get('/api/run/:runId', (req, res) => {
+    const run = runCards[req.params.runId];
+    if (!run) return res.status(404).json({ error: 'Not found' });
+    res.json(run);
+});
+
 app.get(['/run/:runId', '/public/run/:runId'], (req, res) => {
+    // Keep this as fallback for direct hits to backend
     try {
         const runId = req.params.runId;
         const run = runCards[runId];
