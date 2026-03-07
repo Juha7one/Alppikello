@@ -106,6 +106,7 @@ function handleSessionJoin(session, role) {
     }
 
     startGPSTracking();
+    refreshStaticViews();
     updateUI();
 }
 

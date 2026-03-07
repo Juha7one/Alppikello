@@ -74,6 +74,8 @@ function renderValmentajaView() {
     const endBtnContainer = document.getElementById('coach-only-end');
     if (endBtnContainer) endBtnContainer.style.display = isCoach ? 'block' : 'none';
 
+    const athletes = currentSession.allAthletes || [];
+
     // 1. Athlete List
     if (coachListEl) {
         coachListEl.innerHTML = athletes.length ? athletes.map(a => `
