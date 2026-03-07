@@ -136,12 +136,22 @@ function startCVLogic(roleType, video, canvas) {
                     const onCourseCount = (currentSession.onCourse || []).length;
 
                     if (roleType === 'video') {
-                        if (onCourseCount > 0 && !hasRecordedForCurrentRunner) {
+                        // Check if someone is on course OR just finished (within 10s)
+                        let runnerToSave = null;
+                        if (onCourseCount > 0) {
+                            runnerToSave = { ...currentSession.onCourse[0] };
+                        } else if ((currentSession.results || []).length > 0) {
+                            const lastResult = currentSession.results[0];
+                            const timeSinceFinish = now - (lastResult.finishTime || 0);
+                            if (timeSinceFinish < 10000) { // 10s grace period for video role
+                                runnerToSave = { ...lastResult };
+                            }
+                        }
+
+                        if (runnerToSave && !hasRecordedForCurrentRunner) {
                             lastTriggerTime = now;
                             hasRecordedForCurrentRunner = true; 
-                            showVideoNotification("TALLENNETAAN... 📹");
-                            // Capture metadata IMMEDIATELY before the delay
-                            const runnerToSave = { ...currentSession.onCourse[0] };
+                            showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()} 📹`);
                             setTimeout(() => saveVideoClip(runnerToSave), 5000);
                             ctx.fillStyle = "rgba(16, 185, 129, 0.6)"; 
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
