@@ -176,10 +176,31 @@ socket.on('sync_response', (data) => {
 });
 
 socket.on('video_available', (payload) => {
-    console.log("[VIDEO] New video available for:", payload.runnerName);
+    console.log("[VIDEO] New video available for:", payload.runnerName, "(Run:", payload.runId, ")");
+    
+    // 1. Show notification
     if (typeof showVideoNotification === 'function') {
         showVideoNotification(`VIDEO VALMIS: ${payload.runnerName.toUpperCase()} 🎬`);
-    } else {
-        console.warn("showVideoNotification not found");
+    }
+
+    // 2. CRITICAL: Inject the videoUrl directly into our local session state
+    // so updateUI() will see it on the next tick
+    if (currentSession && currentSession.results) {
+        let found = false;
+        // Search in results
+        const res = currentSession.results.find(r => r.runId === payload.runId);
+        if (res) {
+            res.videoUrl = payload.videoUrl;
+            found = true;
+        }
+        
+        // Search in onCourse
+        if (!found && currentSession.onCourse) {
+            const oc = currentSession.onCourse.find(r => r.runId === payload.runId);
+            if (oc) oc.videoUrl = payload.videoUrl;
+        }
+
+        // Trigger a UI refresh if we found it
+        updateUI();
     }
 });

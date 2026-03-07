@@ -83,6 +83,16 @@ function processAndSaveVideo(runner, chunks) {
 
     renderVideoGallery();
     showVideoNotification(`VIDEO TALLESSA: ${runner.name.toUpperCase()} 🎬`);
+    
+    // Attempt one last deep search for runId if it was missing during capture
+    if (!runner.runId && currentSession) {
+        const foundOnCourse = (currentSession.onCourse || []).find(r => r.id === runner.id);
+        if (foundOnCourse && foundOnCourse.runId) {
+            runner.runId = foundOnCourse.runId;
+            console.log("[VIDEO] Late runId recovery success!");
+        }
+    }
+
     uploadVideoToServer(blob, runner);
 }
 

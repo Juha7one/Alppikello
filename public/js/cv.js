@@ -166,11 +166,11 @@ function startCVLogic(roleType, video, canvas) {
                             // 1. Capture metadata FIRST based on role
                             let runnerToSave = null;
                             if (roleType === 'lähtö') {
-                                runnerToSave = { ...currentSession.activeQueue[0] };
-                                console.log("[CV] Triggered START for:", runnerToSave.name);
+                                runnerToSave = currentSession.activeQueue && currentSession.activeQueue[0] ? { ...currentSession.activeQueue[0] } : null;
+                                console.log("[CV] Triggered START for:", runnerToSave ? runnerToSave.name : 'NONE');
                             } else {
-                                runnerToSave = { ...currentSession.onCourse[0] };
-                                console.log(`[CV] Triggered ${roleType.toUpperCase()} for:`, runnerToSave.name);
+                                runnerToSave = currentSession.onCourse && currentSession.onCourse[0] ? { ...currentSession.onCourse[0] } : null;
+                                console.log(`[CV] Triggered ${roleType.toUpperCase()} for:`, runnerToSave ? runnerToSave.name : 'NONE');
                             }
 
                             lastTriggerTime = now;
@@ -179,7 +179,6 @@ function startCVLogic(roleType, video, canvas) {
                             // 2. Start recording if mediaRecorder is active
                             if (mediaRecorder && mediaRecorder.state === 'recording' && runnerToSave) {
                                 showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()} 📹`);
-                                // Start/Maali/Väliaika capture immediately
                                 saveVideoClip(runnerToSave);
                             }
 
