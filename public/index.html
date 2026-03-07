@@ -15,10 +15,10 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #0ea5e9;">
+    <div id="deployment-splash" style="background: #f59e0b;">
         <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">INSTANT-SYNC</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.24.0</div>
+        <h1 class="splash-title">ROLE-FLOW</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5;">ALPPIKELLO v2.25.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -81,6 +81,9 @@
                 <button class="btn btn-outline" onclick="loadArchives()" style="width: 100%; height: 80px; font-size: 20px; margin-bottom: 20px; opacity: 0.6;">HARKKA-ARKISTO 📁</button>
                 <p style="font-size: 12px; opacity: 0.5; margin: 15px 0 15px 0; text-align: center;">TAI LIITY OLEMASSA OLEVAAN:</p>
             </div>
+            
+            <!-- Quick Continue for role switchers -->
+            <div id="continue-session-container" style="display:none;"></div>
 
             <div id="nearby-sessions-container" style="display:none; margin-bottom: 30px;">
                 <p style="font-size: 12px; color: var(--accent); font-weight: 900; margin-bottom: 15px;">LÄHISTÖLLÄ:</p>
@@ -377,7 +380,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.24.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.25.0 | © 2026</p>
     </div>
 
     <!-- Core App Logic -->
@@ -387,10 +390,10 @@
     <script src="js/socket.js"></script>
     <script src="js/video.js"></script>
     <script src="js/cv.js"></script>
-    <script src="js/timing.js?v=2.24.0"></script>
-    <script src="js/ui.js?v=2.24.0"></script>
-    <script src="js/rangefinder.js?v=2.24.0"></script>
-    <script src="js/app.js?v=2.24.0"></script>
+    <script src="js/timing.js?v=2.25.0"></script>
+    <script src="js/ui.js?v=2.25.0"></script>
+    <script src="js/rangefinder.js?v=2.25.0"></script>
+    <script src="js/app.js?v=2.25.0"></script>
 </body>
 
 </html>

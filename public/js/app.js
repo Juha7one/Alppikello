@@ -168,6 +168,29 @@ function showOnboardingStep(step) {
         const manualToggle = document.getElementById('btn-toggle-manual');
         if (manualContainer) manualContainer.style.display = 'none';
         if (manualToggle) manualToggle.style.display = 'block';
+
+        // NEW: If already in a session, offer to continue there
+        const contCont = document.getElementById('continue-session-container');
+        if (contCont) {
+            if (currentSession && !isCoach) {
+                contCont.style.display = 'block';
+                contCont.innerHTML = `
+                    <button class="btn btn-outline" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; border-color: var(--success); color: var(--success); margin-bottom: 25px;">
+                        JATKA HARJOITUKSESSA:<br>
+                        <span style="font-size: 18px; font-weight: 900;">${currentSession.name.toUpperCase()}</span>
+                    </button>
+                `;
+            } else {
+                contCont.style.display = 'none';
+            }
+        }
+
+        // Trigger manual discovery immediately
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                socket.emit('find_nearby_sessions', { lat: pos.coords.latitude, lon: pos.coords.longitude });
+            }, null, { timeout: 3000 });
+        }
     }
 }
 
