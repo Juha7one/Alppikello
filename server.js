@@ -113,25 +113,37 @@ app.post('/upload', upload.single('video'), (req, res) => {
 });
 
 app.get('/run/:runId', (req, res) => {
-    const run = runCards[req.params.runId];
-    if (!run) {
-        return res.status(404).send('Tunnusta ei löydy. Linkki saattaa olla vanhentunut.');
+    try {
+        const run = runCards[req.params.runId];
+        if (!run) {
+            return res.status(404).send('<!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:#fff;"><h1>404</h1><p>Suoritusta ei löydy tai se on vanhentunut.</p></body></html>');
+        }
+
+        const templatePath = path.join(__dirname, 'public', 'run_template.html');
+        if (!fs.existsSync(templatePath)) {
+            console.error("[ERROR] run_template.html missing at:", templatePath);
+            return res.status(500).send("Palvelinvirhe: Pohjatiedosto puuttuu.");
+        }
+
+        fs.readFile(templatePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error("[ERROR] Failed to read template:", err);
+                return res.status(500).send('Palvelinvirhe tiedostoa luettaessa.');
+            }
+            
+            const duration = (run.totalTime / 1000).toFixed(2);
+            const displayData = {
+                ...run,
+                totalTime: duration + 's'
+            };
+
+            const result = data.replace('{{RUN_DATA}}', JSON.stringify(displayData));
+            res.send(result);
+        });
+    } catch (err) {
+        console.error("[CRITICAL ERROR] /run route crashed:", err);
+        res.status(500).send("Sisäinen palvelinvirhe.");
     }
-
-    const templatePath = path.join(__dirname, 'public', 'run_template.html');
-    fs.readFile(templatePath, 'utf8', (err, data) => {
-        if (err) return res.status(500).send('Palvelinvirhe');
-        
-        // Simple formatting for duration
-        const duration = (run.totalTime / 1000).toFixed(2);
-        const displayData = {
-            ...run,
-            totalTime: duration + 's'
-        };
-
-        const result = data.replace('{{RUN_DATA}}', JSON.stringify(displayData));
-        res.send(result);
-    });
 });
 // --- Automatic Housekeeping ---
 // Remove sessions with no heartbeats for > 12 hours
@@ -393,6 +405,7 @@ io.on('connection', (socket) => {
                     name: runner.name,
                     totalTime: runner.totalTime,
                     videoUrl: runner.videoUrl,
+                    splits: runner.splits || [],
                     sessionName: session.name,
                     timestamp: Date.now()
                 };

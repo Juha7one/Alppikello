@@ -117,8 +117,12 @@ function renderValmentajaView() {
     const results = currentSession.results || [];
     if (results.length > 0) {
         resultEl.innerHTML = results.map((r, i) => {
-            const splitList = (r.splits || []).map(s => 
-                `<div style="font-size: 11px; opacity: 0.6;">⏱️ ${s.deviceName || 'VÄLIAIKA'}: ${formatDuration(s.duration)}</div>`
+            const splitList = (r.splits || []).map((s, idx) => 
+                `<div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">
+                    <span style="color: var(--accent); font-weight: 800;">⏱️ V${idx + 1}:</span> 
+                    <span style="font-weight: 700;">${formatDuration(s.duration)} s</span> 
+                    <small style="opacity: 0.5;">(${s.deviceName || 'KENNO'})</small>
+                </div>`
             ).join('');
 
             return `
