@@ -94,15 +94,15 @@ app.post('/upload', upload.single('video'), (req, res) => {
         // Update session object
         const session = sessions[sessionId];
         if (session) {
-            const res = session.results.find(r => r.id === runnerId);
-            if (res) {
-                res.videoUrl = videoUrl;
-                if (runCards[res.runId]) runCards[res.runId].videoUrl = videoUrl;
+            const foundResult = session.results.find(r => r.id === runnerId);
+            if (foundResult) {
+                foundResult.videoUrl = videoUrl;
+                if (runCards[foundResult.runId]) runCards[foundResult.runId].videoUrl = videoUrl;
             }
-            const pend = session.pendingResults.find(r => r.id === runnerId);
-            if (pend) {
-                pend.videoUrl = videoUrl;
-                if (runCards[pend.runId]) runCards[pend.runId].videoUrl = videoUrl;
+            const foundPending = session.pendingResults.find(r => r.id === runnerId);
+            if (foundPending) {
+                foundPending.videoUrl = videoUrl;
+                if (runCards[foundPending.runId]) runCards[foundPending.runId].videoUrl = videoUrl;
             }
 
             io.to(sessionId).emit('device_status_update', { session });

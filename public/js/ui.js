@@ -133,7 +133,7 @@ function renderValmentajaView() {
                             <div style="font-size: 28px; font-weight: 900; color: var(--accent);">${formatDuration(r.totalTime)}</div>
                             <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
                                 ${r.videoUrl ? `<button class="btn-mini" onclick="window.open('${r.videoUrl}')" style="background: #fff; color: #000;">KATSO 🎬</button>` : ''}
-                                <button class="btn-mini" onclick="shareRun('${r.id}')" style="background: rgba(255,255,255,0.1);">JAA 🔗</button>
+                                <button class="btn-mini" onclick="shareRun('${r.runId}')" style="background: rgba(255,255,255,0.1);">JAA 🔗</button>
                             </div>
                         </div>
                     </div>
