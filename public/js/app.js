@@ -293,12 +293,33 @@ async function loadRunCard(runId) {
             splitsEl.style.display = 'none';
         }
 
-        // Video
+        // Video Handling
         const vCont = document.getElementById('card-video-container');
         const vEl = document.getElementById('card-video');
+        const vOverlay = document.getElementById('card-video-overlay');
+        const vClock = document.getElementById('card-video-clock');
+        const vName = document.getElementById('card-video-name');
+
         if (data.videoUrl) {
             vEl.src = data.videoUrl;
             vCont.style.display = 'block';
+            vName.innerText = data.name.toUpperCase();
+            
+            // Re-render overlay based on video time
+            vEl.ontimeupdate = () => {
+                const currentTimeMs = vEl.currentTime * 1000;
+                const totalTimeMs = data.totalTime;
+                
+                // Show clock if video is playing
+                vOverlay.style.opacity = '1';
+                
+                // Simple logic: show time up to totalTime, then freeze
+                const displayMs = Math.min(currentTimeMs, totalTimeMs);
+                vClock.innerText = (displayMs / 1000).toFixed(2);
+            };
+
+            vEl.onplay = () => { vOverlay.style.opacity = '1'; };
+            vEl.onpause = () => { vOverlay.style.opacity = '0.5'; };
         } else {
             vCont.style.display = 'none';
         }
