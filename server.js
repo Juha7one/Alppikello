@@ -76,6 +76,20 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return R * c; // Distance in km
 }
 
+function saveRunCard(runner, session) {
+    if (!runner || !runner.runId) return;
+    runCards[runner.runId] = {
+        id: runner.runId,
+        name: runner.name,
+        totalTime: runner.totalTime,
+        videoUrl: runner.videoUrl || null,
+        splits: runner.splits || [],
+        sessionName: session.name || "Treeni",
+        timestamp: Date.now()
+    };
+    console.log(`[CARD] Saved run card for ${runner.name} (ID: ${runner.runId})`);
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadDir));
 
@@ -112,11 +126,14 @@ app.post('/upload', upload.single('video'), (req, res) => {
     res.json({ success: true, url: videoUrl });
 });
 
-app.get('/run/:runId', (req, res) => {
+app.get(['/run/:runId', '/public/run/:runId'], (req, res) => {
     try {
-        const run = runCards[req.params.runId];
+        const runId = req.params.runId;
+        const run = runCards[runId];
+        
         if (!run) {
-            return res.status(404).send('<!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:#fff;"><h1>404</h1><p>Suoritusta ei löydy tai se on vanhentunut.</p></body></html>');
+            console.warn(`[CARD] 404 access to ${runId}`);
+            return res.status(404).send('<!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:#fff;"><h1>404 - SUORITUSTA EI LÖYDY</h1><p>Tilaa vievä tai vanhentunut linkki.</p><a href="/" style="color:#3b82f6;">Takaisin pääsivulle</a></body></html>');
         }
 
         const templatePath = path.join(__dirname, 'public', 'run_template.html');
@@ -400,15 +417,7 @@ io.on('connection', (socket) => {
             } else {
                 session.results.unshift(runner);
                 // Save to run cards
-                runCards[runner.runId] = {
-                    id: runner.runId,
-                    name: runner.name,
-                    totalTime: runner.totalTime,
-                    videoUrl: runner.videoUrl,
-                    splits: runner.splits || [],
-                    sessionName: session.name,
-                    timestamp: Date.now()
-                };
+                saveRunCard(runner, session);
 
                 if (session.forerunnerCount < 5) {
                     if (!session.expectedDuration) session.expectedDuration = duration;
@@ -429,6 +438,7 @@ io.on('connection', (socket) => {
                 const runner = session.pendingResults.splice(idx, 1)[0];
                 delete runner.suspicious;
                 session.results.unshift(runner);
+                saveRunCard(runner, session);
                 io.to(sessionId).emit('device_status_update', { session });
             }
         }
@@ -455,6 +465,7 @@ io.on('connection', (socket) => {
                 runner.done = true;
                 runner.manual = true;
                 session.results.unshift(runner);
+                saveRunCard(runner, session);
                 io.to(sessionId).emit('device_status_update', { session });
             }
         }
