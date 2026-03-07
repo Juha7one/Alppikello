@@ -104,19 +104,26 @@ app.use('/uploads', express.static(uploadDir));
 app.post('/upload', upload.single('video'), (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded.');
 
-    const { sessionId, runnerId, runnerName } = req.body;
-    const videoUrl = req.file.location ? req.file.location : `/uploads/${req.file.filename}`;
+    const { sessionId, runnerId, runId, runnerName } = req.body;
+    
+    // Ensure absolute URL even for local fallsbacks
+    let videoUrl = req.file.location ? req.file.location : null;
+    if (!videoUrl) {
+        const protocol = req.get('x-forwarded-proto') || req.protocol;
+        const host = req.get('host');
+        videoUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+    }
 
-    console.log(`Video uploaded for session ${sessionId}, runner ${runnerName}: ${videoUrl}`);
+    console.log(`[UPLOAD] Video for ${runnerName} (Run: ${runId}): ${videoUrl} (S3: ${!!req.file.location})`);
 
     if (sessionId) {
-        const payload = { sessionId, runnerId, runnerName, videoUrl };
+        const payload = { sessionId, runnerId, runId, runnerName, videoUrl };
         io.to(sessionId).emit('video_available', payload);
 
-        // Update session object
         const session = sessions[sessionId];
         if (session) {
-            const foundResult = session.results.find(r => r.id === runnerId);
+            // Find by EXACT runId
+            const foundResult = session.results.find(r => r.runId === runId);
             if (foundResult) {
                 foundResult.videoUrl = videoUrl;
                 if (runCards[foundResult.runId]) runCards[foundResult.runId].videoUrl = videoUrl;

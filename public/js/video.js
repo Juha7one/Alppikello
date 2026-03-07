@@ -87,9 +87,12 @@ function uploadVideoToServer(blob, runner) {
     formData.append('video', blob, `${safeRole}_${runner.name}.mp4`);
     formData.append('sessionId', currentSession.id);
     formData.append('runnerId', runner.id);
+    formData.append('runId', runner.runId);
     formData.append('runnerName', runner.name);
 
-    fetch('/upload', { method: 'POST', body: formData })
+    const uploadUrl = (typeof SERVER_URL !== 'undefined' && SERVER_URL) ? `${SERVER_URL}/upload` : '/upload';
+
+    fetch(uploadUrl, { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => console.log("Upload success:", data.url))
         .catch(err => console.error("Upload failed:", err));
