@@ -1,4 +1,5 @@
 // --- Alppikello Computer Vision (Digital Photocell) ---
+let currentCVRole = null;
 
 function stopCV() {
     if (cvStream) {
@@ -88,6 +89,7 @@ window.stopCV = stopCV;
 window.startCV = startCV;
 
 function startCVLogic(roleType, video, canvas) {
+    currentCVRole = roleType;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const procCanvas = document.createElement('canvas');
     const procCtx = procCanvas.getContext('2d', { willReadFrequently: true });
@@ -102,7 +104,7 @@ function startCVLogic(roleType, video, canvas) {
     const gateX = 0.5; 
 
     const processFrame = () => {
-        if (!cvStream) {
+        if (!cvStream || currentCVRole !== roleType) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             return;
         }
