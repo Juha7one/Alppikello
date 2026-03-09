@@ -71,6 +71,18 @@ socket.on('session_ended', () => {
 
 socket.on('timing_update', (data) => {
     currentSession = data.session;
+    
+    if (data.type === 'START') {
+        // Crucial: Update our local tracker with the new runId immediately
+        activeRunnerOnCourse = data.runner;
+        hasRecordedForCurrentRunner = false;
+        console.log(`[STATE] Active runner now: ${activeRunnerOnCourse.name} (ID: ${activeRunnerOnCourse.runId})`);
+    } else if (data.type === 'FINISH' || data.type === 'DNF') {
+        if (activeRunnerOnCourse && activeRunnerOnCourse.runId === data.runner.runId) {
+            activeRunnerOnCourse = null;
+        }
+    }
+
     refreshStaticViews();
     updateUI();
 

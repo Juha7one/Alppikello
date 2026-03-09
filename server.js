@@ -121,7 +121,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadDir));
 
 app.post('/upload', upload.single('video'), (req, res) => {
-    if (!req.file) return res.status(400).send('No file uploaded.');
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
 
     const { sessionId, runnerId, runId, runnerName } = req.body;
     
@@ -698,6 +698,16 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`Device disconnected: ${socket.id}`);
+    });
+});
+
+// Global Error Handler for JSON responses
+app.use((err, req, res, next) => {
+    console.error("[SERVER ERROR]", err);
+    res.status(500).json({ 
+        error: 'Palvelinvirhe tiedostoa käsiteltäessä', 
+        details: err.message,
+        timestamp: Date.now()
     });
 });
 

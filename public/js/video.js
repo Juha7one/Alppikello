@@ -93,7 +93,16 @@ function processAndSaveVideo(runner, chunks) {
         }
     }
 
-    uploadVideoToServer(blob, runner);
+    // Delay upload slightly to ensure the server has processed the timing trigger
+    // and generated the runId, and the client has received it back.
+    setTimeout(() => {
+        // One LAST attempt to recover runId from state before sending
+        if (!runner.runId && activeRunnerOnCourse && activeRunnerOnCourse.id === runner.id) {
+            runner.runId = activeRunnerOnCourse.runId;
+            console.log("[VIDEO] Recovered runId from activeRunnerOnCourse at upload time!");
+        }
+        uploadVideoToServer(blob, runner);
+    }, 1500); // 1.5s delay is safe
 }
 
 function clearVideoGallery() {
@@ -122,9 +131,16 @@ function uploadVideoToServer(blob, runner) {
     const uploadUrl = (typeof SERVER_URL !== 'undefined' && SERVER_URL) ? `${SERVER_URL}/upload` : '/upload';
 
     fetch(uploadUrl, { method: 'POST', body: formData })
-        .then(res => res.json())
+        .then(async res => {
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                throw new Error(`Server returned non-JSON: ${text.substring(0, 100)}... (Status: ${res.status})`);
+            }
+        })
         .then(data => console.log("Upload success:", data.url))
-        .catch(err => console.error("Upload failed:", err));
+        .catch(err => console.error("Upload failed details:", err.message));
 }
 
 function renderVideoGallery() {
