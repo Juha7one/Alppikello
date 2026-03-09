@@ -47,38 +47,30 @@ function startVideoBuffer(stream) {
 }
 
 function saveVideoClip(explicitRunner = null) {
-    if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-        console.warn("[VIDEO] saveVideoClip called but recorder NOT active!");
-        return;
-    }
-    
-    // Crucial: Clear buffer reset timer so it doesn't interrupt this clip
-    if (bufferResetTimer) {
-        clearTimeout(bufferResetTimer);
-        bufferResetTimer = null;
-    }
-
-    if (pendingRunnerMetadata) {
-        console.log(`[VIDEO] Already capturing for ${pendingRunnerMetadata.name}. Skip duplicate call.`);
-        return;
+    if (pendingRunnerMetadata && pendingRunnerMetadata.runId === (explicitRunner ? explicitRunner.runId : '')) {
+        return; // Already recording this run
     }
 
     pendingRunnerMetadata = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
     
     if (pendingRunnerMetadata) {
-        console.log(`[VIDEO] Triggered for ${pendingRunnerMetadata.name}. Waiting 4s...`);
-        // Wait 4 seconds to capture the action AFTER the trigger
-        setTimeout(() => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.requestData(); // Get final frames
-                setTimeout(() => {
-                    if (mediaRecorder && mediaRecorder.state === 'recording') {
-                        mediaRecorder.stop();
-                    }
-                }, 100);
-            }
-        }, 4000);
+        console.log(`%c[VIDEO] STARTING RUN RECORDING for ${pendingRunnerMetadata.name}`, "color: #a855f7; font-weight: bold");
+        // We do NOT stop here. We wait for the FINISH event via socket.js
     }
+}
+
+function stopAndUploadRunVideo(runner) {
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+    
+    console.log(`%c[VIDEO] STOPPING RUN RECORDING for ${runner.name}`, "color: #a855f7; font-weight: bold");
+    
+    // Request final data and stop
+    mediaRecorder.requestData();
+    setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+    }, 200);
 }
 
 function processAndSaveVideo(runner, chunks) {

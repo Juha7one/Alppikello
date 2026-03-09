@@ -176,13 +176,6 @@ function startCVLogic(roleType, video, canvas) {
                             lastTriggerTime = now;
                             simulateTrigger(triggerType);
 
-                            // 2. Start recording if mediaRecorder is active
-                            if (mediaRecorder && mediaRecorder.state === 'recording' && runnerToSave && !hasRecordedForCurrentRunner) {
-                                hasRecordedForCurrentRunner = true;
-                                showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()} 📹`);
-                                saveVideoClip(runnerToSave);
-                            }
-
                             ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
                         }

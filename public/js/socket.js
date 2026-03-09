@@ -77,8 +77,20 @@ socket.on('timing_update', (data) => {
         activeRunnerOnCourse = data.runner;
         hasRecordedForCurrentRunner = false;
         console.log(`[STATE] Active runner now: ${activeRunnerOnCourse.name} (ID: ${activeRunnerOnCourse.runId})`);
+        
+        // --- START FULL RUN RECORDING ---
+        if (cvStream) {
+            saveVideoClip(activeRunnerOnCourse);
+        }
     } else if (data.type === 'FINISH' || data.type === 'DNF') {
-        if (activeRunnerOnCourse && activeRunnerOnCourse.runId === data.runner.runId) {
+        const runner = data.runner;
+        
+        // --- STOP AND UPLOAD FULL RUN VIDEO ---
+        if (cvStream && activeRunnerOnCourse && activeRunnerOnCourse.runId === runner.runId) {
+            stopAndUploadRunVideo(runner);
+        }
+
+        if (activeRunnerOnCourse && activeRunnerOnCourse.runId === runner.runId) {
             activeRunnerOnCourse = null;
         }
     }
