@@ -177,7 +177,8 @@ function startCVLogic(roleType, video, canvas) {
                             simulateTrigger(triggerType);
 
                             // 2. Start recording if mediaRecorder is active
-                            if (mediaRecorder && mediaRecorder.state === 'recording' && runnerToSave) {
+                            if (mediaRecorder && mediaRecorder.state === 'recording' && runnerToSave && !hasRecordedForCurrentRunner) {
+                                hasRecordedForCurrentRunner = true;
                                 showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()} 📹`);
                                 saveVideoClip(runnerToSave);
                             }

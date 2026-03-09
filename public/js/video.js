@@ -58,14 +58,24 @@ function saveVideoClip(explicitRunner = null) {
         bufferResetTimer = null;
     }
 
+    if (pendingRunnerMetadata) {
+        console.log(`[VIDEO] Already capturing for ${pendingRunnerMetadata.name}. Skip duplicate call.`);
+        return;
+    }
+
     pendingRunnerMetadata = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
     
     if (pendingRunnerMetadata) {
-        console.log(`[VIDEO] Triggered for ${pendingRunnerMetadata.name}. Waiting 4s to capture 'after' action...`);
+        console.log(`[VIDEO] Triggered for ${pendingRunnerMetadata.name}. Waiting 4s...`);
         // Wait 4 seconds to capture the action AFTER the trigger
         setTimeout(() => {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
+                mediaRecorder.requestData(); // Get final frames
+                setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, 100);
             }
         }, 4000);
     }
