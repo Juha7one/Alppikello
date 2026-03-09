@@ -52,13 +52,18 @@ async function startCV(roleType) {
     if (!video || !canvas) return;
 
     try {
-        cvStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: 640, height: 480 },
-            audio: false
-        }).catch(() => navigator.mediaDevices.getUserMedia({
-            video: { width: 640, height: 480 },
-            audio: false
-        }));
+        if (!cvStream) {
+            console.log("[CV] Starting NEW stream");
+            cvStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment', width: 640, height: 480 },
+                audio: false
+            }).catch(() => navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480 },
+                audio: false
+            }));
+        } else {
+            console.log("[CV] Re-using existing stream");
+        }
 
         video.srcObject = cvStream;
         video.play().catch(e => console.warn("Video play failed:", e));

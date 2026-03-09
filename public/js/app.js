@@ -116,18 +116,20 @@ function handleSessionJoin(session, role) {
     startGPSTracking();
 
     // AUTO-ACTIVATE CAMERA/CV based on role
-    if (typeof stopCV === 'function') stopCV(); 
-    
     const roleForCV = {
         'LÄHTÖ': 'lähtö',
         'MAALI': 'maali',
         'VÄLIAIKA': 'väliaika',
         'VIDEO': 'video'
     }[role];
-
+    
     if (roleForCV && typeof startCV === 'function') {
-        console.log(`[AUTO-CV] Activating for ${role}`);
+        console.log(`[AUTO-CV] Smarter activation for ${role}`);
         startCV(roleForCV);
+    } else if (typeof stopCV === 'function') {
+        // Only stop CV if we are not recording a run or a clip
+        const isRecording = (typeof mediaRecorder !== 'undefined' && mediaRecorder && mediaRecorder.state === 'recording' && pendingRunnerMetadata);
+        if (!isRecording) stopCV();
     }
 
     refreshStaticViews();
