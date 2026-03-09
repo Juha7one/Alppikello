@@ -79,33 +79,41 @@ function updateUI() {
         }
     });
     
-    // 3. Update Clocks for ALL types of result videos (Live, Archive, Shared Card)
-    const prefixes = ['res-video-', 'arc-video-', 'card-video']; // card-video uses direct ID or prefix
-    
-    // Unified clock logic for any video element that should have an overlay
-    document.querySelectorAll('video[id^="res-video-"], video[id^="arc-video-"], video#card-video').forEach(vEl => {
-        const idFull = vEl.id;
-        let overlayId = idFull.replace('video', 'clock');
-        if (idFull === 'card-video') overlayId = 'card-video-overlay';
-        
-        const vClock = document.getElementById(overlayId);
-        if (vEl && vClock) {
-            const clockVal = vClock.querySelector('.clock-val') || document.getElementById('card-video-clock');
-            
-            // Extract runId/runner info if possible to get totalTime
-            // For card-video, it's global 'currentRun', for others we might need to find it
-            let totalTime = 60000; // default 1m
-            if (idFull === 'card-video' && typeof currentRun !== 'undefined') totalTime = currentRun.totalTime;
-            
+    // 3. Update Clocks for ALL types of result videos
+    document.querySelectorAll('video[data-trigger-time]').forEach(vEl => {
+        const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
+        const startTime = parseInt(vEl.getAttribute('data-start-time'));
+        const container = vEl.closest('.video-container');
+        if (!container) return;
+
+        const vClock = container.querySelector('.clock-overlay');
+        const clockVal = vClock ? vClock.querySelector('.clock-val') : null;
+
+        if (vEl && vClock && clockVal) {
             vEl.ontimeupdate = () => {
+                const clipStartRelativeToRace = (triggerTime - startTime) - 2000;
+                const currentRaceTimeMs = clipStartRelativeToRace + (vEl.currentTime * 1000);
+                
                 vClock.style.opacity = '1';
-                const displayMs = vEl.currentTime * 1000;
-                if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2);
+                // Don't show negative time (during 2s pre-buffer of start)
+                const displayMs = Math.max(0, currentRaceTimeMs);
+                clockVal.innerText = (displayMs / 1000).toFixed(2);
             };
             vEl.onpause = () => vClock.style.opacity = '0.5';
             vEl.onplay = () => vClock.style.opacity = '1';
         }
     });
+
+    // Special case for card-video (standalone card view)
+    const cardVideo = document.getElementById('card-video');
+    if (cardVideo && typeof currentRun !== 'undefined') {
+        const vOverlay = document.getElementById('card-video-overlay');
+        const vClock = document.getElementById('card-video-clock');
+        cardVideo.ontimeupdate = () => {
+             vOverlay.style.opacity = '1';
+             vClock.innerText = (Math.min(cardVideo.currentTime * 1000, currentRun.totalTime) / 1000).toFixed(2);
+        };
+    }
     // 4. Update Video View if active
     if (currentRole === 'VIDEO') {
         renderVideoView();
@@ -200,27 +208,50 @@ function renderValmentajaView() {
                 </div>`
             ).join('');
 
-            const videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video' }] : []);
+            const videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
             
             let videoHtml = '';
             if (videos.length > 0) {
+                const first = videos[0];
+                const videoDataJson = JSON.stringify(videos).replace(/"/g, '&quot;');
+                
                 videoHtml = `
-                    <div class="video-gallery" style="display: flex; gap: 10px; overflow-x: auto; padding: 5px 0; scrollbar-width: none;">
-                        ${videos.map((vid, vIdx) => `
-                            <div class="video-container" id="video-placeholder-${safeRunId}-${vIdx}" style="flex: 0 0 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                                <video id="res-video-${safeRunId}-${vIdx}" src="${vid.url}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onerror="console.error('VIDEOVIRHE URL:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';"></video>
-                                <div style="display:none; color:rgba(255,0,0,0.5); font-size:10px; font-weight:900;">VIDEOVIRHE</div>
-                                <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 8px; font-weight: 800; color: var(--accent); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
-                                    ${(vid.role || 'VIDEO').toUpperCase()}
-                                </div>
-                                <div id="res-clock-${safeRunId}-${vIdx}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
-                                    <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${(r.name || 'LASKIJA').toUpperCase()}</div>
-                                    <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
-                                </div>
+                    <div class="video-container playlist-player" 
+                         id="player-${safeRunId}" 
+                         data-videos="${videoDataJson}" 
+                         data-current-index="0"
+                         data-start-time="${r.startTime}"
+                         style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
+                        
+                        <video id="vid-el-${safeRunId}" 
+                               src="${first.url}" 
+                               data-trigger-time="${first.triggerTime || r.startTime}"
+                               data-start-time="${r.startTime}"
+                               controls playsinline 
+                               style="width: 100%; height: 100%; object-fit: contain;" 
+                               onended="playNextClip('${safeRunId}')"
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        </video>
+                        
+                        <div style="display:none; color:rgba(255,0,0,0.5); font-size:10px; font-weight:900;">VIDEOVIRHE</div>
+                        
+                        <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
+                            ${(first.role || 'VIDEO').toUpperCase()}
+                        </div>
+
+                        <div class="clock-overlay" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
+                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${(r.name || 'LASKIJA').toUpperCase()}</div>
+                            <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
+                        </div>
+
+                        ${videos.length > 1 ? `
+                            <div class="playlist-controls" style="position: absolute; top: 10px; left: 10px; display: flex; gap: 5px;">
+                                ${videos.map((_, idx) => `
+                                    <div onclick="switchClip('${safeRunId}', ${idx})" style="width: 20px; height: 4px; background: ${idx === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.2)'}; border-radius: 2px; cursor: pointer;"></div>
+                                `).join('')}
                             </div>
-                        `).join('')}
+                        ` : ''}
                     </div>
-                    ${videos.length > 1 ? `<div style="text-align:center; font-size:9px; opacity:0.3; margin-top:5px; font-weight:800;">← SIRRÄ SIVULLE NÄHDÄKSESI MUUT VIDEOT (${videos.length}) →</div>` : ''}
                 `;
             } else {
                 videoHtml = `
@@ -242,7 +273,9 @@ function renderValmentajaView() {
                             <div style="font-weight: 900; font-size: 22px; margin: 4px 0;">${(r.name || 'TUNTEMATON').toUpperCase()}</div>
                         </div>
                         <div style="text-align:right;">
-                            <div style="font-size: 28px; font-weight: 900; color: var(--accent);">${formatDuration(r.totalTime)}</div>
+                            <div style="font-size: 28px; font-weight: 900; color: ${r.status === 'DNF' ? '#ef4444' : 'var(--accent)'};">
+                                ${r.status === 'DNF' ? 'DNF' : formatDuration(r.totalTime)}
+                            </div>
                         </div>
                     </div>
 
@@ -299,12 +332,40 @@ function renderAthleteView() {
     const results = currentSession.results || [];
     const myResults = results.filter(r => r.name === userName);
 
-    listEl.innerHTML = myResults.length ? myResults.map(r => `
-        <div class="card" style="margin-bottom:10px; display:flex; justify-content:space-between;">
-            <span style="font-weight:800;">LASKU</span>
-            <span style="font-size:24px; font-weight:900;">${formatDuration(r.totalTime)}</span>
-        </div>
-    `).join('') : '<p style="text-align:center; opacity:0.3;">Ei omia laskuja vielä.</p>';
+    listEl.innerHTML = myResults.length ? myResults.map((r, i) => {
+        const safeRunId = r.runId || `athlete-run-${i}`;
+        const videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
+        const videoDataJson = JSON.stringify(videos).replace(/"/g, '&quot;');
+        
+        let videoHtml = '';
+        if (videos.length > 0) {
+            const first = videos[0];
+            videoHtml = `
+                <div class="video-container playlist-player" 
+                     id="player-${safeRunId}" 
+                     data-videos="${videoDataJson}" 
+                     data-current-index="0"
+                     data-start-time="${r.startTime}"
+                     style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
+                    <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-start-time="${r.startTime}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')"></video>
+                    <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent);">${(first.role || 'VIDEO').toUpperCase()}</div>
+                    <div class="clock-overlay" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; transition: opacity 0.3s; opacity: 0;">
+                        <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace;">0.00</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="card" style="margin-bottom:15px; padding-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <span style="font-weight:800; opacity: 0.5;">LASKU #${myResults.length - i}</span>
+                    <span style="font-size:24px; font-weight:900; color: var(--accent);">${formatDuration(r.totalTime)}</span>
+                </div>
+                ${videoHtml}
+            </div>
+        `;
+    }).join('') : '<p style="text-align:center; opacity:0.3; padding: 20px;">Ei omia laskuja vielä.</p>';
 }
 
 function renderVideoView() {
@@ -358,3 +419,46 @@ function renderVideoView() {
         infoEl.innerHTML = `<div style="opacity:0.5; font-size:12px;">ODOTTAA: ${missing}...</div>`;
     }
 }
+
+// --- Playlist Player Logic ---
+
+function switchClip(runId, index) {
+    const player = document.getElementById(`player-${runId}`);
+    if (!player) return;
+    
+    const videos = JSON.parse(player.getAttribute('data-videos'));
+    const vidEl = document.getElementById(`vid-el-${runId}`);
+    const badge = player.querySelector('.role-badge');
+    const startTime = parseInt(player.getAttribute('data-start-time'));
+    
+    const clip = videos[index];
+    if (vidEl && clip) {
+        vidEl.src = clip.url;
+        vidEl.setAttribute('data-trigger-time', clip.triggerTime || startTime);
+        if (badge) badge.innerText = (clip.role || 'VIDEO').toUpperCase();
+        player.setAttribute('data-current-index', index);
+        
+        // Update indicators
+        const indicators = player.querySelectorAll('.playlist-controls div');
+        indicators.forEach((ind, i) => {
+            ind.style.background = i === index ? 'var(--accent)' : 'rgba(255,255,255,0.2)';
+        });
+        
+        vidEl.play().catch(() => {});
+    }
+}
+
+function playNextClip(runId) {
+    const player = document.getElementById(`player-${runId}`);
+    if (!player) return;
+    
+    const currentIndex = parseInt(player.getAttribute('data-current-index'));
+    const videos = JSON.parse(player.getAttribute('data-videos'));
+    
+    if (currentIndex < videos.length - 1) {
+        switchClip(runId, currentIndex + 1);
+    }
+}
+
+window.switchClip = switchClip;
+window.playNextClip = playNextClip;

@@ -335,23 +335,38 @@ async function loadRunCard(runId) {
 
         vCont.style.display = 'flex'; // ALWAYS show container
 
-        if (data.videoUrl) {
-            vEl.src = data.videoUrl;
+        const videos = data.videos || (data.videoUrl ? [{ url: data.videoUrl, role: 'video', triggerTime: data.startTime + data.totalTime }] : []);
+        
+        if (videos.length > 0) {
+            const first = videos[0];
+            vEl.src = first.url;
+            vEl.setAttribute('data-trigger-time', first.triggerTime || data.startTime);
+            vEl.setAttribute('data-start-time', data.startTime);
             vEl.style.display = 'block';
             vPlaceholder.style.display = 'none';
             vName.innerText = data.name.toUpperCase();
             
-            // Re-render overlay based on video time
+            // Add onended for playlist support
+            vEl.onended = () => {
+                // Find next video in 'videos'
+                const currentSrc = vEl.src;
+                const currentIndex = videos.findIndex(v => v.url === currentSrc);
+                if (currentIndex !== -1 && currentIndex < videos.length - 1) {
+                    const next = videos[currentIndex + 1];
+                    vEl.src = next.url;
+                    vEl.setAttribute('data-trigger-time', next.triggerTime || data.startTime);
+                    vEl.play().catch(() => {});
+                }
+            };
+
+            // Clock logic (already handled by updateUI's querySelectorAll but reinforcing for standalone)
             vEl.ontimeupdate = () => {
-                const currentTimeMs = vEl.currentTime * 1000;
-                const totalTimeMs = data.totalTime;
-                
-                // Show clock if video is playing
+                const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
+                const startTime = parseInt(vEl.getAttribute('data-start-time'));
+                const clipStartRelativeToRace = (triggerTime - startTime) - 2000;
+                const currentRaceTimeMs = clipStartRelativeToRace + (vEl.currentTime * 1000);
                 vOverlay.style.opacity = '1';
-                
-                // Simple logic: show time up to totalTime, then freeze
-                const displayMs = Math.min(currentTimeMs, totalTimeMs);
-                vClock.innerText = (displayMs / 1000).toFixed(2);
+                vClock.innerText = (Math.max(0, currentRaceTimeMs) / 1000).toFixed(2);
             };
 
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };

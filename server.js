@@ -109,6 +109,7 @@ function saveRunCard(runner, session) {
         name: runner.name,
         totalTime: runner.totalTime,
         videoUrl: runner.videoUrl || null,
+        videos: runner.videos || [],
         splits: runner.splits || [],
         sessionName: session.name || "Treeni",
         timestamp: Date.now()
@@ -175,6 +176,7 @@ app.post('/upload', upload.single('video'), (req, res) => {
                 runnerEntry.videos.push({
                     url: videoUrl,
                     type: req.body.triggerType || 'clip',
+                    triggerTime: parseInt(req.body.triggerTime) || Date.now(),
                     role: req.body.role || 'unknown',
                     timestamp: Date.now()
                 });
@@ -186,6 +188,7 @@ app.post('/upload', upload.single('video'), (req, res) => {
                     runCards[runnerEntry.runId].videos.push({
                         url: videoUrl,
                         type: req.body.triggerType || 'clip',
+                        triggerTime: parseInt(req.body.triggerTime) || Date.now(),
                         role: req.body.role || 'unknown',
                         timestamp: Date.now()
                     });
@@ -623,7 +626,13 @@ io.on('connection', (socket) => {
         if (session) {
             const index = session.onCourse.findIndex(r => r.id === runnerId);
             if (index !== -1) {
-                session.onCourse.splice(index, 1);
+                const runner = session.onCourse.splice(index, 1)[0];
+                runner.status = 'DNF';
+                runner.totalTime = 0;
+                runner.done = true;
+                session.results.unshift(runner);
+                saveRunCard(runner, session);
+                io.to(sessionId).emit('timing_update', { type: 'DNF', runner, session });
                 io.to(sessionId).emit('device_status_update', { session });
             }
         }

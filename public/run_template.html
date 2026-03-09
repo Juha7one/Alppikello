@@ -163,20 +163,87 @@
             display: inline-block;
             margin-bottom: 8px;
         }
+
+        .role-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--accent);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            z-index: 10;
+        }
+
+        .clock-overlay {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            pointer-events: none;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            transition: opacity 0.3s;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .clock-val {
+            font-size: 28px;
+            font-weight: 900;
+            font-family: monospace;
+            line-height: 1.2;
+        }
+
+        .playlist-controls {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .playlist-dot {
+            width: 25px;
+            height: 5px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .playlist-dot.active {
+            background: var(--accent);
+            width: 35px;
+        }
     </style>
 </head>
 <body>
 
     <div class="run-card">
-        <div class="video-container" id="video-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <video id="run-video" controls poster="/img/video-poster.jpg" style="display: none;">
-                <source id="video-source" src="" type="video/mp4">
-                Selaimesi ei tue videotoistoa.
-            </video>
-            <div id="video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3;">
+        <div class="video-container" id="video-wrapper">
+            <video id="run-video" playsinline style="display: none;"></video>
+            
+            <div id="video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; height: 100%;">
                 <div style="font-size: 40px; margin-bottom: 10px;">🎬</div>
-                <div style="font-size: 12px; font-weight: 900; letter-spacing: 2px;">VIDEOA KÄSITELLÄÄN TAI SE PUUTTUU</div>
+                <div style="font-size: 10px; font-weight: 900; letter-spacing: 2px; text-align: center; padding: 0 20px;">VIDEOA KÄSITELLÄÄN TAI SE PUUTTUU</div>
             </div>
+
+            <div id="role-badge" class="role-badge" style="display: none;">VIDEO</div>
+            
+            <div id="clock-overlay" class="clock-overlay">
+                <div style="font-size: 10px; font-weight: 900; color: var(--accent); letter-spacing: 1px; margin-bottom: 2px;" id="clock-name">LASKIJA</div>
+                <div class="clock-val" id="clock-time">0.00</div>
+            </div>
+
+            <div id="playlist-dots" class="playlist-controls"></div>
         </div>
 
         <div class="content">
@@ -205,21 +272,83 @@
     <script>
         // Data populated by server
         const runData = {{RUN_DATA}};
+        let currentIndex = 0;
+        let playlist = [];
+
+        function formatDuration(ms) {
+            const secs = (ms / 1000).toFixed(2);
+            return secs;
+        }
 
         if (runData) {
             document.getElementById('runner-name').innerText = runData.name.toUpperCase();
-            document.getElementById('run-time').innerText = runData.totalTime;
+            document.getElementById('clock-name').innerText = runData.name.toUpperCase();
+            
+            const totalTimeRaw = typeof runData.totalTime === 'number' ? (runData.totalTime / 1000).toFixed(2) : runData.totalTime;
+            document.getElementById('run-time').innerText = totalTimeRaw;
+            
             document.getElementById('session-name').innerText = runData.sessionName.toUpperCase();
             document.getElementById('run-date').innerText = new Date(runData.timestamp).toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
             
-            if (runData.videoUrl) {
-                document.getElementById('video-source').src = runData.videoUrl;
-                document.getElementById('run-video').style.display = 'block';
-                document.getElementById('video-placeholder').style.display = 'none';
-                document.getElementById('run-video').load();
+            playlist = runData.videos || [];
+            if (playlist.length === 0 && runData.videoUrl) {
+                playlist = [{ url: runData.videoUrl, role: 'video' }];
+            }
+
+            const video = document.getElementById('run-video');
+            const placeholder = document.getElementById('video-placeholder');
+            const badge = document.getElementById('role-badge');
+            const clock = document.getElementById('clock-overlay');
+            const clockTime = document.getElementById('clock-time');
+            const dotsContainer = document.getElementById('playlist-dots');
+
+            if (playlist.length > 0) {
+                video.style.display = 'block';
+                placeholder.style.display = 'none';
+                badge.style.display = 'block';
+                
+                function loadClip(index) {
+                    currentIndex = index;
+                    const clip = playlist[index];
+                    video.src = clip.url;
+                    badge.innerText = (clip.role || 'VIDEO').toUpperCase();
+                    
+                    // Update dots
+                    dotsContainer.innerHTML = playlist.map((_, i) => 
+                        `<div class="playlist-dot ${i === index ? 'active' : ''}" onclick="loadClip(${i})"></div>`
+                    ).join('');
+
+                    video.play().catch(() => {});
+                }
+
+                video.ontimeupdate = () => {
+                    const clip = playlist[currentIndex];
+                    const triggerTime = clip.triggerTime || runData.startTime || Date.now();
+                    const startTime = runData.startTime || (triggerTime - 5000); // fallback
+                    
+                    const clipStartRelativeToRace = (triggerTime - startTime) - 2000;
+                    const currentRaceTimeMs = clipStartRelativeToRace + (video.currentTime * 1000);
+                    
+                    clock.style.opacity = '1';
+                    clockTime.innerText = Math.max(0, (currentRaceTimeMs / 1000)).toFixed(2);
+                };
+
+                video.onended = () => {
+                    if (currentIndex < playlist.length - 1) {
+                        loadClip(currentIndex + 1);
+                    } else {
+                        clock.style.opacity = '0.5';
+                    }
+                };
+
+                video.onpause = () => { clock.style.opacity = '0.5'; };
+                video.onplay = () => { clock.style.opacity = '1'; };
+
+                loadClip(0);
+                window.loadClip = loadClip;
             } else {
-                document.getElementById('run-video').style.display = 'none';
-                document.getElementById('video-placeholder').style.display = 'flex';
+                video.style.display = 'none';
+                placeholder.style.display = 'flex';
             }
         }
     </script>

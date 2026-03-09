@@ -1,6 +1,7 @@
 // --- Alppikello Video Recording & Uploads ---
 
 let pendingRunnerMetadata = null;
+let recordingSafetyTimer = null;
 
 function startVideoBuffer(stream) {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') return;
@@ -46,7 +47,7 @@ function startVideoBuffer(stream) {
     }
 }
 
-function saveVideoClip(explicitRunner = null, triggerType = 'clip') {
+function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime = null) {
     if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
 
     // 1. Capture metadata
@@ -56,13 +57,21 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip') {
     // 2. Prevent overlapping captures for same runner in same role
     if (pendingRunnerMetadata && pendingRunnerMetadata.runId === runner.runId) return;
 
-    pendingRunnerMetadata = { ...runner, triggerType };
+    pendingRunnerMetadata = { ...runner, triggerType, triggerTime: triggerTime || Date.now() };
     
-    console.log(`[VIDEO] Captured trigger for ${runner.name}. Saving 4s clip...`);
+    console.log(`[VIDEO] Captured trigger for ${runner.name}. Saving dyna-clip (max 20s)...`);
     
-    // 3. Wait 4 seconds to capture the action AFTER the trigger
-    setTimeout(() => {
+    // 3. Safety timeout: 20 seconds
+    if (recordingSafetyTimer) clearTimeout(recordingSafetyTimer);
+    recordingSafetyTimer = setTimeout(() => {
+        stopRecordingForRun(runner.runId);
+    }, 20000);
+}
+
+function stopRecordingForRun(runId) {
+    if (pendingRunnerMetadata && pendingRunnerMetadata.runId === runId) {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
+            console.log(`[VIDEO] Stopping recording for run: ${runId}`);
             mediaRecorder.requestData();
             setTimeout(() => {
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -70,7 +79,11 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip') {
                 }
             }, 100);
         }
-    }, 4000);
+        if (recordingSafetyTimer) {
+            clearTimeout(recordingSafetyTimer);
+            recordingSafetyTimer = null;
+        }
+    }
 }
 
 function stopAndUploadRunVideo(runner) {
@@ -139,6 +152,7 @@ function uploadVideoToServer(blob, runner) {
     formData.append('runId', runner.runId || 'N/A');
     formData.append('runnerName', runner.name || 'LASKIJA');
     formData.append('triggerType', runner.triggerType || 'clip');
+    formData.append('triggerTime', runner.triggerTime || Date.now());
     formData.append('role', currentRole || 'unknown');
 
     if (!runner.runId) {

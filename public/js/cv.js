@@ -190,7 +190,7 @@ function startCVLogic(roleType, video, canvas) {
 
                             // --- RECORD CLIP FOR THIS ROLE ---
                             if (mediaRecorder && mediaRecorder.state === 'recording') {
-                                saveVideoClip(runnerToSave, triggerType);
+                                saveVideoClip(runnerToSave, triggerType, now);
                             }
 
                             ctx.fillStyle = "rgba(239, 68, 68, 0.6)";

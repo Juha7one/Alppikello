@@ -79,6 +79,12 @@ socket.on('timing_update', (data) => {
         console.log(`[STATE] Active runner now: ${activeRunnerOnCourse.name} (ID: ${activeRunnerOnCourse.runId})`);
     } else if (data.type === 'FINISH' || data.type === 'DNF') {
         const runner = data.runner;
+        
+        // --- STOP RECORDING FOR THIS RUN IF WE ARE A CAMERA ---
+        if (typeof stopRecordingForRun === 'function') {
+            stopRecordingForRun(runner.runId);
+        }
+
         if (activeRunnerOnCourse && activeRunnerOnCourse.runId === runner.runId) {
             activeRunnerOnCourse = null;
         }
