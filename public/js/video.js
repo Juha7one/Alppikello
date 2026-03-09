@@ -21,9 +21,11 @@ function startVideoBuffer(stream) {
             
             if (runner && recordingChunks.length > 0) {
                 processAndSaveVideo(runner, recordingChunks);
-            } else {
-                console.warn("[VIDEO] Skip save: missing runner or chunks", { hasRunner: !!runner, chunkCount: recordingChunks.length });
+            } else if (runner) {
+                // Runner was set but no chunks - this is a real issue
+                console.warn("[VIDEO] Skip save: missing chunks for runner", runner.name);
             }
+            // else: runner is null, this was just a buffer reset or view switch, no need for warning
             
             // Always restart buffer if stream is active
             if (cvStream) {
@@ -139,8 +141,17 @@ function uploadVideoToServer(blob, runner) {
                 throw new Error(`Server returned non-JSON: ${text.substring(0, 100)}... (Status: ${res.status})`);
             }
         })
-        .then(data => console.log("Upload success:", data.url))
-        .catch(err => console.error("Upload failed details:", err.message));
+        .then(data => {
+            if (data.success && data.url) {
+                console.log("%c[UPLOAD SUCCESS] Video URL:", "color: #10b981; font-weight: bold", data.url);
+            } else {
+                console.error("%c[UPLOAD ERROR] Server returned error or missing URL:", "color: #ef4444; font-weight: bold", data);
+                showVideoNotification(`VIRHE TALLENNUKSESSA: ${data.error || 'Tuntematon syy'}`);
+            }
+        })
+        .catch(err => {
+            console.error("%c[UPLOAD CRITICAL] Fetch failed:", "color: #ef4444; font-weight: bold", err.message);
+        });
 }
 
 function renderVideoGallery() {
