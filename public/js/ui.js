@@ -144,6 +144,9 @@ function refreshStaticViews() {
         if (el) el.innerText = currentSession.name;
     });
 
+    const endBtnContainer = document.getElementById('coach-only-end');
+    if (endBtnContainer) endBtnContainer.style.display = (currentRole === 'VALMENTAJA') ? 'block' : 'none';
+
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();
@@ -159,9 +162,6 @@ function renderValmentajaView() {
 
     const isCoach = currentRole === 'VALMENTAJA';
     if (coachCtrlEl) coachCtrlEl.style.display = isCoach ? 'block' : 'none';
-
-    const endBtnContainer = document.getElementById('coach-only-end');
-    if (endBtnContainer) endBtnContainer.style.display = isCoach ? 'block' : 'none';
 
     const athletes = currentSession.allAthletes || [];
 
