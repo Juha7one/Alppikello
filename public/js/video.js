@@ -46,31 +46,36 @@ function startVideoBuffer(stream) {
     }
 }
 
-function saveVideoClip(explicitRunner = null) {
-    if (pendingRunnerMetadata && pendingRunnerMetadata.runId === (explicitRunner ? explicitRunner.runId : '')) {
-        return; // Already recording this run
-    }
+function saveVideoClip(explicitRunner = null, triggerType = 'clip') {
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
 
-    pendingRunnerMetadata = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
+    // 1. Capture metadata
+    const runner = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
+    if (!runner) return;
+
+    // 2. Prevent overlapping captures for same runner in same role
+    if (pendingRunnerMetadata && pendingRunnerMetadata.runId === runner.runId) return;
+
+    pendingRunnerMetadata = { ...runner, triggerType };
     
-    if (pendingRunnerMetadata) {
-        console.log(`%c[VIDEO] STARTING RUN RECORDING for ${pendingRunnerMetadata.name}`, "color: #a855f7; font-weight: bold");
-        // We do NOT stop here. We wait for the FINISH event via socket.js
-    }
+    console.log(`[VIDEO] Captured trigger for ${runner.name}. Saving 4s clip...`);
+    
+    // 3. Wait 4 seconds to capture the action AFTER the trigger
+    setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.requestData();
+            setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+            }, 100);
+        }
+    }, 4000);
 }
 
 function stopAndUploadRunVideo(runner) {
-    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-    
-    console.log(`%c[VIDEO] STOPPING RUN RECORDING for ${runner.name}`, "color: #a855f7; font-weight: bold");
-    
-    // Request final data and stop
-    mediaRecorder.requestData();
-    setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-        }
-    }, 200);
+    // Deprecated for now, using trigger-based clips
+    console.log("[VIDEO] stopAndUploadRunVideo skipped - using clips.");
 }
 
 function processAndSaveVideo(runner, chunks) {
@@ -129,10 +134,12 @@ function uploadVideoToServer(blob, runner) {
     const formData = new FormData();
     const safeRole = (currentRole || 'VIDEO').replace(/[ÄÖ]/g, (m) => m === 'Ä' ? 'A' : 'O').replace(/[^a-zA-Z0-9]/g, '_');
     formData.append('video', blob, `${safeRole}_${runner.name}.mp4`);
-    formData.append('sessionId', currentSession.id);
-    formData.append('runnerId', runner.id || 'N/A');
+    formData.append('sessionId', currentSession ? currentSession.id : '');
+    formData.append('runnerId', runner.id || '');
     formData.append('runId', runner.runId || 'N/A');
-    formData.append('runnerName', runner.name || 'Tuntematon');
+    formData.append('runnerName', runner.name || 'LASKIJA');
+    formData.append('triggerType', runner.triggerType || 'clip');
+    formData.append('role', currentRole || 'unknown');
 
     if (!runner.runId) {
         console.warn("[VIDEO UPLOAD] Runner runId is missing! Video might not pair correctly.", runner);

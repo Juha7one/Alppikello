@@ -77,19 +77,8 @@ socket.on('timing_update', (data) => {
         activeRunnerOnCourse = data.runner;
         hasRecordedForCurrentRunner = false;
         console.log(`[STATE] Active runner now: ${activeRunnerOnCourse.name} (ID: ${activeRunnerOnCourse.runId})`);
-        
-        // --- START FULL RUN RECORDING ---
-        if (cvStream) {
-            saveVideoClip(activeRunnerOnCourse);
-        }
     } else if (data.type === 'FINISH' || data.type === 'DNF') {
         const runner = data.runner;
-        
-        // --- STOP AND UPLOAD FULL RUN VIDEO ---
-        if (cvStream && activeRunnerOnCourse && activeRunnerOnCourse.runId === runner.runId) {
-            stopAndUploadRunVideo(runner);
-        }
-
         if (activeRunnerOnCourse && activeRunnerOnCourse.runId === runner.runId) {
             activeRunnerOnCourse = null;
         }
@@ -215,13 +204,17 @@ socket.on('video_available', (payload) => {
         const res = currentSession.results.find(r => r.runId === payload.runId);
         if (res) {
             res.videoUrl = payload.videoUrl;
+            res.videos = payload.videos; // Update gallery
             found = true;
         }
         
         // Search in onCourse
         if (!found && currentSession.onCourse) {
             const oc = currentSession.onCourse.find(r => r.runId === payload.runId);
-            if (oc) oc.videoUrl = payload.videoUrl;
+            if (oc) {
+                oc.videoUrl = payload.videoUrl;
+                oc.videos = payload.videos; // Update gallery
+            }
         }
 
         // Trigger a UI refresh if we found it

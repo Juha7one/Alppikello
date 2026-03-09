@@ -168,12 +168,27 @@ app.post('/upload', upload.single('video'), (req, res) => {
 
             if (runnerEntry) {
                 console.log(`[UPLOAD SUCCESS] Paired video for ${runnerEntry.name} (Run: ${runnerEntry.runId}) - URL: ${videoUrl}`);
-                runnerEntry.videoUrl = videoUrl;
+                runnerEntry.videoUrl = videoUrl; // Latest one for legacy compatibility
                 
+                // Initialize videos array if missing
+                if (!runnerEntry.videos) runnerEntry.videos = [];
+                runnerEntry.videos.push({
+                    url: videoUrl,
+                    type: req.body.triggerType || 'clip',
+                    role: req.body.role || 'unknown',
+                    timestamp: Date.now()
+                });
+
                 // Ensure runCard also gets updated immediately
                 if (runCards[runnerEntry.runId]) {
                     runCards[runnerEntry.runId].videoUrl = videoUrl;
-                    console.log(`[UPLOAD] Also updated run card for ${runnerEntry.runId}`);
+                    if (!runCards[runnerEntry.runId].videos) runCards[runnerEntry.runId].videos = [];
+                    runCards[runnerEntry.runId].videos.push({
+                        url: videoUrl,
+                        type: req.body.triggerType || 'clip',
+                        role: req.body.role || 'unknown',
+                        timestamp: Date.now()
+                    });
                 }
                 
                 const payload = { 
@@ -181,12 +196,14 @@ app.post('/upload', upload.single('video'), (req, res) => {
                     runnerId: runnerEntry.id, 
                     runId: runnerEntry.runId, 
                     runnerName: runnerEntry.name, 
-                    videoUrl 
+                    videoUrl,
+                    videos: runnerEntry.videos
                 };
                 io.to(sessionId).emit('video_available', payload);
                 io.to(sessionId).emit('device_status_update', { session });
-            } else {
-                console.warn(`[UPLOAD WARNING] Could not find run for runner ${runnerName} (RID: ${runnerId}, RunID: ${runId})`);
+            }
+ else {
+                console.warn(`[UPLOAD WARNING] Could not find run for runner ${runnerName} (RID: ${runnerId}, RunID: ${runId}). Video URL: ${videoUrl}`);
                 // Still notify clients that a video exists, maybe they can match it
                 const payload = { sessionId, runnerId, runId, runnerName, videoUrl };
                 io.to(sessionId).emit('video_available', payload);

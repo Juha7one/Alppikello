@@ -188,6 +188,11 @@ function startCVLogic(roleType, video, canvas) {
                             lastTriggerTime = now;
                             simulateTrigger(triggerType);
 
+                            // --- RECORD CLIP FOR THIS ROLE ---
+                            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                                saveVideoClip(runnerToSave, triggerType);
+                            }
+
                             ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
                         }

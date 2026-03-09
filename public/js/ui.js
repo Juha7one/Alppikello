@@ -200,24 +200,39 @@ function renderValmentajaView() {
                 </div>`
             ).join('');
 
-            const videoHtml = `
-                <div class="video-container" id="video-placeholder-${safeRunId}" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                    ${r.videoUrl ? `
-                        <video id="res-video-${safeRunId}" src="${r.videoUrl}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onerror="console.error('VIDEOVIRHE URL:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';"></video>
-                        <div style="display:none; color:rgba(255,0,0,0.5); font-size:10px; font-weight:900;">VIDEOVIRHE</div>
-                        <div id="res-clock-${safeRunId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
-                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${(r.name || 'LASKIJA').toUpperCase()}</div>
-                            <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
-                        </div>
-                    ` : `
+            const videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video' }] : []);
+            
+            let videoHtml = '';
+            if (videos.length > 0) {
+                videoHtml = `
+                    <div class="video-gallery" style="display: flex; gap: 10px; overflow-x: auto; padding: 5px 0; scrollbar-width: none;">
+                        ${videos.map((vid, vIdx) => `
+                            <div class="video-container" id="video-placeholder-${safeRunId}-${vIdx}" style="flex: 0 0 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
+                                <video id="res-video-${safeRunId}-${vIdx}" src="${vid.url}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onerror="console.error('VIDEOVIRHE URL:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';"></video>
+                                <div style="display:none; color:rgba(255,0,0,0.5); font-size:10px; font-weight:900;">VIDEOVIRHE</div>
+                                <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 8px; font-weight: 800; color: var(--accent); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
+                                    ${(vid.role || 'VIDEO').toUpperCase()}
+                                </div>
+                                <div id="res-clock-${safeRunId}-${vIdx}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
+                                    <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${(r.name || 'LASKIJA').toUpperCase()}</div>
+                                    <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${videos.length > 1 ? `<div style="text-align:center; font-size:9px; opacity:0.3; margin-top:5px; font-weight:800;">← SIRRÄ SIVULLE NÄHDÄKSESI MUUT VIDEOT (${videos.length}) →</div>` : ''}
+                `;
+            } else {
+                videoHtml = `
+                    <div class="video-container" id="video-placeholder-${safeRunId}" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
                         <div style="text-align: center; opacity: 0.5;">
                             <div style="font-size: 24px; margin-bottom: 8px;">🎬</div>
                             <div style="font-size: 11px; font-weight: 900; letter-spacing: 1px;">ODOTETAAN VIDEOTA...</div>
-                            <div style="font-size: 9px; margin-top: 4px; opacity: 0.6;">(ID: ${safeRunId})</div>
+                            <div style="font-size: 9px; margin-top: 4px; opacity: 0.6;">(AUTOMAATTINEN PARITUS)</div>
                         </div>
-                    `}
-                </div>
-            `;
+                    </div>
+                `;
+            }
 
             return `
                 <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff; padding-bottom: 20px;">
