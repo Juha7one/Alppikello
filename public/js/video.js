@@ -73,6 +73,7 @@ function saveVideoClip(explicitRunner = null) {
 
 function processAndSaveVideo(runner, chunks) {
     const blob = new Blob(chunks, { type: chunks[0].type });
+    console.log(`[VIDEO] Created blob: ${Math.round(blob.size / 1024)} KB, type: ${chunks[0].type}, chunks: ${chunks.length}`);
     const url = URL.createObjectURL(blob);
 
     recordedClips.unshift({
