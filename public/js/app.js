@@ -326,13 +326,17 @@ async function loadRunCard(runId) {
         // Video Handling
         const vCont = document.getElementById('card-video-container');
         const vEl = document.getElementById('card-video');
+        const vPlaceholder = document.getElementById('card-video-placeholder');
         const vOverlay = document.getElementById('card-video-overlay');
         const vClock = document.getElementById('card-video-clock');
         const vName = document.getElementById('card-video-name');
 
+        vCont.style.display = 'flex'; // ALWAYS show container
+
         if (data.videoUrl) {
             vEl.src = data.videoUrl;
-            vCont.style.display = 'block';
+            vEl.style.display = 'block';
+            vPlaceholder.style.display = 'none';
             vName.innerText = data.name.toUpperCase();
             
             // Re-render overlay based on video time
@@ -351,7 +355,8 @@ async function loadRunCard(runId) {
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };
             vEl.onpause = () => { vOverlay.style.opacity = '0.5'; };
         } else {
-            vCont.style.display = 'none';
+            vEl.style.display = 'none';
+            vPlaceholder.style.display = 'flex';
         }
 
         loading.style.display = 'none';
@@ -423,15 +428,23 @@ async function openArchive(filename) {
                 </div>`
             ).join('');
 
-            const videoHtml = r.videoUrl ? `
-                <div class="video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative;">
-                    <video id="arc-video-${r.runId}" src="${r.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
-                    <div id="arc-clock-${r.runId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
-                        <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${r.name.toUpperCase()}</div>
-                        <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
-                    </div>
+            const videoHtml = `
+                <div class="video-container" id="arc-video-placeholder-${r.runId}" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
+                    ${r.videoUrl ? `
+                        <video id="arc-video-${r.runId}" src="${r.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
+                        <div id="arc-clock-${r.runId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
+                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${r.name.toUpperCase()}</div>
+                            <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
+                        </div>
+                    ` : `
+                        <div style="text-align: center; opacity: 0.5;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🎬</div>
+                            <div style="font-size: 11px; font-weight: 900; letter-spacing: 1px;">VIDEOA EI LÖYDY</div>
+                            <div style="font-size: 9px; margin-top: 4px; opacity: 0.6;">(ID: ${r.runId})</div>
+                        </div>
+                    `}
                 </div>
-            ` : '';
+            `;
 
             return `
                 <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff;">

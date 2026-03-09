@@ -168,12 +168,13 @@ app.post('/upload', upload.single('video'), (req, res) => {
             }
 
             if (runnerEntry) {
-                console.log(`[UPLOAD] Successfully paired video with ${runnerEntry.name} (Run: ${runnerEntry.runId})`);
+                console.log(`[UPLOAD SUCCESS] Paired video for ${runnerEntry.name} (Run: ${runnerEntry.runId}) - URL: ${videoUrl}`);
                 runnerEntry.videoUrl = videoUrl;
                 
-                // Update shareable card
+                // Ensure runCard also gets updated immediately
                 if (runCards[runnerEntry.runId]) {
                     runCards[runnerEntry.runId].videoUrl = videoUrl;
+                    console.log(`[UPLOAD] Also updated run card for ${runnerEntry.runId}`);
                 }
                 
                 const payload = { 

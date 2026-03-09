@@ -168,11 +168,15 @@
 <body>
 
     <div class="run-card">
-        <div class="video-container">
-            <video id="run-video" controls poster="/img/video-poster.jpg">
+        <div class="video-container" id="video-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <video id="run-video" controls poster="/img/video-poster.jpg" style="display: none;">
                 <source id="video-source" src="" type="video/mp4">
                 Selaimesi ei tue videotoistoa.
             </video>
+            <div id="video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3;">
+                <div style="font-size: 40px; margin-bottom: 10px;">🎬</div>
+                <div style="font-size: 12px; font-weight: 900; letter-spacing: 2px;">VIDEOA KÄSITELLÄÄN TAI SE PUUTTUU</div>
+            </div>
         </div>
 
         <div class="content">
@@ -210,7 +214,12 @@
             
             if (runData.videoUrl) {
                 document.getElementById('video-source').src = runData.videoUrl;
+                document.getElementById('run-video').style.display = 'block';
+                document.getElementById('video-placeholder').style.display = 'none';
                 document.getElementById('run-video').load();
+            } else {
+                document.getElementById('run-video').style.display = 'none';
+                document.getElementById('video-placeholder').style.display = 'flex';
             }
         }
     </script>
