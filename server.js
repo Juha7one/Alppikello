@@ -177,13 +177,14 @@ app.post('/upload', upload.single('video'), (req, res) => {
                 // Deduplicate by URL
                 const exists = runnerEntry.videos.some(v => v.url === videoUrl);
                 if (!exists) {
-                    const videoObj = {
-                        url: videoUrl,
-                        type: req.body.triggerType || 'clip',
-                        triggerTime: parseInt(req.body.triggerTime) || Date.now(),
-                        role: req.body.role || 'unknown',
-                        timestamp: Date.now()
-                    };
+                        const videoObj = {
+                            url: videoUrl,
+                            type: req.body.triggerType || 'clip',
+                            triggerTime: parseInt(req.body.triggerTime) || Date.now(),
+                            videoStartTime: parseInt(req.body.videoCaptureStartTime) || 0,
+                            role: req.body.role || 'unknown',
+                            timestamp: Date.now()
+                        };
                     runnerEntry.videos.push(videoObj);
                     
                     // Update persistent runCard

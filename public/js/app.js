@@ -349,6 +349,7 @@ async function loadRunCard(runId) {
                 const vid = videos[idx];
                 vEl.src = vid.url;
                 vEl.setAttribute('data-trigger-time', vid.triggerTime || startTime);
+                vEl.setAttribute('data-video-start-time', vid.videoStartTime || 0);
                 vEl.setAttribute('data-start-time', startTime);
                 vName.innerText = data.name.toUpperCase();
                 
@@ -370,12 +371,19 @@ async function loadRunCard(runId) {
             };
 
             vEl.ontimeupdate = () => {
-                const tTime = parseInt(vEl.getAttribute('data-trigger-time'));
                 const sTime = parseInt(vEl.getAttribute('data-start-time'));
-                const clipRelRace = (tTime - sTime) - 2000;
-                const raceTimeMs = clipRelRace + (vEl.currentTime * 1000);
+                const vAbsStart = parseInt(vEl.getAttribute('data-video-start-time'));
                 vOverlay.style.opacity = '1';
-                vClock.innerText = (Math.max(0, raceTimeMs) / 1000).toFixed(2);
+
+                if (sTime && vAbsStart && vAbsStart > 0) {
+                    const nowMs = vAbsStart + (vEl.currentTime * 1000);
+                    vClock.innerText = (Math.max(0, nowMs - sTime) / 1000).toFixed(2);
+                } else {
+                    const tTime = parseInt(vEl.getAttribute('data-trigger-time'));
+                    const clipRelRace = (tTime - sTime) - 2000;
+                    const raceTimeMs = clipRelRace + (vEl.currentTime * 1000);
+                    vClock.innerText = (Math.max(0, raceTimeMs) / 1000).toFixed(2);
+                }
             };
 
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };

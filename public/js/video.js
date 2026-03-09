@@ -2,6 +2,7 @@
 
 let pendingRunnerMetadata = null;
 let recordingSafetyTimer = null;
+let videoCaptureStartTime = 0;
 
 function startVideoBuffer(stream) {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') return;
@@ -34,6 +35,7 @@ function startVideoBuffer(stream) {
             }
         };
         mediaRecorder.start(1000);
+        videoCaptureStartTime = Date.now();
 
         if (bufferResetTimer) clearTimeout(bufferResetTimer);
         bufferResetTimer = setTimeout(() => {
@@ -57,7 +59,12 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime 
     // 2. Prevent overlapping captures for same runner in same role
     if (pendingRunnerMetadata && pendingRunnerMetadata.runId === runner.runId) return;
 
-    pendingRunnerMetadata = { ...runner, triggerType, triggerTime: triggerTime || Date.now() };
+    pendingRunnerMetadata = { 
+        ...runner, 
+        triggerType, 
+        triggerTime: triggerTime || Date.now(),
+        videoCaptureStartTime: videoCaptureStartTime 
+    };
     
     console.log(`[VIDEO] Captured trigger for ${runner.name}. Saving dyna-clip (max 20s)...`);
     
@@ -154,6 +161,7 @@ function uploadVideoToServer(blob, runner) {
     formData.append('runnerName', runner.name || 'LASKIJA');
     formData.append('triggerType', runner.triggerType || 'clip');
     formData.append('triggerTime', runner.triggerTime || Date.now());
+    formData.append('videoCaptureStartTime', runner.videoCaptureStartTime || 0);
     formData.append('role', currentRole || 'unknown');
 
     if (!runner.runId) {

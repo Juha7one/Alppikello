@@ -91,13 +91,22 @@ function updateUI() {
 
         if (vEl && vClock && clockVal) {
             vEl.ontimeupdate = () => {
-                const clipStartRelativeToRace = (triggerTime - startTime) - 2000;
-                const currentRaceTimeMs = clipStartRelativeToRace + (vEl.currentTime * 1000);
+                const startTime = parseInt(vEl.getAttribute('data-start-time'));
+                const videoAbsStart = parseInt(vEl.getAttribute('data-video-start-time'));
                 
                 vClock.style.opacity = '1';
-                // Don't show negative time (during 2s pre-buffer of start)
-                const displayMs = Math.max(0, currentRaceTimeMs);
-                clockVal.innerText = (displayMs / 1000).toFixed(2);
+
+                if (startTime && videoAbsStart && videoAbsStart > 0) {
+                    const absNow = videoAbsStart + (vEl.currentTime * 1000);
+                    const raceTime = (absNow - startTime) / 1000;
+                    clockVal.innerText = Math.max(0, raceTime).toFixed(2);
+                } else {
+                    // Legacy fallback
+                    const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
+                    const clipRelRace = (triggerTime - startTime) - 2000;
+                    const curMs = clipRelRace + (vEl.currentTime * 1000);
+                    clockVal.innerText = Math.max(0, (curMs / 1000)).toFixed(2);
+                }
             };
             vEl.onpause = () => vClock.style.opacity = '0.5';
             vEl.onplay = () => vClock.style.opacity = '1';
@@ -227,6 +236,7 @@ function renderValmentajaView() {
                         <video id="vid-el-${safeRunId}" 
                                src="${first.url}" 
                                data-trigger-time="${first.triggerTime || r.startTime}"
+                               data-video-start-time="${first.videoStartTime || 0}"
                                data-start-time="${r.startTime}"
                                controls playsinline 
                                style="width: 100%; height: 100%; object-fit: contain;" 
@@ -433,10 +443,13 @@ function switchClip(runId, index) {
     const badge = player.querySelector('.role-badge');
     const startTime = parseInt(player.getAttribute('data-start-time'));
     
+    const vidStartTime = parseInt(player.getAttribute('data-video-start-time') || 0);
+    
     const clip = videos[index];
     if (vidEl && clip) {
         vidEl.src = clip.url;
         vidEl.setAttribute('data-trigger-time', clip.triggerTime || startTime);
+        vidEl.setAttribute('data-video-start-time', clip.videoStartTime || 0);
         if (badge) badge.innerText = (clip.role || 'VIDEO').toUpperCase();
         player.setAttribute('data-current-index', index);
         
