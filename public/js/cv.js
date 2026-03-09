@@ -27,7 +27,9 @@ function stopCV() {
 
 async function initTriggerCV(roleType) {
     if (cvStream) {
-        stopCV();
+        // If already streaming, just re-attach to new role elements without stopping
+        console.log(`[CV] Re-targeting existing stream to ${roleType}`);
+        await startCV(roleType);
         return;
     }
     await startCV(roleType);
@@ -66,7 +68,10 @@ async function startCV(roleType) {
             status.style.background = "var(--success)";
         }
 
-        startVideoBuffer(cvStream);
+        // ONLY start buffer if not already recording/buffering
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            startVideoBuffer(cvStream);
+        }
         startCVLogic(roleType, video, canvas);
     } catch (err) {
         console.error("Kameravirhe:", err);
