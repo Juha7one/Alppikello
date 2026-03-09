@@ -59,20 +59,29 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime 
     // 2. Prevent overlapping captures for same runner in same role
     if (pendingRunnerMetadata && pendingRunnerMetadata.runId === runner.runId) return;
 
+    // LOCK the role at the moment of capture
+    const captureRole = currentRole || 'unknown';
+
     pendingRunnerMetadata = { 
         ...runner, 
         triggerType, 
         triggerTime: triggerTime || Date.now(),
-        videoCaptureStartTime: videoCaptureStartTime 
+        videoCaptureStartTime: videoCaptureStartTime,
+        captureRole: captureRole
     };
     
-    console.log(`[VIDEO] Captured trigger for ${runner.name}. Saving dyna-clip (max 20s)...`);
+    // 3. Role-based safety timeout
+    let safetyDuration = 20000; // Default (LÄHTÖ, VÄLIAIKA, VIDEO)
+    if (captureRole === 'MAALI') {
+        safetyDuration = 4000; // 4s for finish
+    }
+
+    console.log(`[VIDEO] Captured trigger for ${runner.name} (Role: ${captureRole}). Duration: ${safetyDuration/1000}s`);
     
-    // 3. Safety timeout: 20 seconds (Don't reset if already active for this run)
     if (!recordingSafetyTimer) {
         recordingSafetyTimer = setTimeout(() => {
             stopRecordingForRun(runner.runId);
-        }, 20000);
+        }, safetyDuration);
     }
 }
 
@@ -153,7 +162,8 @@ function uploadVideoToServer(blob, runner) {
     if (!currentSession) return;
 
     const formData = new FormData();
-    const safeRole = (currentRole || 'VIDEO').replace(/[ÄÖ]/g, (m) => m === 'Ä' ? 'A' : 'O').replace(/[^a-zA-Z0-9]/g, '_');
+    const captureRole = runner.captureRole || currentRole || 'VIDEO';
+    const safeRole = captureRole.replace(/[ÄÖ]/g, (m) => m === 'Ä' ? 'A' : 'O').replace(/[^a-zA-Z0-9]/g, '_');
     formData.append('video', blob, `${safeRole}_${runner.name}.mp4`);
     formData.append('sessionId', currentSession ? currentSession.id : '');
     formData.append('runnerId', runner.id || '');
@@ -162,7 +172,7 @@ function uploadVideoToServer(blob, runner) {
     formData.append('triggerType', runner.triggerType || 'clip');
     formData.append('triggerTime', runner.triggerTime || Date.now());
     formData.append('videoCaptureStartTime', runner.videoCaptureStartTime || 0);
-    formData.append('role', currentRole || 'unknown');
+    formData.append('role', captureRole);
 
     if (!runner.runId) {
         console.warn("[VIDEO UPLOAD] Runner runId is missing! Video might not pair correctly.", runner);

@@ -427,8 +427,8 @@ function renderVideoView() {
             <div style="font-size: 10px; opacity: 0.6; margin-top:5px;">${distText}</div>
         `;
     } else {
-        const missing = !startLoc ? "LÄHTÖPISTE" : "KAMERAN GPS";
-        infoEl.innerHTML = `<div style="opacity:0.5; font-size:12px;">ODOTTAA: ${missing}...</div>`;
+        const missing = !startLoc ? "LÄHTÖPISTETTÄ" : "SIJAINTITIETOA";
+        infoEl.innerHTML = `<div style="opacity:0.5; font-size:12px;">ODOTTAA ${missing}...</div>`;
     }
 }
 
