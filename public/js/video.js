@@ -59,10 +59,15 @@ function saveVideoClip(explicitRunner = null) {
     }
 
     pendingRunnerMetadata = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
-    console.log("[VIDEO] Saving clip for:", pendingRunnerMetadata ? pendingRunnerMetadata.name : 'NONE');
     
     if (pendingRunnerMetadata) {
-        mediaRecorder.stop();
+        console.log(`[VIDEO] Triggered for ${pendingRunnerMetadata.name}. Waiting 4s to capture 'after' action...`);
+        // Wait 4 seconds to capture the action AFTER the trigger
+        setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+        }, 4000);
     }
 }
 
@@ -143,14 +148,14 @@ function uploadVideoToServer(blob, runner) {
         })
         .then(data => {
             if (data.success && data.url) {
-                console.log("%c[UPLOAD SUCCESS] Video URL:", "color: #10b981; font-weight: bold", data.url);
+                console.log("[UPLOAD SUCCESS] Video URL:", data.url);
             } else {
-                console.error("%c[UPLOAD ERROR] Server returned error or missing URL:", "color: #ef4444; font-weight: bold", data);
+                console.error("[UPLOAD ERROR] Server returned error or missing URL:", data);
                 showVideoNotification(`VIRHE TALLENNUKSESSA: ${data.error || 'Tuntematon syy'}`);
             }
         })
         .catch(err => {
-            console.error("%c[UPLOAD CRITICAL] Fetch failed:", "color: #ef4444; font-weight: bold", err.message);
+            console.error("[UPLOAD CRITICAL] Fetch failed:", err.message);
         });
 }
 

@@ -203,7 +203,7 @@ function renderValmentajaView() {
             const videoHtml = `
                 <div class="video-container" id="video-placeholder-${safeRunId}" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
                     ${r.videoUrl ? `
-                        <video id="res-video-${safeRunId}" src="${r.videoUrl}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onerror="console.error('Video load failed for ${safeRunId}: ' + this.src); document.getElementById('video-placeholder-${safeRunId}').innerHTML='<div style=\'color:red; font-size:10px;\'>VIDEO VIRHE</div>';"></video>
+                        <video id="res-video-${safeRunId}" src="${r.videoUrl}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onerror="this.parentElement.innerHTML='<div style=\'color:red; font-size:10px; opacity:0.5; text-align:center;\'>VIDEO VIRHE</div>';"></video>
                         <div id="res-clock-${safeRunId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
                             <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${(r.name || 'LASKIJA').toUpperCase()}</div>
                             <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
