@@ -80,10 +80,9 @@ socket.on('timing_update', (data) => {
     } else if (data.type === 'FINISH' || data.type === 'DNF') {
         const runner = data.runner;
         
-        // --- STOP RECORDING FOR THIS RUN IF WE ARE A CAMERA ---
-        if (typeof stopRecordingForRun === 'function') {
-            stopRecordingForRun(runner.runId);
-        }
+        // --- DO NOT STOP IMMEDIATELY ---
+        // Let the video.js safety timers (4s for MAALI, 20s for others) handle the stop.
+        // This ensures the video captures the moment after the finish line.
 
         if (activeRunnerOnCourse && activeRunnerOnCourse.runId === runner.runId) {
             activeRunnerOnCourse = null;

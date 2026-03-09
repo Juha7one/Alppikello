@@ -56,11 +56,13 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime 
     const runner = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
     if (!runner) return;
 
-    // 2. Prevent overlapping captures for same runner in same role
-    if (pendingRunnerMetadata && pendingRunnerMetadata.runId === runner.runId) return;
+    // 2. Prevent overlapping captures for DIFFERENT runners. 
+    // If it's the SAME runner, we allow UPDATING metadata (e.g. from split to finish)
+    // and RESETTING the timer to ensure enough "post-trigger" time.
+    const isSameRun = pendingRunnerMetadata && pendingRunnerMetadata.runId === runner.runId;
 
-    // LOCK the role at the moment of capture
-    const captureRole = currentRole || 'unknown';
+    // LOCK the role at the first capture in this role, but allows updating triggerTime
+    const captureRole = (isSameRun && pendingRunnerMetadata.captureRole) ? pendingRunnerMetadata.captureRole : (currentRole || 'unknown');
 
     pendingRunnerMetadata = { 
         ...runner, 
@@ -76,13 +78,16 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime 
         safetyDuration = 4000; // 4s for finish
     }
 
-    console.log(`[VIDEO] Captured trigger for ${runner.name} (Role: ${captureRole}). Duration: ${safetyDuration/1000}s`);
+    console.log(`[VIDEO] Trigger for ${runner.name} (Role: ${captureRole}). Timer reset to: ${safetyDuration/1000}s`);
     
-    if (!recordingSafetyTimer) {
-        recordingSafetyTimer = setTimeout(() => {
-            stopRecordingForRun(runner.runId);
-        }, safetyDuration);
+    // Always reset/refresh the timer for the same run to ensure post-trigger time
+    if (recordingSafetyTimer) {
+        clearTimeout(recordingSafetyTimer);
     }
+    
+    recordingSafetyTimer = setTimeout(() => {
+        stopRecordingForRun(runner.runId);
+    }, safetyDuration);
 }
 
 function stopRecordingForRun(runId) {
