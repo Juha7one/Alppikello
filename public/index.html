@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ALPPIKELLO - Älykäs Ajanotto</title>
-    <link rel="stylesheet" href="css/style.css?v=2.54.0">
+    <link rel="stylesheet" href="css/style.css?v=2.55.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
@@ -15,10 +15,10 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #1e272e;">
-        <p class="splash-subtitle">Päivitys asennettu:</p>
-        <h1 class="splash-title">ALPINE-EYE</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.54.0</div>
+    <div id="deployment-splash" style="background: #e0f2fe;">
+        <p class="splash-subtitle" style="color: #0369a1;">Päivitys asennettu:</p>
+        <h1 class="splash-title" style="color: #0369a1;">ALPINE-EYE</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #0369a1;">ALPPIKELLO v2.55.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -322,7 +322,7 @@
         <div id="run-card-content" style="display: none;">
             <div class="card" style="padding: 0; overflow: hidden; border-radius: 24px;">
                 <div id="card-video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; display: none; position: relative; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <video id="card-video" controls style="width: 100%; height: 100%; object-fit: contain; display: none;"></video>
+                    <video id="card-video" playsinline controls style="width: 100%; height: 100%; object-fit: contain; display: none;"></video>
                     <div id="card-video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3;">
                         <div style="font-size: 40px; margin-bottom: 10px;">🎬</div>
                         <div style="font-size: 12px; font-weight: 900; letter-spacing: 2px;">VIDEOA KÄSITELLÄÄN TAI SE PUUTTUU</div>
@@ -334,6 +334,8 @@
                             <div id="card-video-clock" style="font-size: 32px; font-weight: 900; font-family: monospace; line-height: 1;">0.00</div>
                         </div>
                     </div>
+                    <!-- Playlist Dots -->
+                    <div id="card-playlist-dots" style="position: absolute; top: 15px; left: 15px; display: flex; gap: 5px; z-index: 20;"></div>
                 </div>
                 <div style="padding: 24px;">
                     <div id="card-session-badge" style="background: var(--success); color: #000; font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-bottom: 8px;">HARJOITUS</div>
@@ -391,7 +393,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.54.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.55.0 | © 2026</p>
     </div>
 
     <!-- Premium Modal Overlay -->
@@ -409,15 +411,15 @@
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/state.js?v=2.54.0"></script>
-    <script src="js/utils.js?v=2.54.0"></script>
-    <script src="js/socket.js?v=2.54.0"></script>
-    <script src="js/video.js?v=2.54.0"></script>
-    <script src="js/cv.js?v=2.54.0"></script>
-    <script src="js/timing.js?v=2.54.0"></script>
-    <script src="js/ui.js?v=2.54.0"></script>
-    <script src="js/rangefinder.js?v=2.54.0"></script>
-    <script src="js/app.js?v=2.54.0"></script>
+    <script src="js/state.js?v=2.55.0"></script>
+    <script src="js/utils.js?v=2.55.0"></script>
+    <script src="js/socket.js?v=2.55.0"></script>
+    <script src="js/video.js?v=2.55.0"></script>
+    <script src="js/cv.js?v=2.55.0"></script>
+    <script src="js/timing.js?v=2.55.0"></script>
+    <script src="js/ui.js?v=2.55.0"></script>
+    <script src="js/rangefinder.js?v=2.55.0"></script>
+    <script src="js/app.js?v=2.55.0"></script>
 </body>
 
 </html>

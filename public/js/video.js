@@ -61,11 +61,12 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime 
     
     console.log(`[VIDEO] Captured trigger for ${runner.name}. Saving dyna-clip (max 20s)...`);
     
-    // 3. Safety timeout: 20 seconds
-    if (recordingSafetyTimer) clearTimeout(recordingSafetyTimer);
-    recordingSafetyTimer = setTimeout(() => {
-        stopRecordingForRun(runner.runId);
-    }, 20000);
+    // 3. Safety timeout: 20 seconds (Don't reset if already active for this run)
+    if (!recordingSafetyTimer) {
+        recordingSafetyTimer = setTimeout(() => {
+            stopRecordingForRun(runner.runId);
+        }, 20000);
+    }
 }
 
 function stopRecordingForRun(runId) {

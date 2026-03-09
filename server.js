@@ -107,9 +107,10 @@ function saveRunCard(runner, session) {
     runCards[runner.runId] = {
         id: runner.runId,
         name: runner.name,
+        startTime: runner.startTime || session.timestamp || Date.now(),
         totalTime: runner.totalTime,
         videoUrl: runner.videoUrl || null,
-        videos: runner.videos || [],
+        videos: (runner.videos || []).sort((a, b) => a.triggerTime - b.triggerTime),
         splits: runner.splits || [],
         sessionName: session.name || "Treeni",
         timestamp: Date.now()
@@ -169,29 +170,31 @@ app.post('/upload', upload.single('video'), (req, res) => {
 
             if (runnerEntry) {
                 console.log(`[UPLOAD SUCCESS] Paired video for ${runnerEntry.name} (Run: ${runnerEntry.runId}) - URL: ${videoUrl}`);
-                runnerEntry.videoUrl = videoUrl; // Latest one for legacy compatibility
+                runnerEntry.videoUrl = videoUrl; 
                 
-                // Initialize videos array if missing
                 if (!runnerEntry.videos) runnerEntry.videos = [];
-                runnerEntry.videos.push({
-                    url: videoUrl,
-                    type: req.body.triggerType || 'clip',
-                    triggerTime: parseInt(req.body.triggerTime) || Date.now(),
-                    role: req.body.role || 'unknown',
-                    timestamp: Date.now()
-                });
-
-                // Ensure runCard also gets updated immediately
-                if (runCards[runnerEntry.runId]) {
-                    runCards[runnerEntry.runId].videoUrl = videoUrl;
-                    if (!runCards[runnerEntry.runId].videos) runCards[runnerEntry.runId].videos = [];
-                    runCards[runnerEntry.runId].videos.push({
+                
+                // Deduplicate by URL
+                const exists = runnerEntry.videos.some(v => v.url === videoUrl);
+                if (!exists) {
+                    const videoObj = {
                         url: videoUrl,
                         type: req.body.triggerType || 'clip',
                         triggerTime: parseInt(req.body.triggerTime) || Date.now(),
                         role: req.body.role || 'unknown',
                         timestamp: Date.now()
-                    });
+                    };
+                    runnerEntry.videos.push(videoObj);
+                    
+                    // Update persistent runCard
+                    if (runCards[runnerEntry.runId]) {
+                        runCards[runnerEntry.runId].videoUrl = videoUrl;
+                        if (!runCards[runnerEntry.runId].videos) runCards[runnerEntry.runId].videos = [];
+                        // Deduplicate runCard as well
+                        if (!runCards[runnerEntry.runId].videos.some(v => v.url === videoUrl)) {
+                            runCards[runnerEntry.runId].videos.push(videoObj);
+                        }
+                    }
                 }
                 
                 const payload = { 
@@ -203,7 +206,6 @@ app.post('/upload', upload.single('video'), (req, res) => {
                     videos: runnerEntry.videos
                 };
                 io.to(sessionId).emit('video_available', payload);
-                io.to(sessionId).emit('device_status_update', { session });
             }
  else {
                 console.warn(`[UPLOAD WARNING] Could not find run for runner ${runnerName} (RID: ${runnerId}, RunID: ${runId}). Video URL: ${videoUrl}`);

@@ -208,7 +208,8 @@ function renderValmentajaView() {
                 </div>`
             ).join('');
 
-            const videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
+            let videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
+            videos = [...videos].sort((a, b) => (a.triggerTime || 0) - (b.triggerTime || 0));
             
             let videoHtml = '';
             if (videos.length > 0) {
@@ -334,7 +335,8 @@ function renderAthleteView() {
 
     listEl.innerHTML = myResults.length ? myResults.map((r, i) => {
         const safeRunId = r.runId || `athlete-run-${i}`;
-        const videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
+        let videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
+        videos = [...videos].sort((a, b) => (a.triggerTime || 0) - (b.triggerTime || 0));
         const videoDataJson = JSON.stringify(videos).replace(/"/g, '&quot;');
         
         let videoHtml = '';

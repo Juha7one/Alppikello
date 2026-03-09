@@ -290,9 +290,9 @@
             document.getElementById('session-name').innerText = runData.sessionName.toUpperCase();
             document.getElementById('run-date').innerText = new Date(runData.timestamp).toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
             
-            playlist = runData.videos || [];
+            playlist = (runData.videos || []).sort((a, b) => (a.triggerTime || 0) - (b.triggerTime || 0));
             if (playlist.length === 0 && runData.videoUrl) {
-                playlist = [{ url: runData.videoUrl, role: 'video' }];
+                playlist = [{ url: runData.videoUrl, role: 'video', triggerTime: (runData.startTime || runData.timestamp) + (runData.totalTime || 0) }];
             }
 
             const video = document.getElementById('run-video');

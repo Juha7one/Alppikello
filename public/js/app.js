@@ -335,42 +335,55 @@ async function loadRunCard(runId) {
 
         vCont.style.display = 'flex'; // ALWAYS show container
 
-        const videos = data.videos || (data.videoUrl ? [{ url: data.videoUrl, role: 'video', triggerTime: data.startTime + data.totalTime }] : []);
+        let videos = (data.videos || []).sort((a, b) => (a.triggerTime || 0) - (b.triggerTime || 0));
+        if (videos.length === 0 && data.videoUrl) {
+            videos = [{ url: data.videoUrl, role: 'video', triggerTime: (data.startTime || data.timestamp) + (data.totalTime || 0) }];
+        }
         
+        const startTime = parseInt(data.startTime) || parseInt(data.timestamp) || Date.now();
+
         if (videos.length > 0) {
-            const first = videos[0];
-            vEl.src = first.url;
-            vEl.setAttribute('data-trigger-time', first.triggerTime || data.startTime);
-            vEl.setAttribute('data-start-time', data.startTime);
-            vEl.style.display = 'block';
-            vPlaceholder.style.display = 'none';
-            vName.innerText = data.name.toUpperCase();
-            
-            // Add onended for playlist support
-            vEl.onended = () => {
-                // Find next video in 'videos'
-                const currentSrc = vEl.src;
-                const currentIndex = videos.findIndex(v => v.url === currentSrc);
-                if (currentIndex !== -1 && currentIndex < videos.length - 1) {
-                    const next = videos[currentIndex + 1];
-                    vEl.src = next.url;
-                    vEl.setAttribute('data-trigger-time', next.triggerTime || data.startTime);
-                    vEl.play().catch(() => {});
+            let currentIdx = 0;
+            const loadClip = (idx) => {
+                currentIdx = idx;
+                const vid = videos[idx];
+                vEl.src = vid.url;
+                vEl.setAttribute('data-trigger-time', vid.triggerTime || startTime);
+                vEl.setAttribute('data-start-time', startTime);
+                vName.innerText = data.name.toUpperCase();
+                
+                // Update dots if container exists
+                const dots = document.getElementById('card-playlist-dots');
+                if (dots) {
+                    dots.innerHTML = videos.map((_, i) => 
+                        `<div style="width:20px; height:4px; background:${i === idx ? 'var(--accent)' : 'rgba(255,255,255,0.2)'}; border-radius:2px; cursor:pointer;" onclick="window.cardPlayerLoad(${i})"></div>`
+                    ).join('');
                 }
+
+                vEl.play().catch(() => {});
             };
 
-            // Clock logic (already handled by updateUI's querySelectorAll but reinforcing for standalone)
+            window.cardPlayerLoad = loadClip; // For dot clicks
+            
+            vEl.onended = () => {
+                if (currentIdx < videos.length - 1) loadClip(currentIdx + 1);
+            };
+
             vEl.ontimeupdate = () => {
-                const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
-                const startTime = parseInt(vEl.getAttribute('data-start-time'));
-                const clipStartRelativeToRace = (triggerTime - startTime) - 2000;
-                const currentRaceTimeMs = clipStartRelativeToRace + (vEl.currentTime * 1000);
+                const tTime = parseInt(vEl.getAttribute('data-trigger-time'));
+                const sTime = parseInt(vEl.getAttribute('data-start-time'));
+                const clipRelRace = (tTime - sTime) - 2000;
+                const raceTimeMs = clipRelRace + (vEl.currentTime * 1000);
                 vOverlay.style.opacity = '1';
-                vClock.innerText = (Math.max(0, currentRaceTimeMs) / 1000).toFixed(2);
+                vClock.innerText = (Math.max(0, raceTimeMs) / 1000).toFixed(2);
             };
 
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };
             vEl.onpause = () => { vOverlay.style.opacity = '0.5'; };
+            
+            vEl.style.display = 'block';
+            vPlaceholder.style.display = 'none';
+            loadClip(0);
         } else {
             vEl.style.display = 'none';
             vPlaceholder.style.display = 'flex';
