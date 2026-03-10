@@ -539,16 +539,17 @@ async function openArchive(filename) {
 function generateQR(sid) {
     const url = `${window.location.origin}${window.location.pathname}?s=${sid}`;
     
-    // Large Modal QR
+    // Large Modal QR (Fixed and simplified)
     const canvasLarge = document.getElementById('session-qr-large');
     if (canvasLarge && typeof QRCode !== 'undefined') {
-        QRCode.toCanvas(canvasLarge, url, { width: 300, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
-    }
-
-    // Small Thumbnail QR on Coach Card
-    const canvasSmall = document.getElementById('session-qr-small');
-    if (canvasSmall && typeof QRCode !== 'undefined') {
-        QRCode.toCanvas(canvasSmall, url, { width: 80, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
+        QRCode.toCanvas(canvasLarge, url, { 
+            width: 300, 
+            margin: 2, 
+            color: { dark: '#000000', light: '#ffffff' } 
+        }, function (error) {
+            if (error) console.error('[QR] Error generating QR:', error);
+            else console.log('[QR] Generated for session:', sid);
+        });
     }
 }
 

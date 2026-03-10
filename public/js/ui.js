@@ -117,7 +117,6 @@ function updateUILayout() {
 
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') {
         renderValmentajaView();
-        if (typeof generateQR === 'function') generateQR(currentSession.id);
     }
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();

@@ -18,7 +18,7 @@
     <div id="deployment-splash" style="background: #312e81;">
         <p class="splash-subtitle" style="color: #fff;">Päivitys asennettu:</p>
         <h1 class="splash-title" style="color: #fff;">STORM PEAK</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.64.1</div>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.65.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -90,9 +90,9 @@
             </div>
 
             <div id="manual-join-section" style="border-top: 2px solid rgba(255,255,255,0.1); padding-top: 30px; margin-top: 40px;">
-                <p style="font-size: 12px; font-weight: 900; color: #fff; margin-bottom: 15px; text-transform: uppercase;">Tai syötä koodi manuaalisesti:</p>
+                <p style="font-size: 12px; font-weight: 900; color: #fff; margin-bottom: 15px; text-transform: uppercase;">Koodi:</p>
                 <input type="text" id="input-session-id" class="premium-input" placeholder="XYZ123" autocomplete="off" style="text-transform: uppercase; font-size: 32px; height: 80px; text-align: center; letter-spacing: 5px; margin-bottom: 15px; background: #fff; color: #000; font-weight: 900;">
-                <button class="btn btn-primary" onclick="joinSession()" style="height: 70px; font-size: 20px;">LIITY KOODILLA</button>
+                <button class="btn btn-primary" onclick="joinSession()" style="height: 70px; font-size: 20px;">LIITY</button>
             </div>
 
             <div style="margin-top: 60px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; width: 100%;">
@@ -120,20 +120,15 @@
     <div id="view-valmentaja" class="view container">
         <!-- High-Contrast Session Control Card -->
         <div id="coach-session-card" class="card" style="background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); padding: 25px; margin-bottom: 35px; border-radius: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="flex: 1;">
-                    <h1 id="coach-session-name" style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; color: var(--accent);">TREENI</h1>
-                    <div id="coach-session-code-display" style="font-size: 44px; font-weight: 900; color: #fff; line-height: 1; margin: 12px 0; font-family: 'Inter', sans-serif;">------</div>
-                    <div id="s3-status-badge" style="display:inline-block; font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3 POIS</div>
-                </div>
-                <div id="coach-qr-thumb" onclick="showQRModal()" style="width: 90px; height: 90px; background: #fff; border-radius: 16px; padding: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                    <canvas id="session-qr-small" style="width: 80px !important; height: 80px !important;"></canvas>
-                </div>
+            <div style="text-align: left;">
+                <h1 id="coach-session-name" style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; color: var(--accent);">TREENI</h1>
+                <div id="coach-session-code-display" style="font-size: 44px; font-weight: 900; color: #fff; line-height: 1; margin: 12px 0; font-family: 'Inter', sans-serif;">------</div>
+                <div id="s3-status-badge" style="display:inline-block; font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3 POIS</div>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px;">
-                <button class="btn btn-primary" onclick="shareSession()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800;">JAA LINKKI 🔗</button>
-                <button class="btn btn-outline" onclick="showQRModal()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800; border-color: #fff; color: #fff; border-width: 2px;">JAA QR 📲</button>
+                <button class="btn btn-primary" onclick="shareSession()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800;">JAA LINKKI</button>
+                <button class="btn btn-outline" onclick="showQRModal()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800; border-color: #fff; color: #fff; border-width: 2px;">JAA QR</button>
             </div>
         </div>
 
@@ -402,7 +397,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.64.1 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.65.0 | © 2026</p>
     </div>
 
     <!-- QR Modal -->
@@ -433,15 +428,15 @@
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="js/state.js?v=2.64.1"></script>
-    <script src="js/utils.js?v=2.64.1"></script>
-    <script src="js/socket.js?v=2.64.1"></script>
-    <script src="js/video.js?v=2.64.1"></script>
-    <script src="js/cv.js?v=2.64.1"></script>
-    <script src="js/timing.js?v=2.64.1"></script>
-    <script src="js/ui.js?v=2.64.1"></script>
-    <script src="js/rangefinder.js?v=2.64.1"></script>
-    <script src="js/app.js?v=2.64.1"></script>
+    <script src="js/state.js?v=2.65.0"></script>
+    <script src="js/utils.js?v=2.65.0"></script>
+    <script src="js/socket.js?v=2.65.0"></script>
+    <script src="js/video.js?v=2.65.0"></script>
+    <script src="js/cv.js?v=2.65.0"></script>
+    <script src="js/timing.js?v=2.65.0"></script>
+    <script src="js/ui.js?v=2.65.0"></script>
+    <script src="js/rangefinder.js?v=2.65.0"></script>
+    <script src="js/app.js?v=2.65.0"></script>
 </body>
 
 </html>
