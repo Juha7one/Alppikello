@@ -75,6 +75,16 @@ function joinNearbySession(sid) {
     }
 }
 
+function toggleManualJoin() {
+    const manualCont = document.getElementById('manual-join-container');
+    const btn = document.getElementById('btn-toggle-manual');
+    if (manualCont) {
+        const isHidden = manualCont.style.display === 'none';
+        manualCont.style.display = isHidden ? 'block' : 'none';
+        if (btn) btn.innerText = isHidden ? "PIILOTA KOODI" : "SYÖTÄ KOODI MANUAALISESTI";
+    }
+}
+
 function handleSessionJoin(session, role) {
     currentSession = session;
     currentRole = role;
@@ -177,19 +187,27 @@ function showOnboardingStep(step) {
         // Fetch fresh nearby sessions
         if (socket && socket.connected) socket.emit('get_nearby_sessions', { lat: userLocation?.lat, lon: userLocation?.lon });
 
+        // SMART DEDUPLICATION:
+        // Hide manual join by default if we have context (Nearby or Continue)
+        const manualCont = document.getElementById('manual-join-container');
         const contCont = document.getElementById('continue-session-container');
-        if (contCont) {
-            if (currentSession) {
+        
+        if (currentSession) {
+            if (contCont) {
                 contCont.style.display = 'block';
                 contCont.innerHTML = `
-                    <button class="btn btn-outline" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; border-color: var(--success); color: var(--success); margin-bottom: 25px; background: rgba(34, 197, 94, 0.05);">
+                    <button class="btn btn-outline" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; border-color: var(--success); color: var(--success); margin-bottom: 25px; background: rgba(34, 197, 94, 0.05); height: 80px;">
                         JATKA HARJOITUKSESSA:<br>
                         <span style="font-size: 16px; font-weight: 900;">${currentSession.name.toUpperCase()}</span>
                     </button>
                 `;
-            } else {
-                contCont.style.display = 'none';
             }
+            if (manualCont) manualCont.style.display = 'none';
+            const toggle = document.getElementById('btn-toggle-manual');
+            if (toggle) toggle.style.display = 'block';
+        } else {
+            if (contCont) contCont.style.display = 'none';
+            if (manualCont) manualCont.style.display = 'block';
         }
     }
 }

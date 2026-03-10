@@ -109,11 +109,14 @@ socket.on('nearby_sessions_found', (sessions) => {
     if (sessions && sessions.length > 0) {
         container.style.display = 'block';
         
-        // DEDUPLICATION: Hide "Continue in current" if it's already in "Nearby"
+        // DEDUPLICATION: If Nearby found, hide other options
         const continueCont = document.getElementById('continue-session-container');
-        if (continueCont && currentSession) {
-            const isInsideNearby = sessions.some(s => s.id === currentSession.id);
-            if (isInsideNearby) continueCont.style.display = 'none';
+        const manualCont = document.getElementById('manual-join-container');
+        if (continueCont) continueCont.style.display = 'none';
+        if (manualCont) {
+             manualCont.style.display = 'none';
+             const toggleBtn = document.getElementById('btn-toggle-manual');
+             if (toggleBtn) toggleBtn.style.display = 'block';
         }
 
         listEl.innerHTML = sessions.map(s => `

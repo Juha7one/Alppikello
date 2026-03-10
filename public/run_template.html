@@ -181,24 +181,26 @@
 
         .clock-overlay {
             position: absolute;
-            bottom: 60px;
-            left: 20px;
+            bottom: 15px;
+            right: 15px;
             pointer-events: none;
-            background: rgba(0,0,0,0.7);
-            padding: 8px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(8px);
+            background: rgba(0,0,0,0.8);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
             transition: opacity 0.3s;
             opacity: 0;
+            text-align: right;
             z-index: 10;
         }
 
         .clock-val {
-            font-size: 28px;
+            font-size: 16px;
             font-weight: 900;
             font-family: monospace;
-            line-height: 1.2;
+            line-height: 1;
+            color: #fff;
         }
 
         .playlist-controls {
@@ -239,7 +241,7 @@
             <div id="role-badge" class="role-badge" style="display: none;">VIDEO</div>
             
             <div id="clock-overlay" class="clock-overlay">
-                <div style="font-size: 10px; font-weight: 900; color: var(--accent); letter-spacing: 1px; margin-bottom: 2px;" id="clock-name">LASKIJA</div>
+                <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;" id="clock-name">LASKIJA</div>
                 <div class="clock-val" id="clock-time">0.00</div>
             </div>
 

@@ -83,8 +83,8 @@ function selectExistingName(name) {
     }
 }
 
-function addAthleteManually() {
-    const input = document.getElementById('input-manual-athlete');
+function addAthleteManually(inputId = 'input-manual-athlete') {
+    const input = document.getElementById(inputId);
     const name = input ? input.value.trim() : "";
     if (!currentSession || !name) return alert("Anna urheilijan nimi!");
 

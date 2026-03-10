@@ -283,7 +283,6 @@ function renderValmentajaView() {
                         <div style="text-align: center; opacity: 0.5;">
                             <div style="font-size: 24px; margin-bottom: 8px;">🎬</div>
                             <div style="font-size: 11px; font-weight: 900; letter-spacing: 1px;">ODOTETAAN VIDEOTA...</div>
-                            <div style="font-size: 9px; margin-top: 4px; opacity: 0.6;">(AUTOMAATTINEN PARITUS)</div>
                         </div>
                     </div>
                 `;
