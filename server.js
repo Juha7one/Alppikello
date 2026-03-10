@@ -328,10 +328,20 @@ io.on('connection', (socket) => {
     // --- Onboarding & Session Management ---
 
     socket.on('create_session', (data) => {
-        const sessionId = generateHumanId();
+        let sessionId = data.id || generateHumanId();
+        
+        // Handle collisions (rare with time-based IDs but good to have)
+        if (sessions[sessionId]) {
+            let count = 1;
+            while (sessions[`${sessionId}-${count}`]) {
+                count++;
+            }
+            sessionId = `${sessionId}-${count}`;
+        }
+
         sessions[sessionId] = {
             id: sessionId,
-            name: data.name || "Treeni",
+            name: data.name || sessionId,
             startTime: Date.now(),
             adminId: socket.id,
             devices: {},

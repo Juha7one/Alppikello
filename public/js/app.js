@@ -26,12 +26,7 @@ async function createSession() {
         btn.innerText = "LUODAAN...";
     }
 
-    const days = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'];
-    const now = new Date();
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const timeStr = `${days[now.getDay()]} ${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()} klo ${now.getHours()}:${minutes}`;
-    let sessionName = `Treeni ${timeStr}`;
-
+    let placeStr = "TREENI";
     let initialLocation = null;
     if ("geolocation" in navigator) {
         try {
@@ -39,12 +34,21 @@ async function createSession() {
             initialLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
             const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
             const data = await resp.json();
-            const place = data.address.suburb || data.address.city || data.address.town;
-            if (place) sessionName = `${place} ${timeStr}`;
-        } catch (e) { }
+            const place = data.address.suburb || data.address.city || data.address.town || data.address.municipality || data.address.county;
+            if (place) placeStr = place.replace(/[^äöåÄÖÅa-zA-Z]/g, '').substring(0, 5).toUpperCase();
+        } catch (e) {
+            console.warn("[LOC] Could not resolve place name:", e);
+        }
     }
+
+    const d = new Date();
+    const dateStr = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getFullYear()).substring(2)}`;
+    const timeStr = `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
+    const generatedId = `${placeStr}-${dateStr}-${timeStr}`;
+
     socket.emit('create_session', { 
-        name: sessionName, 
+        id: generatedId,
+        name: generatedId, // Name and code are now the same
         creatorName: userName,
         location: initialLocation 
     });
