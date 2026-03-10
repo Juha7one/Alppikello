@@ -288,7 +288,6 @@ function renderValmentajaView() {
                 <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff; padding-bottom: 25px; position: relative;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px;">
                         <div>
-                            <span style="opacity:0.3; font-size: 11px;">#${results.length - i} • ${startTimeStr}</span>
                             <div style="font-weight: 900; font-size: 24px; margin: 4px 0; letter-spacing: -0.5px;">
                                 ${rank ? `${rank}. ` : ''}${r.name.toUpperCase()} ${isDNF ? 'DNF' : formatDuration(r.totalTime)}
                                 <span class="result-gap" style="font-size: 18px; color: var(--accent); opacity: 1;">${gap}</span>
@@ -401,7 +400,6 @@ function renderAthleteView() {
             <div class="card" style="margin-bottom:15px; padding-bottom: 25px; position: relative;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
                     <div style="text-align: left;">
-                        <span style="font-weight:800; opacity: 0.5;">LASKU #${myResults.length - i}</span>
                         <div style="font-weight: 900; font-size: 24px; margin: 4px 0; letter-spacing: -0.5px;">
                             ${rank ? `${rank}. ` : ''}${userName.toUpperCase()} ${isDNF ? 'DNF' : formatDuration(r.totalTime)}
                             <span class="result-gap" style="font-size: 18px; color: var(--accent); opacity: 1;">${gap}</span>
