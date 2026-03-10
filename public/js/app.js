@@ -182,8 +182,8 @@ function showOnboardingStep(step) {
                 contCont.style.display = 'block';
                 contCont.innerHTML = `
                     <button class="btn btn-outline" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; border-color: var(--success); color: var(--success); margin-bottom: 25px; background: rgba(34, 197, 94, 0.05);">
-                        JATKA NYKYISESSÄ:<br>
-                        <span style="font-size: 18px; font-weight: 900;">${currentSession.name.toUpperCase()}</span>
+                        JATKA HARJOITUKSESSA:<br>
+                        <span style="font-size: 16px; font-weight: 900;">${currentSession.name.toUpperCase()}</span>
                     </button>
                 `;
             } else {
@@ -543,18 +543,24 @@ async function openArchive(filename) {
 function generateQR(sid) {
     const url = `${window.location.origin}${window.location.pathname}?s=${sid}`;
     
-    // Large Modal QR (Fixed and simplified)
-    const canvasLarge = document.getElementById('session-qr-large');
-    if (canvasLarge && typeof QRCode !== 'undefined') {
-        QRCode.toCanvas(canvasLarge, url, { 
-            width: 300, 
-            margin: 2, 
-            color: { dark: '#000000', light: '#ffffff' } 
-        }, function (error) {
-            if (error) console.error('[QR] Error generating QR:', error);
-            else console.log('[QR] Generated for session:', sid);
-        });
-    }
+    // Large Modal QR (Added safety timeout for better reliability)
+    setTimeout(() => {
+        const canvasLarge = document.getElementById('session-qr-large');
+        if (canvasLarge && typeof QRCode !== 'undefined') {
+            QRCode.toCanvas(canvasLarge, url, { 
+                width: 300, 
+                margin: 2, 
+                color: { dark: '#000000', light: '#ffffff' } 
+            }, function (error) {
+                if (error) console.error('[QR] Error generating QR:', error);
+                else console.log('[QR] Generated for session:', sid);
+            });
+        } else if (!canvasLarge) {
+            console.error('[QR] session-qr-large canvas not found!');
+        } else {
+            console.error('[QR] QRCode library not found!');
+        }
+    }, 150);
 }
 
 function showQRModal() {

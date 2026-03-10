@@ -71,8 +71,6 @@ function updateUILayout() {
     // 1. Session name and code in the new card
     const sNameEl = document.getElementById('coach-session-name');
     if (sNameEl) sNameEl.innerText = currentSession.name.toUpperCase();
-    const sCodeEl = document.getElementById('coach-session-code-display');
-    if (sCodeEl) sCodeEl.innerText = currentSession.id;
 
     ['start', 'finish', 'lahettaja', 'lahto', 'split', 'athlete'].forEach(id => {
         const el = document.getElementById(`${id}-session-name`);
@@ -93,14 +91,14 @@ function updateUILayout() {
     const s3ActiveNow = !!(s3Active);
     const coachS3Resource = document.getElementById('s3-status-badge');
     if (coachS3Resource) {
-        coachS3Resource.innerText = s3ActiveNow ? "S3: PILVITALLENNUS AKTIIVINEN ✅" : "S3: PAIKALLINEN TALLENNUS (VÄLIAIKAINEN) ⚠️";
-        coachS3Resource.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
-        coachS3Resource.style.borderColor = s3ActiveNow ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)";
+        coachS3Resource.innerText = s3ActiveNow ? "S3: OK" : "S3: VIRHE";
+        coachS3Resource.style.color = s3ActiveNow ? "var(--success)" : "var(--danger)";
+        coachS3Resource.style.borderColor = s3ActiveNow ? "var(--success)" : "var(--danger)";
     }
     const videoS3Resource = document.getElementById('video-s3-status');
     if (videoS3Resource) {
-        videoS3Resource.innerText = s3ActiveNow ? "S3: PILVITALLENNUS ✅" : "S3: EI KÄYTÖSSÄ ⚠️";
-        videoS3Resource.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
+        videoS3Resource.innerText = s3ActiveNow ? 'S3: OK' : 'S3: VIRHE';
+        videoS3Resource.style.color = s3ActiveNow ? 'var(--success)' : 'var(--danger)';
     }
 
     // 4. Role Badges

@@ -106,11 +106,19 @@ socket.on('nearby_sessions_found', (sessions) => {
 
     if (sessions && sessions.length > 0) {
         container.style.display = 'block';
+        
+        // DEDUPLICATION: Hide "Continue in current" if it's already in "Nearby"
+        const continueCont = document.getElementById('continue-session-container');
+        if (continueCont && currentSession) {
+            const isInsideNearby = sessions.some(s => s.id === currentSession.id);
+            if (isInsideNearby) continueCont.style.display = 'none';
+        }
+
         listEl.innerHTML = sessions.map(s => `
             <div class="card" onclick="joinNearbySession('${s.id}')" style="padding: 16px; margin: 0 0 10px 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.1); border-color: var(--accent);">
                 <div>
                     <div style="font-weight: 800; font-size: 16px;">${s.name.toUpperCase()}</div>
-                    <div style="font-size: 11px; opacity: 0.6; font-weight: 700;">KOODI: ${s.id} • ${s.athleteCount} LASKIJAA</div>
+                    <div style="font-size: 11px; opacity: 0.6; font-weight: 700;">${s.athleteCount} LASKIJAA</div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-weight: 900; color: var(--accent); font-size: 14px;">${s.distance} km</div>
