@@ -30,7 +30,8 @@ async function createSession() {
     let initialLocation = null;
     if ("geolocation" in navigator) {
         try {
-            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 3000 }));
+            // Increased timeout for slow mobile GPS
+            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true }));
             initialLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
             const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
             const data = await resp.json();
@@ -545,40 +546,47 @@ function generateQR(sid) {
     if (!sid) return console.error("[QR] No session ID provided");
     const url = `${window.location.origin}${window.location.pathname}?s=${sid}`;
     
-    // Safety delay to ensure modal is rendered and canvas is accessible
     setTimeout(() => {
         const canvas = document.getElementById('session-qr-large');
-        if (canvas && typeof QRCode !== 'undefined') {
-            QRCode.toCanvas(canvas, url, { 
+        const qrLib = typeof QRCode !== 'undefined' ? QRCode : (window.QRCode || null);
+        
+        if (canvas && qrLib) {
+            qrLib.toCanvas(canvas, url, { 
                 width: 300, 
                 margin: 2, 
                 color: { dark: '#000000', light: '#ffffff' } 
             }, function (error) {
                 if (error) {
                     console.error('[QR] Lib error:', error);
-                    // Fallback visual alert if canvas render fails
-                    canvas.parentElement.innerHTML = `<div style="color:#000; font-weight:900; padding:20px;">QR VIRHE<br><span style="font-size:10px; font-weight:400;">Käytä linkkiä tai koodia</span></div>`;
+                    canvas.parentElement.innerHTML = `<div style="color:#000; font-weight:900; padding:20px;">QR VIRHE</div>`;
                 } else {
                     console.log('[QR] Generated successfully for:', sid);
                 }
             });
         } else {
-            console.error('[QR] Missing canvas or library:', { canvas: !!canvas, lib: typeof QRCode });
+            const errStr = `[QR] FAIL: canvas=${!!canvas} lib=${typeof qrLib}`;
+            console.error(errStr);
+            if (canvas) canvas.parentElement.innerHTML = `<div style="color:#000; padding:20px;">${errStr}</div>`;
         }
-    }, 250);
+    }, 400); // Slightly longer delay for safer modal rendering
 }
 
 function showQRModal() {
     const modal = document.getElementById('qr-modal');
     if (modal) {
         modal.style.display = 'flex';
+        // Force a reflow for transition if needed, then add active
+        setTimeout(() => modal.classList.add('active'), 10);
         if (currentSession) generateQR(currentSession.id);
     }
 }
 
 function hideQRModal() {
     const modal = document.getElementById('qr-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
 }
 
 window.showQRModal = showQRModal;
