@@ -326,6 +326,31 @@ async function shareSession() {
     }
 }
 
+async function shareArchive(filename) {
+    if (isSharing) return;
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/archive/${filename.replace('.json', '')}`;
+    
+    if (navigator.share) {
+        isSharing = true;
+        try {
+            await navigator.share({
+                title: 'Alppikello - Harjoituksen Tulokset',
+                text: 'Katso harjoituksen tulokset täältä!',
+                url: url
+            });
+        } catch (e) {
+            if (e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+                console.warn("[SHARE] Archive share failed:", e);
+            }
+        } finally {
+            isSharing = false;
+        }
+    } else {
+        copyToClipboard(url);
+    }
+}
+
 function checkDeepLink() {
     const params = new URLSearchParams(window.location.search);
     
@@ -568,6 +593,13 @@ async function openArchive(filename) {
             `;
         }).join('');
 
+        // Add Share Entire Session Button at the bottom
+        resultsList.innerHTML += `
+            <div style="margin: 40px 0 20px 0; border-top: 2px solid rgba(255,255,255,0.05); padding-top: 30px;">
+                <button class="btn btn-primary" onclick="shareArchive('${filename}')" style="width: 100%; height: 80px; font-size: 20px;">JAA KOKO HARJOITUS 🔗</button>
+            </div>
+        `;
+
         // Attach clock logic to archive videos
         session.results.forEach(r => {
             const vEl = document.getElementById(`arc-video-${r.runId}`);
@@ -576,8 +608,8 @@ async function openArchive(filename) {
                 const clockVal = vClock.querySelector('.clock-val');
                 vEl.ontimeupdate = () => {
                     vClock.style.opacity = '1';
-                    const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime);
-                    if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2);
+                    const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime || 999999);
+                    if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2).replace('.', ',');
                 };
                 vEl.onpause = () => vClock.style.opacity = '0.5';
                 vEl.onplay = () => vClock.style.opacity = '1';

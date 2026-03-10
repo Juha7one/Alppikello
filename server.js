@@ -285,18 +285,36 @@ app.get(['/run/:runId', '/public/run/:runId'], (req, res) => {
                 return res.status(500).send('Palvelinvirhe tiedostoa luettaessa.');
             }
             
-            const duration = (run.totalTime / 1000).toFixed(2);
-            const displayData = {
-                ...run,
-                totalTime: duration + 's'
-            };
-
-            const result = data.replace('{{RUN_DATA}}', JSON.stringify(displayData));
+            const result = data.replace('{{RUN_DATA}}', JSON.stringify(run));
             res.send(result);
         });
     } catch (err) {
         console.error("[CRITICAL ERROR] /run route crashed:", err);
         res.status(500).send("Sisäinen palvelinvirhe.");
+    }
+});
+
+app.get('/archive/:filename', (req, res) => {
+    try {
+        const filename = req.params.filename;
+        const filePath = path.join(archiveDir, filename.endsWith('.json') ? filename : filename + '.json');
+        
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).send('<!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:#fff;"><h1>404 - ARKISTOA EI LÖYDY</h1><p>Tilaa vievä tai vanhentunut linkki.</p><a href="/" style="color:#3b82f6;">Takaisin pääsivulle</a></body></html>');
+        }
+
+        const templatePath = path.join(__dirname, 'public', 'archive_template.html');
+        fs.readFile(templatePath, 'utf8', (err, templateData) => {
+            if (err) return res.status(500).send("Virhe luettaessa pohjaa.");
+            
+            fs.readFile(filePath, 'utf8', (err, archiveData) => {
+                if (err) return res.status(500).send("Virhe luettaessa arkistoa.");
+                const result = templateData.replace('{{SESSION_DATA}}', archiveData);
+                res.send(result);
+            });
+        });
+    } catch (err) {
+        res.status(500).send("Palvelinvirhe.");
     }
 });
 // --- Automatic Housekeeping ---
