@@ -175,6 +175,7 @@ function renderValmentajaView() {
     // SMART RENDER: Only update DOM if the structural data has actually changed
     // This prevents video elements from being destroyed and recreated 10x per second
     const currentHash = JSON.stringify({
+        role: currentRole,
         rCount: results.length,
         ocCount: onCourse.length,
         qCount: queue.length,
