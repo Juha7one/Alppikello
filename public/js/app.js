@@ -385,14 +385,66 @@ async function loadRunCard(runId) {
         
         const data = await resp.json();
         
+        // NEW REDESIGN context: Use sessionResults if available to calculate labels
+        const sessionResults = data.sessionResults || [];
+        const validResults = [...sessionResults]
+            .filter(r => r.totalTime > 0 && r.status !== 'DNF')
+            .sort((a,b) => a.totalTime - b.totalTime);
+        const bestTime = validResults.length > 0 ? validResults[0].totalTime : 0;
+        const isDNF = data.status === 'DNF';
+        const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === data.id) + 1 || null);
+        
+        // Personal best in this session
+        const myRuns = sessionResults.filter(r => r.name === data.name && r.totalTime > 0);
+        const personalBestTime = myRuns.length > 0 ? Math.min(...myRuns.map(r => r.totalTime)) : (data.totalTime || 0);
+        const isPersonalBest = (data.totalTime > 0 && data.totalTime <= personalBestTime);
+
+        let label = "Laskuaika:";
+        let gapHtml = "";
+        let timeVal = isDNF ? 'DNF' : formatDuration(data.totalTime);
+
+        if (!isDNF) {
+            if (rank === 1) {
+                label = "Paras aika:";
+                if (validResults.length > 1) {
+                    const lead = validResults[1].totalTime - validResults[0].totalTime;
+                    gapHtml = `<span style="color: var(--success); font-size: 16px; font-weight: 700; margin-left: 8px;">–${formatDuration(lead)}</span>`;
+                }
+            } else if (rank === 2) {
+                label = "2. paras aika:";
+                const gap = data.totalTime - bestTime;
+                gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            } else if (rank === 3) {
+                label = "3. paras aika:";
+                const gap = data.totalTime - bestTime;
+                gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            } else if (isPersonalBest) {
+                label = "Paras oma aika:";
+                const gap = data.totalTime - bestTime;
+                gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            } else {
+                const gap = data.totalTime - bestTime;
+                gapHtml = `<span style="font-size: 16px; opacity: 0.5; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            }
+        }
+
         // Populate UI
-        document.getElementById('card-runner-name').innerText = data.name.toUpperCase();
+        document.getElementById('card-runner-name').innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">${data.name.toUpperCase()}, #${data.runNumber || '?'}</div>
+                <div style="text-align: right;">
+                    <div style="font-size: 11px; font-weight: 800; opacity: 0.5; letter-spacing: 0.5px; text-transform: uppercase;">${label}</div>
+                    <div style="font-size: 24px; font-weight: 900;">${timeVal}${gapHtml}</div>
+                </div>
+            </div>`;
         document.getElementById('card-session-badge').innerText = (data.sessionName || "Harkat").toUpperCase();
         
         const date = new Date(data.timestamp);
         document.getElementById('card-run-date').innerText = date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
         
-        document.getElementById('card-total-time').innerText = formatDuration(data.totalTime);
+        // Hide standard time-box if we used the header above
+        const standardTimeBox = document.getElementById('card-total-time-box');
+        if (standardTimeBox) standardTimeBox.style.display = 'none';
         
         // Splits
         const splitsEl = document.getElementById('card-splits');
@@ -474,6 +526,7 @@ async function loadRunCard(runId) {
                     raceTimeSec = Math.min(raceTimeSec, officialTotalMs / 1000);
                 }
                 vClock.innerText = formatSeconds(raceTimeSec);
+                vClock.parentElement.querySelector('.role-badge').innerText = (videos[currentIdx].role || 'VIDEO').toUpperCase();
             };
 
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };

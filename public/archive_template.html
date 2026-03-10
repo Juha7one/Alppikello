@@ -276,8 +276,23 @@
             const date = new Date(session.archivedAt || session.timestamp);
             document.getElementById('session-date').innerText = date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 
-            const listEl = document.getElementById('results-list');
-            
+            const validResults = [...session.results]
+                .filter(r => r.totalTime > 0 && r.status !== 'DNF')
+                .sort((a,b) => a.totalTime - b.totalTime);
+            const bestOverallTime = validResults.length > 0 ? validResults[0].totalTime : 0;
+
+            const counts = {};
+            const runNumbers = {};
+            [...session.results].reverse().forEach(r => {
+                counts[r.name] = (counts[r.name] || 0) + 1;
+                runNumbers[r.runId] = counts[r.name];
+            });
+
+            const personalBests = {};
+            validResults.forEach(r => {
+                if (!personalBests[r.name] || r.totalTime < personalBests[r.name]) personalBests[r.name] = r.totalTime;
+            });
+
             listEl.innerHTML = session.results.map((r, i) => {
                 const splitsHtml = (r.splits || []).map((s, idx) => `
                     <div class="split-item">
@@ -286,12 +301,45 @@
                     </div>
                 `).join('');
 
+                const isDNF = r.status === 'DNF';
+                const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === r.runId) + 1 || null);
+                
+                let label = "Laskuaika:";
+                let gapHtml = "";
+                let timeVal = isDNF ? 'DNF' : formatDuration(r.totalTime);
+
+                if (!isDNF) {
+                    if (rank === 1) {
+                        label = "Paras aika:";
+                        if (validResults.length > 1) {
+                            const lead = validResults[1].totalTime - validResults[0].totalTime;
+                            gapHtml = `<span style="color: var(--success); font-weight: 800; margin-left:8px;">–${formatDuration(lead)}</span>`;
+                        }
+                    } else if (rank === 2) {
+                        label = "2. paras aika:";
+                        const gap = r.totalTime - bestOverallTime;
+                        gapHtml = `<span style="color: var(--accent); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                    } else if (rank === 3) {
+                        label = "3. paras aika:";
+                        const gap = r.totalTime - bestOverallTime;
+                        gapHtml = `<span style="color: var(--accent); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                    } else if (r.totalTime === personalBests[r.name]) {
+                        label = "Paras oma aika:";
+                        const gap = r.totalTime - bestOverallTime;
+                        gapHtml = `<span style="color: var(--accent); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                    } else {
+                        const gap = r.totalTime - bestOverallTime;
+                        gapHtml = `<span style="opacity: 0.5; font-weight: 700; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                    }
+                }
+
                 return `
-                    <div class="run-card" style="animation-delay: ${i * 0.1}s">
+                    <div class="run-card" style="animation-delay: ${i * 0.1}s; border-left: 4px solid var(--accent);">
                         <div class="video-container">
                             ${r.videoUrl ? `
                                 <video id="vid-${r.runId}" src="${r.videoUrl}" playsinline controls></video>
                                 <div id="clock-${r.runId}" class="clock-overlay">
+                                    <div id="badge-${r.runId}" style="position: absolute; top: -110px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10; text-transform: uppercase;">VIDEO</div>
                                     <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${r.name.toUpperCase()}</div>
                                     <div class="clock-val">0,00</div>
                                 </div>
@@ -303,12 +351,14 @@
                             `}
                         </div>
                         <div class="content">
-                            <div class="run-header">
-                                <div>
-                                    <span class="rank-badge">#${session.results.length - i}</span>
-                                    <h2 class="runner-name">${r.name.toUpperCase()}</h2>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                                <div style="text-align: left;">
+                                    <h2 class="runner-name">${r.name.toUpperCase()}, #${runNumbers[r.runId] || '?'}</h2>
                                 </div>
-                                <div class="run-time">${formatDuration(r.totalTime)}</div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 10px; font-weight: 800; opacity: 0.5; text-transform: uppercase;">${label}</div>
+                                    <div style="font-size: 20px; font-weight: 900;">${timeVal}${gapHtml}</div>
+                                </div>
                             </div>
                             ${splitsHtml ? `<div class="splits-list">${splitsHtml}</div>` : ''}
                         </div>

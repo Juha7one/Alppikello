@@ -231,30 +231,57 @@ function renderValmentajaView() {
         activeEl.innerHTML = `<div style="text-align: center; padding: 40px; opacity:0.3;">RATA VAPAA</div>`;
     }
 
-    // 3. Results
     if (results.length > 0) {
-        // Pre-calculate rankings for total time gaps
-        const validResults = [...results]
-            .filter(r => r.totalTime > 0 && r.status !== 'DNF')
-            .sort((a, b) => a.totalTime - b.totalTime);
-        const bestTime = validResults.length > 0 ? validResults[0].totalTime : 0;
+        // Run numbering per athlete (oldest to newest)
+        const counts = {};
+        const runNumbers = {};
+        // Work on a copy reversed to count chronologically
+        [...results].reverse().forEach(r => {
+            counts[r.name] = (counts[r.name] || 0) + 1;
+            runNumbers[r.runId] = counts[r.name];
+        });
 
-        // Pre-calculate best splits
-        const bestSplits = {};
-        validResults.forEach(vr => {
-            (vr.splits || []).forEach((s, idx) => {
-                if (!bestSplits[idx] || s.duration < bestSplits[idx]) bestSplits[idx] = s.duration;
-            });
+        // Athlete's best times
+        const personalBests = {};
+        validResults.forEach(r => {
+            if (!personalBests[r.name] || r.totalTime < personalBests[r.name]) {
+                personalBests[r.name] = r.totalTime;
+            }
         });
 
         resultEl.innerHTML = results.map((r, i) => {
             const safeRunId = r.runId || `run-${i}`;
-            const startTimeStr = r.startTime ? new Date(r.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
-            
             const isDNF = r.status === 'DNF';
             const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === r.runId) + 1 || null);
-            const gapVal = r.totalTime - bestTime;
-            const gap = (r.totalTime > 0 && rank > 1) ? `+${formatDuration(gapVal)}` : '';
+            
+            let label = "Laskuaika:";
+            let gapHtml = "";
+            let timeVal = isDNF ? 'DNF' : formatDuration(r.totalTime);
+
+            if (!isDNF) {
+                if (rank === 1) {
+                    label = "Paras aika:";
+                    if (validResults.length > 1) {
+                        const lead = validResults[1].totalTime - validResults[0].totalTime;
+                        gapHtml = `<span style="color: var(--success); font-size: 16px; font-weight: 700; margin-left: 8px;">–${formatDuration(lead)}</span>`;
+                    }
+                } else if (rank === 2) {
+                    label = "2. paras aika:";
+                    const gap = r.totalTime - bestTime;
+                    gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+                } else if (rank === 3) {
+                    label = "3. paras aika:";
+                    const gap = r.totalTime - bestTime;
+                    gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+                } else if (r.totalTime === personalBests[r.name]) {
+                    label = "Paras oma aika:";
+                    const gap = r.totalTime - bestTime;
+                    gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+                } else {
+                    const gap = r.totalTime - bestTime;
+                    gapHtml = `<span style="font-size: 16px; opacity: 0.5; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+                }
+            }
 
             const splitList = (r.splits || []).map((s, idx) => {
                 const splitBest = bestSplits[idx];
@@ -281,10 +308,6 @@ function renderValmentajaView() {
                         <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-video-start-time="${first.videoStartTime || 0}"
                                data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')" onplay="attachVideoClockLogic(this)"></video>
                         <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10;">${(first.role || 'VIDEO').toUpperCase()}</div>
-                        <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
-                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${(r.name || 'LASKIJA').toUpperCase()}</div>
-                            <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
-                        </div>
                     </div>
                 `;
             } else {
@@ -292,12 +315,17 @@ function renderValmentajaView() {
             }
 
             return `
-                <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff; padding-bottom: 25px; position: relative;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px;">
-                        <div>
-                            <div style="font-weight: 900; font-size: 24px; margin: 4px 0; letter-spacing: -0.5px;">
-                                ${rank ? `${rank}. ` : ''}${r.name.toUpperCase()} ${isDNF ? 'DNF' : formatDuration(r.totalTime)}
-                                <span class="result-gap" style="font-size: 18px; color: var(--accent); opacity: 1;">${gap}</span>
+                <div class="card" style="margin-bottom:15px; border-left: 4px solid var(--accent); padding-bottom: 25px; position: relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 12px;">
+                        <div style="text-align: left;">
+                            <div style="font-weight: 900; font-size: 24px; letter-spacing: -0.5px; opacity: 1;">
+                                ${r.name.toUpperCase()}, #${runNumbers[r.runId] || '?'}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; font-weight: 800; opacity: 0.5; letter-spacing: 0.5px; text-transform: uppercase;">${label}</div>
+                            <div style="font-weight: 900; font-size: 24px; color: #fff;">
+                                ${timeVal}${gapHtml}
                             </div>
                         </div>
                     </div>
@@ -370,12 +398,55 @@ function renderAthleteView() {
         });
     });
 
+    // Run numbering per athlete (oldest to newest)
+    const counts = {};
+    const runNumbers = {};
+    [...results].reverse().forEach(r => {
+        counts[r.name] = (counts[r.name] || 0) + 1;
+        runNumbers[r.runId] = counts[r.name];
+    });
+
+    // Athlete's best times
+    const personalBests = {};
+    validResults.forEach(r => {
+        if (!personalBests[r.name] || r.totalTime < personalBests[r.name]) {
+            personalBests[r.name] = r.totalTime;
+        }
+    });
+
     listEl.innerHTML = myResults.length ? myResults.map((r, i) => {
         const safeRunId = r.runId || `athlete-run-${i}`;
         const isDNF = r.status === 'DNF';
         const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === r.runId) + 1 || null);
-        const gapVal = r.totalTime - bestTime;
-        const gap = (r.totalTime > 0 && rank > 1) ? `+${formatDuration(gapVal)}` : '';
+        
+        let label = "Laskuaika:";
+        let gapHtml = "";
+        let timeVal = isDNF ? 'DNF' : formatDuration(r.totalTime);
+
+        if (!isDNF) {
+            if (rank === 1) {
+                label = "Paras aika:";
+                if (validResults.length > 1) {
+                    const lead = validResults[1].totalTime - validResults[0].totalTime;
+                    gapHtml = `<span style="color: var(--success); font-size: 16px; font-weight: 700; margin-left: 8px;">–${formatDuration(lead)}</span>`;
+                }
+            } else if (rank === 2) {
+                label = "2. paras aika:";
+                const gap = r.totalTime - bestTime;
+                gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            } else if (rank === 3) {
+                label = "3. paras aika:";
+                const gap = r.totalTime - bestTime;
+                gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            } else if (r.totalTime === personalBests[r.name]) {
+                label = "Paras oma aika:";
+                const gap = r.totalTime - bestTime;
+                gapHtml = `<span style="color: var(--accent); font-size: 16px; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            } else {
+                const gap = r.totalTime - bestTime;
+                gapHtml = `<span style="font-size: 16px; opacity: 0.5; font-weight: 700; margin-left: 8px;">+${formatDuration(gap)}</span>`;
+            }
+        }
 
         const splitList = (r.splits || []).map((s, idx) => {
             const splitBest = bestSplits[idx];
@@ -401,21 +472,22 @@ function renderAthleteView() {
                      style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
                     <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-video-start-time="${first.videoStartTime || 0}" data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')" onplay="attachVideoClockLogic(this)"></video>
                     <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10;">${(first.role || 'VIDEO').toUpperCase()}</div>
-                    <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
-                        <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${userName.toUpperCase()}</div>
-                        <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
-                    </div>
                 </div>
             `;
         }
 
         return `
-            <div class="card" style="margin-bottom:15px; padding-bottom: 25px; position: relative;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+            <div class="card" style="margin-bottom:15px; padding-bottom: 25px; position: relative; border-left: 4px solid var(--accent);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 12px;">
                     <div style="text-align: left;">
-                        <div style="font-weight: 900; font-size: 24px; margin: 4px 0; letter-spacing: -0.5px;">
-                            ${rank ? `${rank}. ` : ''}${userName.toUpperCase()} ${isDNF ? 'DNF' : formatDuration(r.totalTime)}
-                            <span class="result-gap" style="font-size: 18px; color: var(--accent); opacity: 1;">${gap}</span>
+                        <div style="font-weight: 900; font-size: 24px; letter-spacing: -0.5px; opacity: 1;">
+                            ${r.name.toUpperCase()}, #${runNumbers[r.runId] || '?'}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 11px; font-weight: 800; opacity: 0.5; letter-spacing: 0.5px; text-transform: uppercase;">${label}</div>
+                        <div style="font-weight: 900; font-size: 24px; color: #fff;">
+                            ${timeVal}${gapHtml}
                         </div>
                     </div>
                 </div>

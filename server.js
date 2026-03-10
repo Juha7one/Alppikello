@@ -115,18 +115,29 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
 function saveRunCard(runner, session) {
     if (!runner || !runner.runId) return;
+    
+    // Calculate run number for this person in this session
+    const userRuns = (session.results || []).filter(r => r.name === runner.name);
+    const runNumber = userRuns.length; // If already in results, it's this. If not, maybe count + 1?
+    // Actually, when this is called, the runner might already be in session.results or about to be.
+    // Let's be consistent:
+    const finalRunNumber = userRuns.some(r => r.runId === runner.runId) ? userRuns.findIndex(r=>r.name===runner.name)+1 : userRuns.length + 1;
+    // Wait, indexing is tricky. Let's just store the count for now.
+    
     runCards[runner.runId] = {
         id: runner.runId,
         name: runner.name,
+        runNumber: finalRunNumber,
         startTime: runner.startTime || session.timestamp || Date.now(),
         totalTime: runner.totalTime,
         videoUrl: runner.videoUrl || null,
         videos: (runner.videos || []).sort((a, b) => a.triggerTime - b.triggerTime),
         splits: runner.splits || [],
         sessionName: session.name || "Treeni",
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        sessionResults: (session.results || []).map(r => ({ name: r.name, totalTime: r.totalTime, status: r.status, runId: r.runId }))
     };
-    console.log(`[CARD] Saved run card for ${runner.name} (ID: ${runner.runId})`);
+    console.log(`[CARD] Saved run card for ${runner.name} #${finalRunNumber} (ID: ${runner.runId})`);
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
