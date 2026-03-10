@@ -150,6 +150,13 @@ function saveRunCard(runner, session) {
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadDir));
+app.use('/public/uploads', express.static(uploadDir));
+
+// ADD LOGGING FOR EVERY REQUEST TO DIAGNOSE REDIRECTS/CPANEL
+app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.url}`);
+    next();
+});
 
 app.post('/upload', upload.single('video'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
@@ -250,38 +257,42 @@ app.post('/upload', upload.single('video'), (req, res) => {
     res.json({ success: true, url: videoUrl });
 });
 
-app.get('/api/run/:runId', (req, res) => {
+app.get(['/api/run/:runId', '/public/api/run/:runId'], (req, res) => {
     const run = runCards[req.params.runId];
     if (!run) return res.status(404).json({ error: 'Not found' });
     res.json(run);
 });
 
-app.get('/api/archives', (req, res) => {
+app.get(['/api/archives', '/public/api/archives'], (req, res) => {
     try {
+        if (!fs.existsSync(archiveDir)) return res.json([]);
         const files = fs.readdirSync(archiveDir);
         const archives = files.filter(f => f.endsWith('.json')).map(f => {
-            const data = JSON.parse(fs.readFileSync(path.join(archiveDir, f)));
-            return {
-                id: data.id,
-                name: data.name,
-                date: data.archivedAt || Date.now(),
-                athleteCount: data.results.length,
-                filename: f
-            };
-        }).sort((a, b) => b.date - a.date);
+            try {
+                const data = JSON.parse(fs.readFileSync(path.join(archiveDir, f)));
+                return {
+                    id: data.id,
+                    name: data.name,
+                    date: data.archivedAt || Date.now(),
+                    athleteCount: (data.results || []).length,
+                    filename: f
+                };
+            } catch(e) { return null; }
+        }).filter(it => it).sort((a, b) => b.date - a.date);
         res.json(archives);
     } catch (err) {
+        console.error("[API ERROR] Archives list failed:", err);
         res.status(500).json({ error: "Failed to list archives" });
     }
 });
 
-app.get('/api/archives/:filename', (req, res) => {
+app.get(['/api/archives/:filename', '/public/api/archives/:filename'], (req, res) => {
     const filePath = path.join(archiveDir, req.params.filename);
     if (!fs.existsSync(filePath)) return res.status(404).send("Archive not found");
     res.sendFile(filePath);
 });
 
-app.get(['/run/:runId', '/public/run/:runId'], (req, res) => {
+app.get(['/run/:runId', '/public/run/:runId', '/alppikello/run/:runId'], (req, res) => {
     // Keep this as fallback for direct hits to backend
     try {
         const runId = req.params.runId;
@@ -314,18 +325,24 @@ app.get(['/run/:runId', '/public/run/:runId'], (req, res) => {
     }
 });
 
-app.get('/archive/:filename', (req, res) => {
+app.get(['/archive/:filename', '/public/archive/:filename', '/alppikello/archive/:filename'], (req, res) => {
     try {
-        const filename = req.params.filename;
-        const filePath = path.join(archiveDir, filename.endsWith('.json') ? filename : filename + '.json');
-        console.log(`[ROUTE] Accessing archive: ${filename} -> ${filePath}`);
+        let filename = req.params.filename;
+        if (!filename.endsWith('.json')) filename += '.json';
+        const filePath = path.join(archiveDir, filename);
+        console.log(`[ROUTE] Serving archive: ${filename} from ${filePath}`);
         
         if (!fs.existsSync(filePath)) {
-            console.warn(`[ROUTE] Archive NOT FOUND: ${filePath}`);
+            console.warn(`[ROUTE] NOT FOUND: ${filePath}`);
             return res.status(404).send('<!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:#fff;"><h1>404 - ARKISTOA EI LÖYDY</h1><p>Tilaa vievä tai vanhentunut linkki.</p><a href="/" style="color:#3b82f6;">Takaisin pääsivulle</a></body></html>');
         }
 
         const templatePath = path.join(__dirname, 'public', 'archive_template.html');
+        // Fallback for subfolders
+        if (!fs.existsSync(templatePath)) {
+            console.warn(`[ROUTE] Template not in public/! trying local public/ folder...`);
+        }
+
         fs.readFile(templatePath, 'utf8', (templateErr, templateData) => {
             if (templateErr) {
                  console.error(`[ROUTE] Template error:`, templateErr);
@@ -337,10 +354,8 @@ app.get('/archive/:filename', (req, res) => {
                     console.error(`[ROUTE] File read error:`, fileErr);
                     return res.status(500).send("Virhe luettaessa arkistoa.");
                 }
-                
                 // USE split/join to avoid special replacement patterns in huge JSON string
                 const result = templateData.split('{{SESSION_DATA}}').join(archiveData);
-                console.log(`[ROUTE] Serving archive: ${filename} (${archiveData.length} bytes)`);
                 res.send(result);
             });
         });
