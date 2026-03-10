@@ -169,7 +169,9 @@ function showOnboardingStep(step) {
         const manualToggle = document.getElementById('btn-toggle-manual');
         if (manualToggle) manualToggle.style.display = 'none';
 
-        // NEW: If already in a session, offer to continue there (Coach can also rejoin)
+        // Fetch fresh nearby sessions
+        if (socket && socket.connected) socket.emit('get_nearby_sessions', { lat: userLocation?.lat, lon: userLocation?.lon });
+
         const contCont = document.getElementById('continue-session-container');
         if (contCont) {
             if (currentSession) {
@@ -183,13 +185,6 @@ function showOnboardingStep(step) {
             } else {
                 contCont.style.display = 'none';
             }
-        }
-
-        // Trigger manual discovery immediately
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                socket.emit('find_nearby_sessions', { lat: pos.coords.latitude, lon: pos.coords.longitude });
-            }, null, { timeout: 3000 });
         }
     }
 }
@@ -559,6 +554,16 @@ function generateQR(sid) {
 
 function showQRModal() {
     const modal = document.getElementById('qr-modal');
-    if (modal) { modal.style.display = 'flex'; if (currentSession) generateQR(currentSession.id); }
+    if (modal) {
+        modal.style.display = 'flex';
+        if (currentSession) generateQR(currentSession.id);
+    }
 }
-function hideQRModal() { const modal = document.getElementById('qr-modal'); if (modal) modal.style.display = 'none'; }
+
+function hideQRModal() {
+    const modal = document.getElementById('qr-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+window.showQRModal = showQRModal;
+window.hideQRModal = hideQRModal;

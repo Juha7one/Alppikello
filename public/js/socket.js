@@ -57,6 +57,7 @@ socket.on('device_status_update', (data) => {
 });
 
 socket.on('session_ended', () => {
+    currentSession = null; // Clear local state immediately
     showPremiumModal({
         title: 'HARJOITUS LOPETETTU',
         text: 'Valmentaja on lopettanut harjoituksen. Kaikki suoritukset on arkistoitu.',

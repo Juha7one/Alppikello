@@ -18,7 +18,7 @@
     <div id="deployment-splash" style="background: #312e81;">
         <p class="splash-subtitle" style="color: #fff;">Päivitys asennettu:</p>
         <h1 class="splash-title" style="color: #fff;">STORM PEAK</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.63.2</div>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.64.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -133,7 +133,7 @@
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px;">
                 <button class="btn btn-primary" onclick="shareSession()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800;">JAA LINKKI 🔗</button>
-                <button class="btn btn-outline" onclick="showQRModal()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800; border-color: #fff; color: #fff; border-width: 2px;">NÄYTÄ QR 🔳</button>
+                <button class="btn btn-outline" onclick="showQRModal()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800; border-color: #fff; color: #fff; border-width: 2px;">JAA QR 📲</button>
             </div>
         </div>
 
@@ -402,7 +402,19 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.63.2 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.64.0 | © 2026</p>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="qr-modal" class="modal-overlay" style="display:none;" onclick="hideQRModal()">
+        <div class="premium-modal" style="background: #fff; padding: 40px; border-radius: 40px;" onclick="event.stopPropagation()">
+            <h2 style="color: #000; font-weight: 900; margin-bottom: 20px;">LIITY HARJOITUKSEEN</h2>
+            <div style="display: flex; justify-content: center; margin-bottom: 25px; padding: 10px; border: 20px solid #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border-radius: 20px;">
+                <canvas id="session-qr-large" style="width: 260px !important; height: 260px !important;"></canvas>
+            </div>
+            <p style="color: #666; font-size: 14px; font-weight: 700; margin-bottom: 25px;">NÄYTÄ TÄMÄ QR TOISELLE PUHELIMELLE</p>
+            <button class="btn btn-primary" onclick="hideQRModal()" style="margin-top: 0;">SULJE</button>
+        </div>
     </div>
 
     <!-- Premium Modal Overlay -->
@@ -420,15 +432,16 @@
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/state.js?v=2.63.2"></script>
-    <script src="js/utils.js?v=2.63.2"></script>
-    <script src="js/socket.js?v=2.63.2"></script>
-    <script src="js/video.js?v=2.63.2"></script>
-    <script src="js/cv.js?v=2.63.2"></script>
-    <script src="js/timing.js?v=2.63.2"></script>
-    <script src="js/ui.js?v=2.63.2"></script>
-    <script src="js/rangefinder.js?v=2.63.2"></script>
-    <script src="js/app.js?v=2.63.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="js/state.js?v=2.64.0"></script>
+    <script src="js/utils.js?v=2.64.0"></script>
+    <script src="js/socket.js?v=2.64.0"></script>
+    <script src="js/video.js?v=2.64.0"></script>
+    <script src="js/cv.js?v=2.64.0"></script>
+    <script src="js/timing.js?v=2.64.0"></script>
+    <script src="js/ui.js?v=2.64.0"></script>
+    <script src="js/rangefinder.js?v=2.64.0"></script>
+    <script src="js/app.js?v=2.64.0"></script>
 </body>
 
 </html>

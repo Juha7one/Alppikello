@@ -85,9 +85,19 @@ function archiveSession(session) {
 }
 
 // Store for sessions and devices
-const sessions = {};
-// Store for shareable Run Cards (in-memory for now)
+// Store for shared Run Cards
 const runCards = {};
+
+// --- Human Friendly ID Generator ---
+const ADJECTIVES = ['HUIMA', 'REIPAS', 'NOPEA', 'VAHVA', 'HURJA', 'VANKKA', 'RAJU', 'HUIPPU', 'KYLMÄ', 'LIUKAS'];
+const NOUNS = ['ILVES', 'KARHU', 'SUSI', 'KOTKA', 'HAUKKA', 'PORO', 'KETTU', 'MÄYRÄ', 'PÖLLÖ', 'HIRVI'];
+
+function generateHumanId() {
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    const num = Math.floor(Math.random() * 90) + 10; // 10-99
+    return `${adj}-${noun}-${num}`;
+}
 
 // Helper for nearby sessions
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -317,7 +327,7 @@ io.on('connection', (socket) => {
     // --- Onboarding & Session Management ---
 
     socket.on('create_session', (data) => {
-        const sessionId = uuidv4().substring(0, 6).toUpperCase();
+        const sessionId = generateHumanId();
         sessions[sessionId] = {
             id: sessionId,
             name: data.name || "Treeni",
@@ -362,6 +372,9 @@ io.on('connection', (socket) => {
             if (s.location && s.location.lat) {
                 const dist = getDistance(lat, lon, s.location.lat, s.location.lon);
                 
+                // Filter out ended sessions
+                if (s.ended) continue;
+
                 // PERFORMANCE: Check if session has ANY active devices in the last 30 minutes
                 const now = Date.now();
                 const devices = Object.values(s.devices || {});
@@ -720,14 +733,18 @@ io.on('connection', (socket) => {
         const sid = (data && typeof data === 'object') ? data.sessionId : data;
         const session = sessions[sid];
         
-        // ALLOW any device with VALMENTAJA role to end the session
         const device = session ? session.devices[socket.id] : null;
 
         if (session && device && device.role === 'VALMENTAJA') {
             console.log(`[SESSION] Coach closed session ${sid}`);
+            session.ended = true; // Mark as ended
             archiveSession(session);
             io.to(sid).emit('session_ended');
-            delete sessions[sid];
+            
+            // Delete after a short delay to allow final emits to reach clients
+            setTimeout(() => {
+                delete sessions[sid];
+            }, 2000);
         } else if (session) {
             console.warn(`[SECURITY] Unauthorized end_session attempt for ${sid} by ${socket.id} (Role: ${device ? device.role : 'none'})`);
         }

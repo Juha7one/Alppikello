@@ -115,7 +115,10 @@ function updateUILayout() {
         }
     }
 
-    if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
+    if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') {
+        renderValmentajaView();
+        if (typeof generateQR === 'function') generateQR(currentSession.id);
+    }
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();
     if (currentRole === 'VIDEO') renderVideoView();
@@ -171,13 +174,18 @@ function renderValmentajaView() {
 
     const athletes = currentSession.allAthletes || [];
 
-    // 1. Athlete List
+    // 1. Athlete List (Highlight those in queue)
     if (coachListEl) {
-        coachListEl.innerHTML = athletes.length ? athletes.map(a => `
-            <button class="btn btn-outline" style="padding: 15px; margin-bottom: 8px; font-size: 20px; text-align: center; display: block; width: 100%;" onclick="addToQueue('${a.id}')">
-                ${a.name.toUpperCase()}
-            </button>
-        `).join('') : '<p>Ei nimiä listalla.</p>';
+        const queue = currentSession.activeQueue || [];
+        coachListEl.innerHTML = athletes.length ? athletes.map(a => {
+            const isInQueue = queue.some(q => String(q.id) === String(a.id));
+            const style = isInQueue ? 'background: var(--accent); border-color: var(--accent); color: #fff;' : '';
+            return `
+                <button class="btn btn-outline" style="padding: 15px; margin-bottom: 8px; font-size: 20px; text-align: center; display: block; width: 100%; ${style}" onclick="addToQueue('${a.id}')">
+                    ${a.name.toUpperCase()} ${isInQueue ? '⏱️' : ''}
+                </button>
+            `;
+        }).join('') : '<p>Ei nimiä listalla.</p>';
     }
 
     // 2. Active Runners
