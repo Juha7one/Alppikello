@@ -9,6 +9,7 @@ const socket = io(SERVER_URL);
 // --- Globals & State ---
 let currentSession = null;
 let currentRole = null;
+let userLocation = null;
 let serverTimeOffset = 0;
 let rtt = 0;
 let selectedRole = null;

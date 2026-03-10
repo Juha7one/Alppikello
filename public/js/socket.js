@@ -10,7 +10,9 @@ socket.on('connect', () => {
     checkDeepLink();
     startDiscoveryGPS(); 
     
-    if (userName) document.getElementById('input-user-name').value = userName;
+    if (userName && document.getElementById('input-profile-name')) {
+        document.getElementById('input-profile-name').value = userName;
+    }
     showOnboardingStep('name');
 });
 

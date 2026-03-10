@@ -239,6 +239,7 @@ function startGPSTracking() {
 function startDiscoveryGPS() {
     if (!navigator.geolocation) return;
     discoveryWatchId = navigator.geolocation.watchPosition((pos) => {
+        userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
         socket.emit('find_nearby_sessions', { lat: pos.coords.latitude, lon: pos.coords.longitude });
     }, null, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
 }
