@@ -104,9 +104,8 @@ function handleSessionJoin(session, role) {
 
     if (!uiUpdateTimer) uiUpdateTimer = setInterval(updateUI, 100);
 
-
     if (role === 'VALMENTAJA') {
-        const sNameEl = document.getElementById('coach-session-name'); // Updated to use correct ID
+        const sNameEl = document.getElementById('coach-session-name');
         if (sNameEl) sNameEl.innerText = session.name;
         const codeEl = document.getElementById('session-code');
         if (codeEl) codeEl.innerText = session.id;
@@ -132,7 +131,7 @@ function handleSessionJoin(session, role) {
         if (!isRecording) stopCV();
     }
 
-    refreshStaticViews();
+    updateUILayout();
     updateUI();
 }
 
@@ -373,17 +372,24 @@ async function loadRunCard(runId) {
             vEl.ontimeupdate = () => {
                 const sTime = parseInt(vEl.getAttribute('data-start-time'));
                 const vAbsStart = parseInt(vEl.getAttribute('data-video-start-time'));
+                const officialTotalMs = data.totalTime || 0;
                 vOverlay.style.opacity = '1';
 
+                let raceTimeSec = 0;
                 if (sTime && vAbsStart && vAbsStart > 0) {
                     const nowMs = vAbsStart + (vEl.currentTime * 1000);
-                    vClock.innerText = (Math.max(0, nowMs - sTime) / 1000).toFixed(2);
+                    raceTimeSec = Math.max(0, (nowMs - sTime) / 1000);
                 } else {
                     const tTime = parseInt(vEl.getAttribute('data-trigger-time'));
                     const clipRelRace = (tTime - sTime) - 2000;
                     const raceTimeMs = clipRelRace + (vEl.currentTime * 1000);
-                    vClock.innerText = (Math.max(0, raceTimeMs) / 1000).toFixed(2);
+                    raceTimeSec = Math.max(0, raceTimeMs / 1000);
                 }
+
+                if (officialTotalMs > 0) {
+                    raceTimeSec = Math.min(raceTimeSec, officialTotalMs / 1000);
+                }
+                vClock.innerText = raceTimeSec.toFixed(2);
             };
 
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };

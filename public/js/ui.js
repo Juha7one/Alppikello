@@ -43,21 +43,62 @@ function showPremiumModal(config) {
 function updateUI() {
     if (!currentSession) return;
     
-    // 1. Update S3 Status Badges
-    const s3ActiveNow = !!(s3Active); // Ensure boolean
-    const coachS3 = document.getElementById('s3-status-badge');
-    if (coachS3) {
-        coachS3.innerText = s3ActiveNow ? "S3: PILVITALLENNUS AKTIIVINEN ✅" : "S3: PAIKALLINEN TALLENNUS (VÄLIAIKAINEN) ⚠️";
-        coachS3.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
-        coachS3.style.borderColor = s3ActiveNow ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)";
+    // Update Timers (Dynamic parts ONLY: Skiers on course)
+    const now = getSyncedTime();
+    const onCourse = currentSession.onCourse || [];
+    onCourse.forEach(r => {
+        const timeEl = document.getElementById(`timer-${r.id}`);
+        if (timeEl) {
+            timeEl.innerText = formatDuration(now - r.startTime);
+        }
+    });
+
+    // Update Video View if active
+    if (currentRole === 'VIDEO') {
+        renderVideoView();
+        if (typeof renderVideoGallery === 'function') renderVideoGallery();
     }
-    const videoS3 = document.getElementById('video-s3-status');
-    if (videoS3) {
-        videoS3.innerText = s3ActiveNow ? "S3: PILVITALLENNUS ✅" : "S3: EI KÄYTÖSSÄ ⚠️";
-        videoS3.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
+}
+
+/**
+ * Re-renders structural parts of the UI ONLY when data actually changes
+ * or when rolename/roles specific features need updating.
+ */
+function updateUILayout() {
+    if (!currentSession) return;
+    console.log("[UI] Updating layout and visibility...");
+
+    // 1. Session name headers
+    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'coach', 'athlete'].forEach(id => {
+        const el = document.getElementById(`${id}-session-name`);
+        if (el) el.innerText = currentSession.name;
+    });
+
+    // 2. Role-based visibility (The End Session button)
+    const endBtnContainer = document.getElementById('coach-only-end');
+    if (endBtnContainer) {
+        if (currentRole === 'VALMENTAJA') {
+            endBtnContainer.style.setProperty('display', 'block', 'important');
+        } else {
+            endBtnContainer.style.setProperty('display', 'none', 'important');
+        }
     }
 
-    // 2. Update Role Badge (Coach/Katsomo)
+    // 3. S3 status badges (only if they exist in current view)
+    const s3ActiveNow = !!(s3Active);
+    const coachS3Resource = document.getElementById('s3-status-badge');
+    if (coachS3Resource) {
+        coachS3Resource.innerText = s3ActiveNow ? "S3: PILVITALLENNUS AKTIIVINEN ✅" : "S3: PAIKALLINEN TALLENNUS (VÄLIAIKAINEN) ⚠️";
+        coachS3Resource.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
+        coachS3Resource.style.borderColor = s3ActiveNow ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)";
+    }
+    const videoS3Resource = document.getElementById('video-s3-status');
+    if (videoS3Resource) {
+        videoS3Resource.innerText = s3ActiveNow ? "S3: PILVITALLENNUS ✅" : "S3: EI KÄYTÖSSÄ ⚠️";
+        videoS3Resource.style.color = s3ActiveNow ? "var(--success)" : "var(--warning)";
+    }
+
+    // 4. Role Badges
     const coachBadge = document.getElementById('coach-role-badge');
     if (coachBadge) {
         if (currentRole === 'KATSOMO') {
@@ -69,103 +110,48 @@ function updateUI() {
         }
     }
 
-    // 3. Update Timers (Dynamic parts only)
-    const now = getSyncedTime();
-    const onCourse = currentSession.onCourse || [];
-    onCourse.forEach(r => {
-        const timeEl = document.getElementById(`timer-${r.id}`);
-        if (timeEl) {
-            timeEl.innerText = formatDuration(now - r.startTime);
-        }
-    });
-    
-    // 3. Update Clocks for ALL types of result videos
-    document.querySelectorAll('video[data-trigger-time]').forEach(vEl => {
-        const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
-        const startTime = parseInt(vEl.getAttribute('data-start-time'));
-        const container = vEl.closest('.video-container');
-        if (!container) return;
-
-        const vClock = container.querySelector('.clock-overlay');
-        const clockVal = vClock ? vClock.querySelector('.clock-val') : null;
-
-        if (vEl && vClock && clockVal) {
-            vEl.ontimeupdate = () => {
-                const startTime = parseInt(vEl.getAttribute('data-start-time'));
-                const videoAbsStart = parseInt(vEl.getAttribute('data-video-start-time'));
-                
-                vClock.style.opacity = '1';
-
-                if (startTime && videoAbsStart && videoAbsStart > 0) {
-                    const absNow = videoAbsStart + (vEl.currentTime * 1000);
-                    const raceTime = (absNow - startTime) / 1000;
-                    
-                    // CLIPPING: Never show more than final race time if we have it
-                    let displayTime = Math.max(0, raceTime);
-                    const totalTimeAttr = vEl.getAttribute('data-total-time');
-                    if (totalTimeAttr) {
-                        const totalTime = parseFloat(totalTimeAttr);
-                        if (totalTime > 0) displayTime = Math.min(displayTime, totalTime / 1000);
-                    }
-                    
-                    clockVal.innerText = displayTime.toFixed(2);
-                } else {
-                    // Legacy fallback
-                    const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
-                    const clipRelRace = (triggerTime - startTime) - 2000;
-                    const curMs = clipRelRace + (vEl.currentTime * 1000);
-                    clockVal.innerText = Math.max(0, (curMs / 1000)).toFixed(2);
-                }
-            };
-            vEl.onpause = () => vClock.style.opacity = '0.5';
-            vEl.onplay = () => vClock.style.opacity = '1';
-        }
-    });
-
-    // Special case for card-video (standalone card view)
-    const cardVideo = document.getElementById('card-video');
-    if (cardVideo && typeof currentRun !== 'undefined') {
-        const vOverlay = document.getElementById('card-video-overlay');
-        const vClock = document.getElementById('card-video-clock');
-        cardVideo.ontimeupdate = () => {
-             vOverlay.style.opacity = '1';
-             vClock.innerText = (Math.min(cardVideo.currentTime * 1000, currentRun.totalTime) / 1000).toFixed(2);
-        };
-    }
-    // 4. Update Video View if active
-    if (currentRole === 'VIDEO') {
-        renderVideoView();
-        if (typeof renderVideoGallery === 'function') renderVideoGallery();
-    }
-}
-
-/**
- * Re-renders structural parts of the UI ONLY when data actually changes.
- * This prevents losing focus or cancelling clicks due to innerHTML overwrites.
- */
-function refreshStaticViews() {
-    if (!currentSession) return;
-    console.log("[UI] Refreshing static views...");
-
-    // Update session name headers across all views
-    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'coach', 'athlete'].forEach(id => {
-        const el = document.getElementById(`${id}-session-name`);
-        if (el) el.innerText = currentSession.name;
-    });
-
-    const endBtnContainer = document.getElementById('coach-only-end');
-    if (endBtnContainer) {
-        if (currentRole === 'VALMENTAJA') {
-            endBtnContainer.style.setProperty('display', 'block', 'important');
-        } else {
-            endBtnContainer.style.setProperty('display', 'none', 'important');
-        }
-    }
-
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
     if (currentRole === 'URHEILIJA') renderAthleteView();
     if (currentRole === 'VIDEO') renderVideoView();
+}
+
+function attachVideoClockLogic(vEl) {
+    if (!vEl) return;
+    const container = vEl.closest('.video-container');
+    if (!container) return;
+
+    const vClock = container.querySelector('.clock-overlay');
+    const clockVal = vClock ? vClock.querySelector('.clock-val') : null;
+
+    if (vClock && clockVal) {
+        vEl.ontimeupdate = () => {
+            const startTime = parseInt(vEl.getAttribute('data-start-time'));
+            const videoAbsStart = parseInt(vEl.getAttribute('data-video-start-time'));
+            
+            vClock.style.opacity = '1';
+
+            if (startTime && videoAbsStart && videoAbsStart > 0) {
+                const absNow = videoAbsStart + (vEl.currentTime * 1000);
+                const raceTime = (absNow - startTime) / 1000;
+                
+                let displayTime = Math.max(0, raceTime);
+                const totalTimeAttr = vEl.getAttribute('data-total-time');
+                if (totalTimeAttr) {
+                    const totalTime = parseFloat(totalTimeAttr);
+                    if (totalTime > 0) displayTime = Math.min(displayTime, totalTime / 1000);
+                }
+                clockVal.innerText = displayTime.toFixed(2);
+            } else {
+                const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
+                const clipRelRace = (triggerTime - startTime) - 2000;
+                const curMs = clipRelRace + (vEl.currentTime * 1000);
+                clockVal.innerText = Math.max(0, (curMs / 1000)).toFixed(2);
+            }
+        };
+        vEl.onpause = () => vClock.style.opacity = '0.5';
+        vEl.onplay = () => vClock.style.opacity = '1';
+    }
 }
 
 function renderValmentajaView() {
@@ -257,7 +243,8 @@ function renderValmentajaView() {
                                controls playsinline 
                                style="width: 100%; height: 100%; object-fit: contain;" 
                                onended="playNextClip('${safeRunId}')"
-                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                               onplay="attachVideoClockLogic(this)">
                         </video>
                         
                         <div style="display:none; color:rgba(255,0,0,0.5); font-size:10px; font-weight:900;">VIDEOVIRHE</div>
@@ -375,7 +362,7 @@ function renderAthleteView() {
                      data-current-index="0"
                      data-start-time="${r.startTime}"
                      style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
-                    <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')"></video>
+                    <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')" onplay="attachVideoClockLogic(this)"></video>
                     <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent);">${(first.role || 'VIDEO').toUpperCase()}</div>
                     <div class="clock-overlay" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; transition: opacity 0.3s; opacity: 0;">
                         <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace;">0.00</div>

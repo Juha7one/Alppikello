@@ -23,7 +23,7 @@ socket.on('disconnect', () => {
 
 socket.on('s3_status', (data) => {
     s3Active = data.active;
-    updateUI();
+    updateUILayout();
 });
 
 socket.on('session_created', (session) => {
@@ -52,7 +52,7 @@ socket.on('device_status_update', (data) => {
         activeRunnerOnCourse = null;
         hasRecordedForCurrentRunner = false;
     }
-    refreshStaticViews();
+    updateUILayout();
     updateUI();
 });
 
@@ -89,7 +89,7 @@ socket.on('timing_update', (data) => {
         }
     }
 
-    refreshStaticViews();
+    updateUILayout();
     updateUI();
 
     if (currentRole === 'VIDEO' && data.type === 'START') {
@@ -223,7 +223,7 @@ socket.on('video_available', (payload) => {
         }
 
         // Trigger a UI refresh if we found it
-        refreshStaticViews();
+        updateUILayout();
         updateUI();
     }
 });
