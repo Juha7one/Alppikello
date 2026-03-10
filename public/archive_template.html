@@ -319,18 +319,18 @@
                     } else if (rank === 2) {
                         label = "2. paras aika:";
                         const gap = r.totalTime - bestOverallTime;
-                        gapHtml = `<span style="color: var(--accent); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                        gapHtml = `<span style="color: var(--danger); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
                     } else if (rank === 3) {
                         label = "3. paras aika:";
                         const gap = r.totalTime - bestOverallTime;
-                        gapHtml = `<span style="color: var(--accent); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                        gapHtml = `<span style="color: var(--danger); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
                     } else if (r.totalTime === personalBests[r.name]) {
                         label = "Paras oma aika:";
                         const gap = r.totalTime - bestOverallTime;
-                        gapHtml = `<span style="color: var(--accent); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                        gapHtml = `<span style="color: var(--danger); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
                     } else {
                         const gap = r.totalTime - bestOverallTime;
-                        gapHtml = `<span style="opacity: 0.5; font-weight: 700; margin-left:8px;">+${formatDuration(gap)}</span>`;
+                        gapHtml = `<span style="color: var(--danger); font-weight: 800; margin-left:8px;">+${formatDuration(gap)}</span>`;
                     }
                 }
 
