@@ -24,6 +24,18 @@ function formatDuration(ms) {
     return (ms < 0 ? "-" : "") + out;
 }
 
+// Fixed truncation for video clock (seconds as float)
+function formatSeconds(s) {
+    if (s === undefined || s === null || isNaN(s)) return "0,00";
+    const ms = Math.floor(Math.abs(s) * 1000);
+    const centis = Math.floor((ms % 1000) / 10);
+    const totalSecs = Math.floor(ms / 1000);
+    const secs = totalSecs % 60;
+    const cStr = String(centis).padStart(2, '0');
+    const sStr = String(secs).padStart(1, '0'); // Short for simple video clock
+    return `${sStr},${cStr}`;
+}
+
 function getDistanceBetween(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radius of the earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;

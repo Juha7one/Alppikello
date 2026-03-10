@@ -259,6 +259,17 @@
             return (ms < 0 ? "-" : "") + out;
         }
 
+        function formatSeconds(s) {
+            if (s === undefined || s === null || isNaN(s)) return "0,00";
+            const ms = Math.floor(Math.abs(s) * 1000);
+            const centis = Math.floor((ms % 1000) / 10);
+            const totalSecs = Math.floor(ms / 1000);
+            const secs = totalSecs % 60;
+            const cStr = String(centis).padStart(2, '0');
+            const sStr = String(secs).padStart(1, '0');
+            return `${sStr},${cStr}`;
+        }
+
         if (session) {
             document.title = `Alppikello - ${session.name}`;
             document.getElementById('session-name').innerText = session.name.toUpperCase();
@@ -271,7 +282,7 @@
                 const splitsHtml = (r.splits || []).map((s, idx) => `
                     <div class="split-item">
                         <span class="split-label">VÄLIAIKA ${idx + 1}</span>
-                        <span class="split-val">${formatDuration(s.duration)} s</span>
+                        <span class="split-val">${formatDuration(s.duration)}</span>
                     </div>
                 `).join('');
 
@@ -314,7 +325,7 @@
                     vEl.ontimeupdate = () => {
                         vClock.style.opacity = '1';
                         const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime || 999999);
-                        clockVal.innerText = (displayMs / 1000).toFixed(2).replace('.', ',');
+                        clockVal.innerText = formatSeconds(displayMs / 1000);
                     };
                     vEl.onpause = () => { vClock.style.opacity = '0.5'; };
                     vEl.onplay = () => { vClock.style.opacity = '1'; };

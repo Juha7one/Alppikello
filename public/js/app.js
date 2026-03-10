@@ -392,8 +392,7 @@ async function loadRunCard(runId) {
         const date = new Date(data.timestamp);
         document.getElementById('card-run-date').innerText = date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
         
-        const duration = (data.totalTime / 1000).toFixed(2);
-        document.getElementById('card-total-time').innerText = duration + 's';
+        document.getElementById('card-total-time').innerText = formatDuration(data.totalTime);
         
         // Splits
         const splitsEl = document.getElementById('card-splits');
@@ -401,7 +400,7 @@ async function loadRunCard(runId) {
             splitsEl.innerHTML = data.splits.map((s, idx) => `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
                     <span style="opacity: 0.5; font-weight: 700;">VÄLIAIKA ${idx+1}</span>
-                    <span style="font-weight: 900;">${(s.duration / 1000).toFixed(2)}s</span>
+                    <span style="font-weight: 900;">${formatDuration(s.duration)}</span>
                 </div>
             `).join('');
             splitsEl.style.display = 'block';
@@ -474,7 +473,7 @@ async function loadRunCard(runId) {
                 if (officialTotalMs > 0) {
                     raceTimeSec = Math.min(raceTimeSec, officialTotalMs / 1000);
                 }
-                vClock.innerText = raceTimeSec.toFixed(2);
+                vClock.innerText = formatSeconds(raceTimeSec);
             };
 
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };
@@ -609,7 +608,7 @@ async function openArchive(filename) {
                 vEl.ontimeupdate = () => {
                     vClock.style.opacity = '1';
                     const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime || 999999);
-                    if (clockVal) clockVal.innerText = (displayMs / 1000).toFixed(2).replace('.', ',');
+                    if (clockVal) clockVal.innerText = formatSeconds(displayMs / 1000);
                 };
                 vEl.onpause = () => vClock.style.opacity = '0.5';
                 vEl.onplay = () => vClock.style.opacity = '1';
