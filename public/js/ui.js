@@ -68,14 +68,19 @@ function updateUILayout() {
     if (!currentSession) return;
     console.log("[UI] Updating layout and visibility...");
 
-    // 1. Session name headers
-    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'coach', 'athlete'].forEach(id => {
+    // 1. Session name and code in the new card
+    const sNameEl = document.getElementById('coach-session-name');
+    if (sNameEl) sNameEl.innerText = currentSession.name.toUpperCase();
+    const sCodeEl = document.getElementById('coach-session-code-display');
+    if (sCodeEl) sCodeEl.innerText = currentSession.id;
+
+    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'athlete'].forEach(id => {
         const el = document.getElementById(`${id}-session-name`);
         if (el) el.innerText = currentSession.name;
     });
 
-    // 2. Role-based visibility (The End Session button)
-    const endBtnContainer = document.getElementById('coach-only-end');
+    // 2. Role-based visibility (The Local End Session button)
+    const endBtnContainer = document.getElementById('coach-only-end-local');
     if (endBtnContainer) {
         if (currentRole === 'VALMENTAJA') {
             endBtnContainer.style.setProperty('display', 'block', 'important');

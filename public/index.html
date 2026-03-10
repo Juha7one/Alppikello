@@ -18,7 +18,7 @@
     <div id="deployment-splash" style="background: #312e81;">
         <p class="splash-subtitle" style="color: #fff;">Päivitys asennettu:</p>
         <h1 class="splash-title" style="color: #fff;">STORM PEAK</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.63.0</div>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.63.1</div>
     </div>
 
     <!-- Onboarding View -->
@@ -68,7 +68,7 @@
                     <span class="role-title">KATSOMO</span>
                 </div>
             </div>
-            <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('name')">← TAKAISIN</button>
+            <button class="btn btn-outline" style="margin-top: 40px; border-color: rgba(255,255,255,0.2);" onclick="showOnboardingStep('name')">← TAKAISIN NIMEN VALINTAAN</button>
         </div>
 
         <!-- Step 3: Session Selection -->
@@ -89,20 +89,18 @@
                 <div id="nearby-sessions-list"></div>
             </div>
 
-            <div id="manual-join-container" style="display:none; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
-                <p style="font-size: 11px; opacity: 0.5; margin-bottom: 10px;">SYÖTÄ KOODI MANUAALISESTI:</p>
-                <input type="text" id="input-session-id" class="premium-input" placeholder="XYZ-123" autocomplete="off" style="text-transform: uppercase;">
-                <button class="btn btn-outline" onclick="joinSession()">LIITY HARJOITUKSEEN</button>
+            <div id="manual-join-section" style="border-top: 2px solid rgba(255,255,255,0.1); padding-top: 30px; margin-top: 40px;">
+                <p style="font-size: 12px; font-weight: 900; color: #fff; margin-bottom: 15px; text-transform: uppercase;">Tai syötä koodi manuaalisesti:</p>
+                <input type="text" id="input-session-id" class="premium-input" placeholder="XYZ123" autocomplete="off" style="text-transform: uppercase; font-size: 32px; height: 80px; text-align: center; letter-spacing: 5px; margin-bottom: 15px; background: #fff; color: #000; font-weight: 900;">
+                <button class="btn btn-primary" onclick="joinSession()" style="height: 70px; font-size: 20px;">LIITY KOODILLA</button>
             </div>
-
-            <button id="btn-toggle-manual" class="btn-mini-link" style="margin-top: 20px; opacity: 0.4;" onclick="document.getElementById('manual-join-container').style.display='block'; this.style.display='none';">TAI SYÖTÄ KOODI MANUAALISESTI</button>
 
             <div style="margin-top: 60px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; width: 100%;">
                 <p style="font-size: 11px; opacity: 0.3; margin-bottom: 15px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Selaa historiaa:</p>
-                <button class="btn btn-outline" onclick="loadArchives()" style="width: 100%; height: 80px; font-size: 20px; margin-bottom: 20px; border-color: rgba(255,255,255,0.1);">HARKKA-ARKISTO 📁</button>
+                <button class="btn btn-outline" onclick="loadArchives()" style="width: 100%; height: 80px; font-size: 20px; margin-bottom: 20px; border-color: rgba(255,255,255,0.2);">HARKKA-ARKISTO 📁</button>
             </div>
 
-            <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('role')">← TAKAISIN</button>
+            <button class="btn btn-outline" style="margin-top: 20px; border-color: rgba(255,255,255,0.2);" onclick="showOnboardingStep('role')">← TAKAISIN ROOLIVALINTAAN</button>
         </div>
 
         <!-- Step 4: Name Selection (within session) -->
@@ -114,20 +112,30 @@
             <input type="text" id="name-input" class="premium-input" placeholder="Oma nimi" autocomplete="off">
             <button class="btn btn-primary" onclick="saveName()">JATKA</button>
             
-            <button class="btn-mini-link" style="margin-top: 20px;" onclick="showOnboardingStep('session')">← TAKAISIN</button>
+            <button class="btn btn-outline" style="margin-top: 40px; border-color: rgba(255,255,255,0.2);" onclick="showOnboardingStep('session')">← TAKAISIN ISTUNTOVALINTAAN</button>
         </div>
     </div>
 
     <!-- Valmentaja / Keskus View -->
     <div id="view-valmentaja" class="view container">
-        <header id="coach-header" style="margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 id="session-name" style="margin: 0; font-size: 32px; font-weight: 900; letter-spacing: -1px;">TREENI</h1>
-                <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.6; font-weight: 700;">KOODI: <span id="session-code" style="color: #fff;">------</span></p>
-                <div id="s3-status-badge" style="display:inline-block; margin-top: 10px; font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3: POIS PÄÄLTÄ</div>
+        <!-- High-Contrast Session Control Card -->
+        <div id="coach-session-card" class="card" style="background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); padding: 25px; margin-bottom: 35px; border-radius: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h1 id="coach-session-name" style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; color: var(--accent);">TREENI</h1>
+                    <div id="coach-session-code-display" style="font-size: 44px; font-weight: 900; color: #fff; line-height: 1; margin: 12px 0; font-family: 'Inter', sans-serif;">------</div>
+                    <div id="s3-status-badge" style="display:inline-block; font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3 POIS</div>
+                </div>
+                <div id="coach-qr-thumb" onclick="showQRModal()" style="width: 90px; height: 90px; background: #fff; border-radius: 16px; padding: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <canvas id="session-qr-small" style="width: 80px !important; height: 80px !important;"></canvas>
+                </div>
             </div>
-            <div id="coach-role-badge" style="background: var(--accent); padding: 8px 15px; border-radius: 12px; font-size: 12px; font-weight: 900;">VALMENTAJA</div>
-        </header>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px;">
+                <button class="btn btn-primary" onclick="shareSession()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800;">JAA LINKKI 🔗</button>
+                <button class="btn btn-outline" onclick="showQRModal()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800; border-color: #fff; color: #fff; border-width: 2px;">NÄYTÄ QR 🔳</button>
+            </div>
+        </div>
 
         <section id="coach-athlete-management" style="margin-bottom: 40px;">
             <div id="coach-controls">
@@ -160,6 +168,12 @@
             <div id="device-status-list"
                 style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 40px;"></div>
         </section>
+
+        <!-- End Session Button (Moved here inside scrolling area) -->
+        <div id="coach-only-end-local" style="display:none; margin: 60px 0 100px 0; padding-top: 40px; border-top: 2px solid rgba(255,255,255,0.1);">
+             <button class="btn btn-danger" onclick="confirmEndSession()" style="background: var(--danger); color: #fff; width: 100%; height: 85px; font-size: 22px; font-weight: 900; margin-top: 0; box-shadow: 0 15px 35px rgba(239, 68, 68, 0.3);">LOPETA HARJOITUS</button>
+             <p style="text-align: center; font-size: 12px; opacity: 0.5; margin-top: 15px; font-weight: 700;">HUOM: Tämä lopettaa harjoituksen kaikille ja arkistoi tulokset.</p>
+        </div>
 
     </div>
 
@@ -376,11 +390,6 @@
         <button id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()" style="display:none;">VAIHDA
             LAITTEEN ROOLI</button>
 
-        <!-- End Session Button (Coach only) -->
-        <div id="coach-only-end" style="display:none; width: 100%; max-width: 400px; margin-top: 20px;">
-             <button class="btn btn-danger" onclick="confirmEndSession()" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); color: var(--danger); width: 100%; height: 70px; font-size: 20px; margin-top: 0;">LOPETA HARJOITUS</button>
-             <p style="text-align: center; font-size: 11px; opacity: 0.5; margin-top: 10px;">HUOM: Tämä poistaa kaiken datan.</p>
-        </div>
         <button id="btn-change-name" class="btn-mini-link" onclick="showOnboardingStep('name')"
             style="display:none;">VAIHDA NIMI (ID: <span id="current-user-name-display"></span>)</button>
 
@@ -393,7 +402,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.63.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.63.1 | © 2026</p>
     </div>
 
     <!-- Premium Modal Overlay -->
@@ -411,15 +420,15 @@
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/state.js?v=2.63.0"></script>
-    <script src="js/utils.js?v=2.63.0"></script>
-    <script src="js/socket.js?v=2.63.0"></script>
-    <script src="js/video.js?v=2.63.0"></script>
-    <script src="js/cv.js?v=2.63.0"></script>
-    <script src="js/timing.js?v=2.63.0"></script>
-    <script src="js/ui.js?v=2.63.0"></script>
-    <script src="js/rangefinder.js?v=2.63.0"></script>
-    <script src="js/app.js?v=2.63.0"></script>
+    <script src="js/state.js?v=2.63.1"></script>
+    <script src="js/utils.js?v=2.63.1"></script>
+    <script src="js/socket.js?v=2.63.1"></script>
+    <script src="js/video.js?v=2.63.1"></script>
+    <script src="js/cv.js?v=2.63.1"></script>
+    <script src="js/timing.js?v=2.63.1"></script>
+    <script src="js/ui.js?v=2.63.1"></script>
+    <script src="js/rangefinder.js?v=2.63.1"></script>
+    <script src="js/app.js?v=2.63.1"></script>
 </body>
 
 </html>

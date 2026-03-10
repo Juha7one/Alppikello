@@ -166,10 +166,8 @@ function showOnboardingStep(step) {
         }
 
         // RESET Manual Join Toggle
-        const manualContainer = document.getElementById('manual-join-container');
         const manualToggle = document.getElementById('btn-toggle-manual');
-        if (manualContainer) manualContainer.style.display = 'none';
-        if (manualToggle) manualToggle.style.display = 'block';
+        if (manualToggle) manualToggle.style.display = 'none';
 
         // NEW: If already in a session, offer to continue there (Coach can also rejoin)
         const contCont = document.getElementById('continue-session-container');
@@ -261,6 +259,20 @@ function shareRun(runId) {
     const url = window.location.origin + window.location.pathname + '?run=' + runId;
     if (navigator.share) {
         navigator.share({ title: 'Alppikello - Tulokortti', url: url });
+    } else {
+        copyToClipboard(url);
+    }
+}
+
+function shareSession() {
+    if (!currentSession) return;
+    const url = `${window.location.origin}${window.location.pathname}?s=${currentSession.id}`;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Alppikello - Liity Harjoitukseen',
+            text: `Liity harjoitukseen: ${currentSession.name.toUpperCase()}`,
+            url: url
+        });
     } else {
         copyToClipboard(url);
     }
@@ -530,10 +542,19 @@ async function openArchive(filename) {
 }
 
 function generateQR(sid) {
-    const canvas = document.getElementById('session-qr-large');
-    if (!canvas || typeof QRCode === 'undefined') return;
     const url = `${window.location.origin}${window.location.pathname}?s=${sid}`;
-    QRCode.toCanvas(canvas, url, { width: 260 });
+    
+    // Large Modal QR
+    const canvasLarge = document.getElementById('session-qr-large');
+    if (canvasLarge && typeof QRCode !== 'undefined') {
+        QRCode.toCanvas(canvasLarge, url, { width: 300, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+    }
+
+    // Small Thumbnail QR on Coach Card
+    const canvasSmall = document.getElementById('session-qr-small');
+    if (canvasSmall && typeof QRCode !== 'undefined') {
+        QRCode.toCanvas(canvasSmall, url, { width: 80, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
+    }
 }
 
 function showQRModal() {
