@@ -547,12 +547,9 @@ function generateQR(sid) {
     const url = `${window.location.origin}${window.location.pathname}?s=${sid}`;
     
     let attempts = 0;
-    const maxAttempts = 10;
-    
     const tryRender = () => {
         const canvas = document.getElementById('session-qr-large');
-        // Check for library in multiple possible locations
-        const lib = window.QRCode || (typeof QRCode !== 'undefined' ? QRCode : null);
+        const lib = window.QRCode;
         
         if (canvas && lib && typeof lib.toCanvas === 'function') {
             lib.toCanvas(canvas, url, { 
@@ -563,30 +560,25 @@ function generateQR(sid) {
                 if (error) {
                     console.error('[QR] Render error:', error);
                     canvas.parentElement.innerHTML = `<div style="color:#000; font-weight:900; padding:20px;">QR VIRHE</div>`;
-                } else {
-                    console.log('[QR] Generated successfully');
                 }
             });
-        } else if (attempts < maxAttempts) {
+        } else if (attempts < 5) {
             attempts++;
-            console.log(`[QR] Waiting for lib... attempt ${attempts}`);
-            setTimeout(tryRender, 300);
+            setTimeout(tryRender, 200);
         } else {
-            const errStr = `[QR] LATAUSVIRHE: ${!canvas ? 'Canvas puuttuu' : 'Kirjasto puuttuu'}`;
-            console.error(errStr, { canvas: !!canvas, lib: typeof lib, val: lib });
+            console.error(`[QR] FAIL: canvas=${!!canvas} lib=${!!lib}`);
             if (canvas) {
                 canvas.parentElement.innerHTML = `
                     <div style="color:#000; padding:20px; font-weight:800; text-align:center;">
-                        ${errStr}<br>
+                        QR-KOODI EI LATAUTUNUT<br>
                         <span style="font-size:10px; font-weight:400; opacity:0.6; margin-top:10px; display:block;">
-                            Voit silti käyttää koodia:<br>
-                            <span style="font-size:14px; color:var(--accent);">${sid}</span>
+                            Käytä koodia:<br>
+                            <span style="font-size:18px; color:var(--accent);">${sid}</span>
                         </span>
                     </div>`;
             }
         }
     };
-    
     tryRender();
 }
 
