@@ -263,9 +263,9 @@ function renderValmentajaView() {
                             ${(first.role || 'VIDEO').toUpperCase()}
                         </div>
 
-                        <div class="clock-overlay" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
-                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${(r.name || 'LASKIJA').toUpperCase()}</div>
-                            <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
+                        <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
+                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${(r.name || 'LASKIJA').toUpperCase()}</div>
+                            <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
                         </div>
 
                         ${videos.length > 1 ? `
