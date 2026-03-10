@@ -99,7 +99,16 @@ function updateUI() {
                 if (startTime && videoAbsStart && videoAbsStart > 0) {
                     const absNow = videoAbsStart + (vEl.currentTime * 1000);
                     const raceTime = (absNow - startTime) / 1000;
-                    clockVal.innerText = Math.max(0, raceTime).toFixed(2);
+                    
+                    // CLIPPING: Never show more than final race time if we have it
+                    let displayTime = Math.max(0, raceTime);
+                    const totalTimeAttr = vEl.getAttribute('data-total-time');
+                    if (totalTimeAttr) {
+                        const totalTime = parseFloat(totalTimeAttr);
+                        if (totalTime > 0) displayTime = Math.min(displayTime, totalTime / 1000);
+                    }
+                    
+                    clockVal.innerText = displayTime.toFixed(2);
                 } else {
                     // Legacy fallback
                     const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
@@ -145,7 +154,13 @@ function refreshStaticViews() {
     });
 
     const endBtnContainer = document.getElementById('coach-only-end');
-    if (endBtnContainer) endBtnContainer.style.display = (currentRole === 'VALMENTAJA') ? 'block' : 'none';
+    if (endBtnContainer) {
+        if (currentRole === 'VALMENTAJA') {
+            endBtnContainer.style.setProperty('display', 'block', 'important');
+        } else {
+            endBtnContainer.style.setProperty('display', 'none', 'important');
+        }
+    }
 
     if (currentRole === 'VALMENTAJA' || currentRole === 'KATSOMO') renderValmentajaView();
     if (currentRole === 'LÄHETTÄJÄ') renderStarterView();
@@ -238,6 +253,7 @@ function renderValmentajaView() {
                                data-trigger-time="${first.triggerTime || r.startTime}"
                                data-video-start-time="${first.videoStartTime || 0}"
                                data-start-time="${r.startTime}"
+                               data-total-time="${r.totalTime || 0}"
                                controls playsinline 
                                style="width: 100%; height: 100%; object-fit: contain;" 
                                onended="playNextClip('${safeRunId}')"
@@ -359,7 +375,7 @@ function renderAthleteView() {
                      data-current-index="0"
                      data-start-time="${r.startTime}"
                      style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
-                    <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-start-time="${r.startTime}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')"></video>
+                    <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')"></video>
                     <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent);">${(first.role || 'VIDEO').toUpperCase()}</div>
                     <div class="clock-overlay" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; transition: opacity 0.3s; opacity: 0;">
                         <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace;">0.00</div>

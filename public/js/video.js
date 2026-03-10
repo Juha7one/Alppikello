@@ -43,7 +43,7 @@ function startVideoBuffer(stream) {
             if (!activeRunnerOnCourse && mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
             }
-        }, 30000); // 30s buffer
+        }, 40000); // 40s buffer safety
     } catch (e) {
         console.error("MediaRecorder start failed:", e);
     }
@@ -152,7 +152,7 @@ function processAndSaveVideo(runner, chunks) {
             console.log("[VIDEO] Recovered runId from activeRunnerOnCourse at upload time!");
         }
         uploadVideoToServer(blob, runner);
-    }, 1500); // 1.5s delay is safe
+    }, 2000); // 2s delay for better pairing sync
 }
 
 function clearVideoGallery() {

@@ -326,19 +326,27 @@
                     const clip = playlist[currentIndex];
                     const vAbsStart = parseInt(video.getAttribute('data-video-start-time'));
                     const sTime = runData.startTime || runData.timestamp;
+                    const officialTotalMs = runData.totalTime || 0;
                     
                     clock.style.opacity = '1';
                     
+                    let raceTimeSec = 0;
                     if (vAbsStart && vAbsStart > 0 && sTime) {
                          const currentRaceMs = (vAbsStart + video.currentTime * 1000) - sTime;
-                         clockTime.innerText = Math.max(0, currentRaceMs / 1000).toFixed(2);
+                         raceTimeSec = Math.max(0, currentRaceMs / 1000);
                     } else {
                         // Legacy fallback
                         const triggerTime = clip.triggerTime || sTime;
                         const clipRelRace = (triggerTime - sTime) - 2000;
                         const currentRaceTimeMs = clipRelRace + (video.currentTime * 1000);
-                        clockTime.innerText = Math.max(0, (currentRaceTimeMs / 1000)).toFixed(2);
+                        raceTimeSec = Math.max(0, (currentRaceTimeMs / 1000));
                     }
+
+                    // CLIPPING: Never show more than final race time if we have it
+                    if (officialTotalMs > 0) {
+                        raceTimeSec = Math.min(raceTimeSec, officialTotalMs / 1000);
+                    }
+                    clockTime.innerText = raceTimeSec.toFixed(2);
                 };
 
                 video.onended = () => {
