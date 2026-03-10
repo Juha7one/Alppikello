@@ -18,7 +18,7 @@
     <div id="deployment-splash" style="background: #312e81;">
         <p class="splash-subtitle" style="color: #fff;">Päivitys asennettu:</p>
         <h1 class="splash-title" style="color: #fff;">STORM PEAK</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.63.1</div>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.63.2</div>
     </div>
 
     <!-- Onboarding View -->
@@ -27,7 +27,7 @@
         <div id="ob-step-name" class="ob-step active">
             <h1 class="premium-title">TERVETULOA</h1>
             <p style="color: var(--text-secondary); margin-bottom: 40px;">Kirjoita nimesi aloittaaksesi.</p>
-            <input type="text" id="input-user-name" class="premium-input" placeholder="Nimesi..." autocomplete="off">
+            <input type="text" id="input-profile-name" class="premium-input" placeholder="Nimesi..." autocomplete="name" spellcheck="false" autocorrect="off" autocapitalize="words">
             <button class="btn btn-primary" onclick="saveNameAndNext()">JATKA</button>
         </div>
 
@@ -109,7 +109,7 @@
             <div id="valitse-nimi-lista" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px;"></div>
             
             <p id="setup-name-new-label" style="font-size: 12px; opacity: 0.5; margin-bottom: 10px;">TAI KIRJOITA UUSI:</p>
-            <input type="text" id="name-input" class="premium-input" placeholder="Oma nimi" autocomplete="off">
+            <input type="text" id="name-input" class="premium-input" placeholder="Oma nimi" autocomplete="name" spellcheck="false" autocorrect="off" autocapitalize="words">
             <button class="btn btn-primary" onclick="saveName()">JATKA</button>
             
             <button class="btn btn-outline" style="margin-top: 40px; border-color: rgba(255,255,255,0.2);" onclick="showOnboardingStep('session')">← TAKAISIN ISTUNTOVALINTAAN</button>
@@ -402,7 +402,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.63.1 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.63.2 | © 2026</p>
     </div>
 
     <!-- Premium Modal Overlay -->
@@ -420,15 +420,15 @@
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/state.js?v=2.63.1"></script>
-    <script src="js/utils.js?v=2.63.1"></script>
-    <script src="js/socket.js?v=2.63.1"></script>
-    <script src="js/video.js?v=2.63.1"></script>
-    <script src="js/cv.js?v=2.63.1"></script>
-    <script src="js/timing.js?v=2.63.1"></script>
-    <script src="js/ui.js?v=2.63.1"></script>
-    <script src="js/rangefinder.js?v=2.63.1"></script>
-    <script src="js/app.js?v=2.63.1"></script>
+    <script src="js/state.js?v=2.63.2"></script>
+    <script src="js/utils.js?v=2.63.2"></script>
+    <script src="js/socket.js?v=2.63.2"></script>
+    <script src="js/video.js?v=2.63.2"></script>
+    <script src="js/cv.js?v=2.63.2"></script>
+    <script src="js/timing.js?v=2.63.2"></script>
+    <script src="js/ui.js?v=2.63.2"></script>
+    <script src="js/rangefinder.js?v=2.63.2"></script>
+    <script src="js/app.js?v=2.63.2"></script>
 </body>
 
 </html>

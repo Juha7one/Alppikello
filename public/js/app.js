@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Initialize UI
-    if (userName) document.getElementById('input-user-name').value = userName;
+    if (userName) document.getElementById('input-profile-name').value = userName;
     showOnboardingStep('name');
 });
 
@@ -138,7 +138,7 @@ function handleSessionJoin(session, role) {
 // --- Onboarding Helpers ---
 
 function saveNameAndNext() {
-    const val = document.getElementById('input-user-name').value.trim();
+    const val = document.getElementById('input-profile-name').value.trim();
     if (!val) return alert("Kirjoita nimesi ensin!");
     userName = val;
     localStorage.setItem('alppikello_user_name', userName);
