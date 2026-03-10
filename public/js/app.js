@@ -281,26 +281,46 @@ function startTimeSync() {
 
 // --- Global Actions (Links) ---
 
-function shareRun(runId) {
+let isSharing = false;
+async function shareRun(runId) {
+    if (isSharing) return;
     if (!runId || runId === 'undefined') return alert("Tallenne ei ole vielä valmis.");
-    // Use query parameter so static host doesn't 404/500
+    
     const url = window.location.origin + window.location.pathname + '?run=' + runId;
     if (navigator.share) {
-        navigator.share({ title: 'Alppikello - Tulokortti', url: url });
+        isSharing = true;
+        try {
+            await navigator.share({ title: 'Alppikello - Tulokortti', url: url });
+        } catch (e) {
+            if (e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+                console.warn("[SHARE] Navigation share failed:", e);
+            }
+        } finally {
+            isSharing = false;
+        }
     } else {
         copyToClipboard(url);
     }
 }
 
-function shareSession() {
-    if (!currentSession) return;
+async function shareSession() {
+    if (isSharing || !currentSession) return;
     const url = `${window.location.origin}${window.location.pathname}?s=${currentSession.id}`;
     if (navigator.share) {
-        navigator.share({
-            title: 'Alppikello - Liity Harjoitukseen',
-            text: `Liity harjoitukseen: ${currentSession.name.toUpperCase()}`,
-            url: url
-        });
+        isSharing = true;
+        try {
+            await navigator.share({
+                title: 'Alppikello - Liity Harjoitukseen',
+                text: `Liity harjoitukseen: ${currentSession.name.toUpperCase()}`,
+                url: url
+            });
+        } catch (e) {
+            if (e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+                console.warn("[SHARE] Navigation share failed:", e);
+            }
+        } finally {
+            isSharing = false;
+        }
     } else {
         copyToClipboard(url);
     }

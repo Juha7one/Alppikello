@@ -159,6 +159,7 @@ function attachVideoClockLogic(vEl) {
     }
 }
 
+let lastValmentajaRenderHash = '';
 function renderValmentajaView() {
     const activeEl = document.getElementById('active-skier');
     const resultEl = document.getElementById('result-list');
@@ -166,14 +167,31 @@ function renderValmentajaView() {
     const coachCtrlEl = document.getElementById('coach-controls');
     if (!activeEl || !resultEl) return;
 
+    const results = currentSession.results || [];
+    const athletes = currentSession.allAthletes || [];
+    const onCourse = currentSession.onCourse || [];
+    const queue = currentSession.activeQueue || [];
+
+    // SMART RENDER: Only update DOM if the structural data has actually changed
+    // This prevents video elements from being destroyed and recreated 10x per second
+    const currentHash = JSON.stringify({
+        rCount: results.length,
+        ocCount: onCourse.length,
+        qCount: queue.length,
+        aCount: athletes.length,
+        // Check if any result got a video update or status change
+        vSum: results.reduce((acc, r) => acc + (r.videos ? r.videos.length : (r.videoUrl ? 1 : 0)), 0),
+        sSum: results.reduce((acc, r) => acc + (r.status === 'DNF' ? 1 : 0), 0)
+    });
+
+    if (currentHash === lastValmentajaRenderHash) return;
+    lastValmentajaRenderHash = currentHash;
+
     const isCoach = currentRole === 'VALMENTAJA';
     if (coachCtrlEl) coachCtrlEl.style.display = isCoach ? 'block' : 'none';
 
-    const athletes = currentSession.allAthletes || [];
-
     // 1. Athlete List (Highlight those in queue)
     if (coachListEl) {
-        const queue = currentSession.activeQueue || [];
         coachListEl.innerHTML = athletes.length ? athletes.map(a => {
             const isInQueue = queue.some(q => String(q.id) === String(a.id));
             const style = isInQueue ? 'background: var(--accent); border-color: var(--accent); color: #fff;' : '';
@@ -186,7 +204,6 @@ function renderValmentajaView() {
     }
 
     // 2. Active Runners
-    const onCourse = currentSession.onCourse || [];
     const now = getSyncedTime();
     if (onCourse.length > 0) {
         activeEl.innerHTML = onCourse.map(r => {
@@ -214,7 +231,6 @@ function renderValmentajaView() {
     }
 
     // 3. Results
-    const results = currentSession.results || [];
     if (results.length > 0) {
         resultEl.innerHTML = results.map((r, i) => {
             const safeRunId = r.runId || `run-${i}`;
