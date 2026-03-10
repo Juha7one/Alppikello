@@ -298,13 +298,14 @@ app.get(['/run/:runId', '/public/run/:runId'], (req, res) => {
             return res.status(500).send("Palvelinvirhe: Pohjatiedosto puuttuu.");
         }
 
-        fs.readFile(templatePath, 'utf8', (err, data) => {
-            if (err) {
-                console.error("[ERROR] Failed to read template:", err);
+        fs.readFile(templatePath, 'utf8', (readErr, data) => {
+            if (readErr) {
+                console.error("[ERROR] Failed to read template:", readErr);
                 return res.status(500).send('Palvelinvirhe tiedostoa luettaessa.');
             }
             
-            const result = data.replace('{{RUN_DATA}}', JSON.stringify(run));
+            // USE split/join to avoid special replacement patterns in JSON string
+            const result = data.split('{{RUN_DATA}}').join(JSON.stringify(run));
             res.send(result);
         });
     } catch (err) {
@@ -325,18 +326,20 @@ app.get('/archive/:filename', (req, res) => {
         }
 
         const templatePath = path.join(__dirname, 'public', 'archive_template.html');
-        fs.readFile(templatePath, 'utf8', (err, templateData) => {
-            if (err) {
-                 console.error(`[ROUTE] Template error:`, err);
+        fs.readFile(templatePath, 'utf8', (templateErr, templateData) => {
+            if (templateErr) {
+                 console.error(`[ROUTE] Template error:`, templateErr);
                  return res.status(500).send("Virhe luettaessa pohjaa.");
             }
             
-            fs.readFile(filePath, 'utf8', (err, archiveData) => {
-                if (err) {
-                    console.error(`[ROUTE] File read error:`, err);
+            fs.readFile(filePath, 'utf8', (fileErr, archiveData) => {
+                if (fileErr) {
+                    console.error(`[ROUTE] File read error:`, fileErr);
                     return res.status(500).send("Virhe luettaessa arkistoa.");
                 }
-                const result = templateData.replace('{{SESSION_DATA}}', archiveData);
+                
+                // USE split/join to avoid special replacement patterns in huge JSON string
+                const result = templateData.split('{{SESSION_DATA}}').join(archiveData);
                 console.log(`[ROUTE] Serving archive: ${filename} (${archiveData.length} bytes)`);
                 res.send(result);
             });
