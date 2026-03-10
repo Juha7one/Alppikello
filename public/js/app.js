@@ -546,29 +546,48 @@ function generateQR(sid) {
     if (!sid) return console.error("[QR] No session ID provided");
     const url = `${window.location.origin}${window.location.pathname}?s=${sid}`;
     
-    setTimeout(() => {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const tryRender = () => {
         const canvas = document.getElementById('session-qr-large');
-        const qrLib = typeof QRCode !== 'undefined' ? QRCode : (window.QRCode || null);
+        // Check for library in multiple possible locations
+        const lib = window.QRCode || (typeof QRCode !== 'undefined' ? QRCode : null);
         
-        if (canvas && qrLib) {
-            qrLib.toCanvas(canvas, url, { 
+        if (canvas && lib && typeof lib.toCanvas === 'function') {
+            lib.toCanvas(canvas, url, { 
                 width: 300, 
                 margin: 2, 
                 color: { dark: '#000000', light: '#ffffff' } 
             }, function (error) {
                 if (error) {
-                    console.error('[QR] Lib error:', error);
+                    console.error('[QR] Render error:', error);
                     canvas.parentElement.innerHTML = `<div style="color:#000; font-weight:900; padding:20px;">QR VIRHE</div>`;
                 } else {
-                    console.log('[QR] Generated successfully for:', sid);
+                    console.log('[QR] Generated successfully');
                 }
             });
+        } else if (attempts < maxAttempts) {
+            attempts++;
+            console.log(`[QR] Waiting for lib... attempt ${attempts}`);
+            setTimeout(tryRender, 300);
         } else {
-            const errStr = `[QR] FAIL: canvas=${!!canvas} lib=${typeof qrLib}`;
-            console.error(errStr);
-            if (canvas) canvas.parentElement.innerHTML = `<div style="color:#000; padding:20px;">${errStr}</div>`;
+            const errStr = `[QR] LATAUSVIRHE: ${!canvas ? 'Canvas puuttuu' : 'Kirjasto puuttuu'}`;
+            console.error(errStr, { canvas: !!canvas, lib: typeof lib, val: lib });
+            if (canvas) {
+                canvas.parentElement.innerHTML = `
+                    <div style="color:#000; padding:20px; font-weight:800; text-align:center;">
+                        ${errStr}<br>
+                        <span style="font-size:10px; font-weight:400; opacity:0.6; margin-top:10px; display:block;">
+                            Voit silti käyttää koodia:<br>
+                            <span style="font-size:14px; color:var(--accent);">${sid}</span>
+                        </span>
+                    </div>`;
+            }
         }
-    }, 400); // Slightly longer delay for safer modal rendering
+    };
+    
+    tryRender();
 }
 
 function showQRModal() {
