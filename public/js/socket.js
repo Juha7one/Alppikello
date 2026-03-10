@@ -107,30 +107,33 @@ socket.on('nearby_sessions_found', (sessions) => {
     if (!listEl || !container) return;
 
     if (sessions && sessions.length > 0) {
-        container.style.display = 'block';
+        // FILTER: Remove currentSession from nearby list to avoid duplication
+        const filtered = sessions.filter(s => !currentSession || s.id !== currentSession.id);
         
-        // DEDUPLICATION: If Nearby found, hide other options
-        const continueCont = document.getElementById('continue-session-container');
-        const manualCont = document.getElementById('manual-join-container');
-        if (continueCont) continueCont.style.display = 'none';
-        if (manualCont) {
-             manualCont.style.display = 'none';
-             const toggleBtn = document.getElementById('btn-toggle-manual');
-             if (toggleBtn) toggleBtn.style.display = 'block';
-        }
+        if (filtered.length > 0) {
+            container.style.display = 'block';
+            
+            // If we have nearby, hide manual join to clean up UI
+            const manualCont = document.getElementById('manual-join-container');
+            const toggleBtn = document.getElementById('btn-toggle-manual');
+            if (manualCont) manualCont.style.display = 'none';
+            if (toggleBtn) toggleBtn.style.display = 'block';
 
-        listEl.innerHTML = sessions.map(s => `
-            <div class="card" onclick="joinNearbySession('${s.id}')" style="padding: 16px; margin: 0 0 10px 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.1); border-color: var(--accent);">
-                <div>
-                    <div style="font-weight: 800; font-size: 16px;">${s.name.toUpperCase()}</div>
-                    <div style="font-size: 11px; opacity: 0.6; font-weight: 700;">${s.athleteCount} LASKIJAA</div>
+            listEl.innerHTML = filtered.map(s => `
+                <div class="card" onclick="joinNearbySession('${s.id}')" style="padding: 16px; margin: 0 0 10px 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.1); border-color: var(--accent);">
+                    <div>
+                        <div style="font-weight: 800; font-size: 16px;">${s.name.toUpperCase()}</div>
+                        <div style="font-size: 11px; opacity: 0.6; font-weight: 700;">${s.athleteCount} LASKIJAA</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 900; color: var(--accent); font-size: 14px;">${s.distance} km</div>
+                        <div style="font-size: 9px; opacity: 0.5;">ETÄISYYS</div>
+                    </div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-weight: 900; color: var(--accent); font-size: 14px;">${s.distance} km</div>
-                    <div style="font-size: 9px; opacity: 0.5;">ETÄISYYS</div>
-                </div>
-            </div>
-        `).join('');
+            `).join('');
+        } else {
+            container.style.display = 'none';
+        }
     } else {
         container.style.display = 'none';
     }

@@ -184,15 +184,19 @@ function showOnboardingStep(step) {
         const manualToggle = document.getElementById('btn-toggle-manual');
         if (manualToggle) manualToggle.style.display = 'none';
 
+        // SMART AGGRESSIVE DEDUPLICATION:
+        const manualCont = document.getElementById('manual-join-container');
+        const contCont = document.getElementById('continue-session-container');
+        const nearbyCont = document.getElementById('nearby-sessions-container');
+        const toggle = document.getElementById('btn-toggle-manual');
+        
         // Fetch fresh nearby sessions
         if (socket && socket.connected) socket.emit('get_nearby_sessions', { lat: userLocation?.lat, lon: userLocation?.lon });
 
-        // SMART DEDUPLICATION:
-        // Hide manual join by default if we have context (Nearby or Continue)
-        const manualCont = document.getElementById('manual-join-container');
-        const contCont = document.getElementById('continue-session-container');
-        
+        let hasEasyJoin = false;
+
         if (currentSession) {
+            hasEasyJoin = true;
             if (contCont) {
                 contCont.style.display = 'block';
                 contCont.innerHTML = `
@@ -202,12 +206,17 @@ function showOnboardingStep(step) {
                     </button>
                 `;
             }
+        } else if (contCont) {
+            contCont.style.display = 'none';
+        }
+
+        // Initial UI state: if we have currentSession, hide manual section
+        if (hasEasyJoin) {
             if (manualCont) manualCont.style.display = 'none';
-            const toggle = document.getElementById('btn-toggle-manual');
             if (toggle) toggle.style.display = 'block';
         } else {
-            if (contCont) contCont.style.display = 'none';
             if (manualCont) manualCont.style.display = 'block';
+            if (toggle) toggle.style.display = 'none';
         }
     }
 }
