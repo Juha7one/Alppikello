@@ -232,6 +232,20 @@ function renderValmentajaView() {
     }
 
     if (results.length > 0) {
+        // Pre-calculate rankings for total time gaps
+        const validResults = [...results]
+            .filter(r => r.totalTime > 0 && r.status !== 'DNF')
+            .sort((a, b) => a.totalTime - b.totalTime);
+        const bestTime = validResults.length > 0 ? validResults[0].totalTime : 0;
+
+        // Pre-calculate best splits
+        const bestSplits = {};
+        validResults.forEach(vr => {
+            (vr.splits || []).forEach((s, idx) => {
+                if (!bestSplits[idx] || s.duration < bestSplits[idx]) bestSplits[idx] = s.duration;
+            });
+        });
+
         // Run numbering per athlete (oldest to newest)
         const counts = {};
         const runNumbers = {};
