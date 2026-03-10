@@ -85,6 +85,7 @@ function archiveSession(session) {
 }
 
 // Store for sessions and devices
+const sessions = {};
 // Store for shared Run Cards
 const runCards = {};
 
