@@ -361,7 +361,13 @@ io.on('connection', (socket) => {
             const s = sessions[sid];
             if (s.location && s.location.lat) {
                 const dist = getDistance(lat, lon, s.location.lat, s.location.lon);
-                if (dist <= radius && !s.ended) {
+                
+                // PERFORMANCE: Check if session has ANY active devices in the last 30 minutes
+                const now = Date.now();
+                const devices = Object.values(s.devices || {});
+                const isRecent = devices.some(d => (now - (d.lastHeartbeat || 0)) < 30 * 60 * 1000);
+                
+                if (dist <= radius && isRecent) {
                     nearby.push({
                         id: s.id,
                         name: s.name,
@@ -714,13 +720,16 @@ io.on('connection', (socket) => {
         const sid = (data && typeof data === 'object') ? data.sessionId : data;
         const session = sessions[sid];
         
-        if (session && session.adminId === socket.id) {
+        // ALLOW any device with VALMENTAJA role to end the session
+        const device = session ? session.devices[socket.id] : null;
+
+        if (session && device && device.role === 'VALMENTAJA') {
             console.log(`[SESSION] Coach closed session ${sid}`);
             archiveSession(session);
             io.to(sid).emit('session_ended');
             delete sessions[sid];
         } else if (session) {
-            console.warn(`[SECURITY] Unauthorized end_session attempt for ${sid} by ${socket.id}`);
+            console.warn(`[SECURITY] Unauthorized end_session attempt for ${sid} by ${socket.id} (Role: ${device ? device.role : 'none'})`);
         }
     });
 
