@@ -146,12 +146,12 @@ function attachVideoClockLogic(vEl) {
                     const totalTime = parseFloat(totalTimeAttr);
                     if (totalTime > 0) displayTime = Math.min(displayTime, totalTime / 1000);
                 }
-                clockVal.innerText = displayTime.toFixed(2);
+                clockVal.innerText = displayTime.toFixed(2).replace('.', ',');
             } else {
                 const triggerTime = parseInt(vEl.getAttribute('data-trigger-time'));
                 const clipRelRace = (triggerTime - startTime) - 2000;
                 const curMs = clipRelRace + (vEl.currentTime * 1000);
-                clockVal.innerText = Math.max(0, (curMs / 1000)).toFixed(2);
+                clockVal.innerText = Math.max(0, (curMs / 1000)).toFixed(2).replace('.', ',');
             }
         };
         vEl.onpause = () => vClock.style.opacity = '0.5';
@@ -252,11 +252,13 @@ function renderValmentajaView() {
             
             const isDNF = r.status === 'DNF';
             const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === r.runId) + 1 || null);
-            const gap = (r.totalTime > 0 && rank > 1) ? `+${((r.totalTime - bestTime) / 1000).toFixed(2)}` : '';
+            const gapVal = r.totalTime - bestTime;
+            const gap = (r.totalTime > 0 && rank > 1) ? `+${(gapVal / 1000).toFixed(2).replace('.', ',')}` : '';
 
             const splitList = (r.splits || []).map((s, idx) => {
                 const splitBest = bestSplits[idx];
-                const splitGap = (s.duration > splitBest) ? ` +${((s.duration - splitBest) / 1000).toFixed(2)}` : '';
+                const sGapVal = s.duration - splitBest;
+                const splitGap = (s.duration > splitBest) ? ` +${(sGapVal / 1000).toFixed(2).replace('.', ',')}` : '';
                 return `
                     <div style="font-size: 13px; opacity: 0.8; margin-top: 6px; font-weight: 700;">
                         <span style="color: var(--accent);">⏱️ VÄLIAIKA ${idx + 1}:</span> 
@@ -371,11 +373,13 @@ function renderAthleteView() {
         const safeRunId = r.runId || `athlete-run-${i}`;
         const isDNF = r.status === 'DNF';
         const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === r.runId) + 1 || null);
-        const gap = (r.totalTime > 0 && rank > 1) ? `+${((r.totalTime - bestTime) / 1000).toFixed(2)}` : '';
+        const gapVal = r.totalTime - bestTime;
+        const gap = (r.totalTime > 0 && rank > 1) ? `+${(gapVal / 1000).toFixed(2).replace('.', ',')}` : '';
 
         const splitList = (r.splits || []).map((s, idx) => {
             const splitBest = bestSplits[idx];
-            const splitGap = (s.duration > splitBest) ? ` +${((s.duration - splitBest) / 1000).toFixed(2)}` : '';
+            const sGapVal = s.duration - splitBest;
+            const splitGap = (s.duration > splitBest) ? ` +${(sGapVal / 1000).toFixed(2).replace('.', ',')}` : '';
             return `
                 <div style="font-size: 13px; opacity: 0.8; margin-top: 6px; font-weight: 700;">
                     <span style="color: var(--accent);">⏱️ VÄLIAIKA ${idx + 1}:</span> 

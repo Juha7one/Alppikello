@@ -1,18 +1,27 @@
 // --- Alppikello Utilities ---
 
 function formatDuration(ms) {
-    if (ms === undefined || ms === null) return "--.--";
-    if (ms < 0) ms = 0;
-    const totalSeconds = ms / 1000;
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = (totalSeconds % 60).toFixed(2);
+    if (ms === undefined || ms === null || isNaN(ms)) return "--,--";
+    const absoluteMs = Math.abs(ms);
+    const centis = Math.floor((absoluteMs % 1000) / 10);
+    const totalSecs = Math.floor(absoluteMs / 1000);
+    const hours = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
 
-    if (mins > 0) {
-        const parts = secs.split('.');
-        const paddedSecs = parts[0].padStart(2, '0') + '.' + parts[1];
-        return `${mins}:${paddedSecs}`;
+    const cStr = String(centis).padStart(2, '0');
+    const sStr = String(secs).padStart(2, '0');
+    const mStr = String(mins).padStart(2, '0');
+
+    let out = "";
+    if (hours > 0) {
+        out = `${hours}.${mStr}.${sStr},${cStr}`;
+    } else if (mins > 0) {
+        out = `${mins}.${sStr},${cStr}`;
+    } else {
+        out = `${secs},${cStr}`;
     }
-    return secs;
+    return (ms < 0 ? "-" : "") + out;
 }
 
 function getDistanceBetween(lat1, lon1, lat2, lon2) {

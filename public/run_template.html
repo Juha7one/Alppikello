@@ -278,15 +278,34 @@
         let playlist = [];
 
         function formatDuration(ms) {
-            const secs = (ms / 1000).toFixed(2);
-            return secs;
+            if (ms === undefined || ms === null || isNaN(ms)) return "--,--";
+            const absoluteMs = Math.abs(ms);
+            const centis = Math.floor((absoluteMs % 1000) / 10);
+            const totalSecs = Math.floor(absoluteMs / 1000);
+            const hours = Math.floor(totalSecs / 3600);
+            const mins = Math.floor((totalSecs % 3600) / 60);
+            const secs = totalSecs % 60;
+
+            const cStr = String(centis).padStart(2, '0');
+            const sStr = String(secs).padStart(2, '0');
+            const mStr = String(mins).padStart(2, '0');
+
+            let out = "";
+            if (hours > 0) {
+                out = `${hours}.${mStr}.${sStr},${cStr}`;
+            } else if (mins > 0) {
+                out = `${mins}.${sStr},${cStr}`;
+            } else {
+                out = `${secs},${cStr}`;
+            }
+            return (ms < 0 ? "-" : "") + out;
         }
 
         if (runData) {
             document.getElementById('runner-name').innerText = runData.name.toUpperCase();
             document.getElementById('clock-name').innerText = runData.name.toUpperCase();
             
-            const totalTimeRaw = typeof runData.totalTime === 'number' ? (runData.totalTime / 1000).toFixed(2) : runData.totalTime;
+            const totalTimeRaw = typeof runData.totalTime === 'number' ? formatDuration(runData.totalTime) : runData.totalTime;
             document.getElementById('run-time').innerText = totalTimeRaw;
             
             document.getElementById('session-name').innerText = runData.sessionName.toUpperCase();
@@ -344,11 +363,10 @@
                         raceTimeSec = Math.max(0, (currentRaceTimeMs / 1000));
                     }
 
-                    // CLIPPING: Never show more than final race time if we have it
                     if (officialTotalMs > 0) {
                         raceTimeSec = Math.min(raceTimeSec, officialTotalMs / 1000);
                     }
-                    clockTime.innerText = raceTimeSec.toFixed(2);
+                    clockTime.innerText = raceTimeSec.toFixed(2).replace('.', ',');
                 };
 
                 video.onended = () => {
