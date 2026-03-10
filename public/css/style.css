@@ -478,3 +478,15 @@ input:focus {
     flex-direction: column;
     gap: 12px;
 }
+
+/* Hide native video duration/timers to focus on our custom clock */
+video::-webkit-media-controls-current-time-display,
+video::-webkit-media-controls-time-remaining-display,
+video::-webkit-media-controls-duration-display {
+    display: none !important;
+}
+
+/* Ensure our clock stays above video controls */
+.clock-overlay {
+    z-index: 2147483647 !important; /* Highest possible to stay above native controls if possible */
+}

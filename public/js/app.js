@@ -486,10 +486,10 @@ async function openArchive(filename) {
             const videoHtml = `
                 <div class="video-container" id="arc-video-placeholder-${r.runId}" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
                     ${r.videoUrl ? `
-                        <video id="arc-video-${r.runId}" src="${r.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
-                        <div id="arc-clock-${r.runId}" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); transition: opacity 0.3s; opacity: 0;">
-                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 1px; line-height: 1;">${r.name.toUpperCase()}</div>
-                            <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace; line-height: 1.2;">0.00</div>
+                        <video id="arc-video-${r.runId}" src="${r.videoUrl}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
+                        <div id="arc-clock-${r.runId}" class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
+                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${r.name.toUpperCase()}</div>
+                            <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
                         </div>
                     ` : `
                         <div style="text-align: center; opacity: 0.5;">
@@ -541,26 +541,30 @@ async function openArchive(filename) {
 }
 
 function generateQR(sid) {
+    if (!sid) return console.error("[QR] No session ID provided");
     const url = `${window.location.origin}${window.location.pathname}?s=${sid}`;
     
-    // Large Modal QR (Added safety timeout for better reliability)
+    // Safety delay to ensure modal is rendered and canvas is accessible
     setTimeout(() => {
-        const canvasLarge = document.getElementById('session-qr-large');
-        if (canvasLarge && typeof QRCode !== 'undefined') {
-            QRCode.toCanvas(canvasLarge, url, { 
+        const canvas = document.getElementById('session-qr-large');
+        if (canvas && typeof QRCode !== 'undefined') {
+            QRCode.toCanvas(canvas, url, { 
                 width: 300, 
                 margin: 2, 
                 color: { dark: '#000000', light: '#ffffff' } 
             }, function (error) {
-                if (error) console.error('[QR] Error generating QR:', error);
-                else console.log('[QR] Generated for session:', sid);
+                if (error) {
+                    console.error('[QR] Lib error:', error);
+                    // Fallback visual alert if canvas render fails
+                    canvas.parentElement.innerHTML = `<div style="color:#000; font-weight:900; padding:20px;">QR VIRHE<br><span style="font-size:10px; font-weight:400;">Käytä linkkiä tai koodia</span></div>`;
+                } else {
+                    console.log('[QR] Generated successfully for:', sid);
+                }
             });
-        } else if (!canvasLarge) {
-            console.error('[QR] session-qr-large canvas not found!');
         } else {
-            console.error('[QR] QRCode library not found!');
+            console.error('[QR] Missing canvas or library:', { canvas: !!canvas, lib: typeof QRCode });
         }
-    }, 150);
+    }, 250);
 }
 
 function showQRModal() {

@@ -373,9 +373,10 @@ function renderAthleteView() {
                      data-start-time="${r.startTime}"
                      style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
                     <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')" onplay="attachVideoClockLogic(this)"></video>
-                    <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent);">${(first.role || 'VIDEO').toUpperCase()}</div>
-                    <div class="clock-overlay" style="position: absolute; bottom: 50px; left: 15px; pointer-events: none; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 8px; transition: opacity 0.3s; opacity: 0;">
-                        <div class="clock-val" style="font-size: 20px; font-weight: 900; font-family: monospace;">0.00</div>
+                    <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10;">${(first.role || 'VIDEO').toUpperCase()}</div>
+                    <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
+                        <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${r.name.toUpperCase()}</div>
+                        <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
                     </div>
                 </div>
             `;
