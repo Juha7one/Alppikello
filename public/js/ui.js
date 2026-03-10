@@ -232,17 +232,38 @@ function renderValmentajaView() {
 
     // 3. Results
     if (results.length > 0) {
+        // Pre-calculate rankings for total time gaps
+        const validResults = [...results]
+            .filter(r => r.totalTime > 0 && r.status !== 'DNF')
+            .sort((a, b) => a.totalTime - b.totalTime);
+        const bestTime = validResults.length > 0 ? validResults[0].totalTime : 0;
+
+        // Pre-calculate best splits
+        const bestSplits = {};
+        validResults.forEach(vr => {
+            (vr.splits || []).forEach((s, idx) => {
+                if (!bestSplits[idx] || s.duration < bestSplits[idx]) bestSplits[idx] = s.duration;
+            });
+        });
+
         resultEl.innerHTML = results.map((r, i) => {
             const safeRunId = r.runId || `run-${i}`;
             const startTimeStr = r.startTime ? new Date(r.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
             
-            const splitList = (r.splits || []).map((s, idx) => 
-                `<div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">
-                    <span style="color: var(--accent); font-weight: 800;">⏱️ V${idx + 1}:</span> 
-                    <span style="font-weight: 700;">${formatDuration(s.duration)} s</span> 
-                    <small style="opacity: 0.5;">(${s.deviceName || 'KENNO'})</small>
-                </div>`
-            ).join('');
+            const isDNF = r.status === 'DNF';
+            const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === r.runId) + 1 || null);
+            const gap = (r.totalTime > 0 && rank > 1) ? `+${((r.totalTime - bestTime) / 1000).toFixed(2)}` : '';
+
+            const splitList = (r.splits || []).map((s, idx) => {
+                const splitBest = bestSplits[idx];
+                const splitGap = (s.duration > splitBest) ? ` +${((s.duration - splitBest) / 1000).toFixed(2)}` : '';
+                return `
+                    <div style="font-size: 13px; opacity: 0.8; margin-top: 6px; font-weight: 700;">
+                        <span style="color: var(--accent);">⏱️ VÄLIAIKA ${idx + 1}:</span> 
+                        <span>${formatDuration(s.duration)} s</span> 
+                        <span class="result-gap">${splitGap}</span>
+                    </div>`;
+            }).join('');
 
             let videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
             videos = [...videos].sort((a, b) => (a.triggerTime || 0) - (b.triggerTime || 0));
@@ -251,79 +272,39 @@ function renderValmentajaView() {
             if (videos.length > 0) {
                 const first = videos[0];
                 const videoDataJson = JSON.stringify(videos).replace(/"/g, '&quot;');
-                
                 videoHtml = `
-                    <div class="video-container playlist-player" 
-                         id="player-${safeRunId}" 
-                         data-videos="${videoDataJson}" 
-                         data-current-index="0"
-                         data-start-time="${r.startTime}"
+                    <div class="video-container playlist-player" id="player-${safeRunId}" data-videos="${videoDataJson}" data-current-index="0" data-start-time="${r.startTime}"
                          style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                        
-                        <video id="vid-el-${safeRunId}" 
-                               src="${first.url}" 
-                               data-trigger-time="${first.triggerTime || r.startTime}"
-                               data-video-start-time="${first.videoStartTime || 0}"
-                               data-start-time="${r.startTime}"
-                               data-total-time="${r.totalTime || 0}"
-                               controls playsinline 
-                               style="width: 100%; height: 100%; object-fit: contain;" 
-                               onended="playNextClip('${safeRunId}')"
-                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                               onplay="attachVideoClockLogic(this)">
-                        </video>
-                        
-                        <div style="display:none; color:rgba(255,0,0,0.5); font-size:10px; font-weight:900;">VIDEOVIRHE</div>
-                        
-                        <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
-                            ${(first.role || 'VIDEO').toUpperCase()}
-                        </div>
-
-                        <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
-                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${(r.name || 'LASKIJA').toUpperCase()}</div>
-                            <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
-                        </div>
-
-                        ${videos.length > 1 ? `
-                            <div class="playlist-controls" style="position: absolute; top: 10px; left: 10px; display: flex; gap: 5px;">
-                                ${videos.map((_, idx) => `
-                                    <div onclick="switchClip('${safeRunId}', ${idx})" style="width: 20px; height: 4px; background: ${idx === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.2)'}; border-radius: 2px; cursor: pointer;"></div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
+                        <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-video-start-time="${first.videoStartTime || 0}"
+                               data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')" onplay="attachVideoClockLogic(this)"></video>
+                        <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10;">${(first.role || 'VIDEO').toUpperCase()}</div>
                     </div>
                 `;
             } else {
-                videoHtml = `
-                    <div class="video-container" id="video-placeholder-${safeRunId}" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                        <div style="text-align: center; opacity: 0.5;">
-                            <div style="font-size: 24px; margin-bottom: 8px;">🎬</div>
-                            <div style="font-size: 11px; font-weight: 900; letter-spacing: 1px;">ODOTETAAN VIDEOTA...</div>
-                        </div>
-                    </div>
-                `;
+                videoHtml = `<div style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; display: flex; align-items: center; justify-content: center; opacity: 0.2; border: 1px solid rgba(255,255,255,0.1);">🎬 ODOTETAAN VIDEOTA...</div>`;
             }
 
             return `
-                <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff; padding-bottom: 20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
+                <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff; padding-bottom: 25px; position: relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px;">
                         <div>
                             <span style="opacity:0.3; font-size: 11px;">#${results.length - i} • ${startTimeStr}</span>
-                            <div style="font-weight: 900; font-size: 22px; margin: 4px 0;">${(r.name || 'TUNTEMATON').toUpperCase()}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size: 28px; font-weight: 900; color: ${r.status === 'DNF' ? '#ef4444' : 'var(--accent)'};">
-                                ${r.status === 'DNF' ? 'DNF' : formatDuration(r.totalTime)}
+                            <div style="font-weight: 900; font-size: 24px; margin: 4px 0; letter-spacing: -0.5px;">
+                                ${rank ? `${rank}. ` : ''}${r.name.toUpperCase()} ${isDNF ? 'DNF' : formatDuration(r.totalTime)}
+                                <span class="result-gap" style="font-size: 18px; color: var(--accent); opacity: 1;">${gap}</span>
                             </div>
                         </div>
                     </div>
 
                     ${videoHtml}
 
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px;">
-                        <div style="display: flex; flex-direction: column; gap: 4px;">${splitList}</div>
-                        <button class="btn-mini" onclick="shareRun('${safeRunId}')" style="background: rgba(255,255,255,0.1); padding: 8px 15px;">JAA TULOSKORTTI 🔗</button>
+                    <div style="margin-top: 15px; text-align: left; padding-left: 5px;">
+                        ${splitList}
                     </div>
+
+                    <button class="corner-share-btn" onclick="shareRun('${safeRunId}')">
+                        <span>🔗</span>
+                    </button>
                 </div>
             `;
         }).join('');
@@ -371,8 +352,35 @@ function renderAthleteView() {
     const results = currentSession.results || [];
     const myResults = results.filter(r => r.name === userName);
 
+    // Pre-calculate rankings and best times
+    const validResults = [...results]
+        .filter(r => r.totalTime > 0 && r.status !== 'DNF')
+        .sort((a, b) => a.totalTime - b.totalTime);
+    const bestTime = validResults.length > 0 ? validResults[0].totalTime : 0;
+    const bestSplits = {};
+    validResults.forEach(vr => {
+        (vr.splits || []).forEach((s, idx) => {
+            if (!bestSplits[idx] || s.duration < bestSplits[idx]) bestSplits[idx] = s.duration;
+        });
+    });
+
     listEl.innerHTML = myResults.length ? myResults.map((r, i) => {
         const safeRunId = r.runId || `athlete-run-${i}`;
+        const isDNF = r.status === 'DNF';
+        const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === r.runId) + 1 || null);
+        const gap = (r.totalTime > 0 && rank > 1) ? `+${((r.totalTime - bestTime) / 1000).toFixed(2)}` : '';
+
+        const splitList = (r.splits || []).map((s, idx) => {
+            const splitBest = bestSplits[idx];
+            const splitGap = (s.duration > splitBest) ? ` +${((s.duration - splitBest) / 1000).toFixed(2)}` : '';
+            return `
+                <div style="font-size: 13px; opacity: 0.8; margin-top: 6px; font-weight: 700;">
+                    <span style="color: var(--accent);">⏱️ VÄLIAIKA ${idx + 1}:</span> 
+                    <span>${formatDuration(s.duration)} s</span> 
+                    <span class="result-gap">${splitGap}</span>
+                </div>`;
+        }).join('');
+
         let videos = r.videos || (r.videoUrl ? [{ url: r.videoUrl, role: 'video', triggerTime: r.finishTime || r.startTime + (r.totalTime || 0) }] : []);
         videos = [...videos].sort((a, b) => (a.triggerTime || 0) - (b.triggerTime || 0));
         const videoDataJson = JSON.stringify(videos).replace(/"/g, '&quot;');
@@ -381,29 +389,32 @@ function renderAthleteView() {
         if (videos.length > 0) {
             const first = videos[0];
             videoHtml = `
-                <div class="video-container playlist-player" 
-                     id="player-${safeRunId}" 
-                     data-videos="${videoDataJson}" 
-                     data-current-index="0"
-                     data-start-time="${r.startTime}"
+                <div class="video-container playlist-player" id="player-${safeRunId}" data-videos="${videoDataJson}" data-current-index="0" data-start-time="${r.startTime}"
                      style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
                     <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-start-time="${r.startTime}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;" onended="playNextClip('${safeRunId}')" onplay="attachVideoClockLogic(this)"></video>
                     <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10;">${(first.role || 'VIDEO').toUpperCase()}</div>
-                    <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
-                        <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${r.name.toUpperCase()}</div>
-                        <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
-                    </div>
                 </div>
             `;
         }
 
         return `
-            <div class="card" style="margin-bottom:15px; padding-bottom: 20px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-                    <span style="font-weight:800; opacity: 0.5;">LASKU #${myResults.length - i}</span>
-                    <span style="font-size:24px; font-weight:900; color: var(--accent);">${formatDuration(r.totalTime)}</span>
+            <div class="card" style="margin-bottom:15px; padding-bottom: 25px; position: relative;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                    <div style="text-align: left;">
+                        <span style="font-weight:800; opacity: 0.5;">LASKU #${myResults.length - i}</span>
+                        <div style="font-weight: 900; font-size: 24px; margin: 4px 0; letter-spacing: -0.5px;">
+                            ${rank ? `${rank}. ` : ''}${userName.toUpperCase()} ${isDNF ? 'DNF' : formatDuration(r.totalTime)}
+                            <span class="result-gap" style="font-size: 18px; color: var(--accent); opacity: 1;">${gap}</span>
+                        </div>
+                    </div>
                 </div>
                 ${videoHtml}
+                <div style="margin-top: 15px; text-align: left; padding-left: 5px;">
+                    ${splitList}
+                </div>
+                <button class="corner-share-btn" onclick="shareRun('${r.runId || safeRunId}')">
+                    <span>🔗</span>
+                </button>
             </div>
         `;
     }).join('') : '<p style="text-align:center; opacity:0.3; padding: 20px;">Ei omia laskuja vielä.</p>';

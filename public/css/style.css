@@ -490,3 +490,40 @@ video::-webkit-media-controls-duration-display {
 .clock-overlay {
     z-index: 2147483647 !important; /* Highest possible to stay above native controls if possible */
 }
+
+/* Corner Share Button */
+.corner-share-btn {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, transparent 60%, rgba(255, 255, 255, 0.1) 60%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 0 8px 8px 0;
+    cursor: pointer;
+    border-radius: 0 0 var(--border-radius) 0;
+    transition: all 0.2s;
+    border: none;
+    color: inherit;
+    z-index: 5;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.corner-share-btn span {
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+.corner-share-btn:active {
+    background: linear-gradient(135deg, transparent 60%, var(--accent) 60%);
+}
+
+.result-gap {
+    font-size: 14px;
+    font-weight: 800;
+    opacity: 0.6;
+    margin-left: 8px;
+}
