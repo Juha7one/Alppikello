@@ -1,50 +1,51 @@
-# ALPPIKELLO ARCHITECTURAL MANIFESTO
+# 📜 ALPPIKELLO ARCHITECTURAL MANIFESTO & OPERATING PROTOCOL
 
-> This document is the source of truth for the Alppikello system architecture. Any AI assistant working on this project MUST read and follow these rules to ensure system integrity.
+This document defines the strict rules for the Alppikello project. Every AI agent must adhere to these principles to ensure system stability, scalability, and consistent deployment.
 
-## 1. Dual-Domain Architecture (The "Static-Backend Bridge")
-Alppikello is split into two distinct environments:
-- **Frontend (Static):** `alppikello.luodut.com` (Hosted on a standard cPanel webhotelli).
-- **Backend (Node.js):** `alppikello-backend.onrender.com` (Hosted on Render.js).
+## 1. INFRASTRUCTURE & SERVICE BOUNDARIES (Critical)
+The application is split across three distinct environments. Do NOT attempt to perform server-side actions in the browser, or direct local file access from the server.
 
-**CRITICAL RULES:**
-- **No Relative Paths for Assets:** All video URLs and API endpoints MUST be absolute (e.g., `https://domain.com/path` instead of `/path`).
-- **CORS:** The backend must always have CORS enabled to allow the static frontend to fetch data and upload videos.
-- **Frontend-Side Rendering:** Shared result cards (Run Cards) are rendered by the frontend single-page app (SPA) using the `?run=ID` query parameter to avoid 404/500 errors on the static host.
+*   **Node.js Backend (server.js)**:
+    *   Handles **Socket.io** orchestration, session state, and global timing.
+    *   Manages **S3 Uploads** (AWS SDK) and metadata.
+    *   Does NOT serve files (handled by the CDN/Static host).
+    *   Does NOT have a persistent database (Current design is in-memory).
+*   **Static/Public Frontend (public/)**:
+    *   Runs in the **Browser**.
+    *   Pure HTML/JS/CSS (Vanilla). No build step unless specified.
+    *   All video processing (MediaRecorder) happens here.
+    *   Must use relative paths for internal resources.
+*   **Storage (AWS S3)**:
+    *   Videos are uploaded here and served via public URLs.
+    *   Local scripts must NEVER assume direct file system access to videos.
 
-## 2. Video Life Cycle & Pairing
-The system uses a decentralized video recording strategy (any device can be a camera).
+## 2. CODE STRUCTURE & MODULARITY (Anti-Monolith)
+*   **Size Limit**: Files should generally stay under 400-500 lines.
+*   **Separation of Concerns**: 
+    *   `ui.js`: Rendering, DOM updates, visual logic.
+    *   `socket.js`: All `socket.on` and `socket.emit` handlers.
+    *   `app.js`: Main controller and onboarding flow.
+    *   `timing.js`: Action triggers (Start/Finish/DNF).
+    *   `video.js`: Camera, recording, and MediaRecorder logic.
+*   **Global Variables**: Keep standard across files (e.g., `currentSession`, `currentRole`, `userName`). Verify in `state.js`.
 
-**THE PAIRING CHAIN:**
-1.  **Recording:** A device (e.g., Video Role) records a clip.
-2.  **Metadata:** The device attaches the `runId` (unique per run) and `runnerId` (unique per athlete) to the video payload.
-3.  **Upload:** Video is sent to `BACKEND/upload`.
-4.  **Storage:** The server uploads the file to **AWS S3** (Primary) or `/uploads` (Fallback).
-5.  **Linking:** The server finds the active run in memory using the `runId` and updates its `videoUrl`.
-6.  **Persistence:** The video URL is saved into the `runCards` map for public sharing.
+## 3. DEPLOYMENT & UPDATE PROTOCOL (The Cycle)
+Every push to Git MUST follow this exact sequence:
+1.  **Version Bump**: Update `version` in `package.json` and `index.html`.
+2.  **Identity Change**: Update the Splash Screen **Name** (e.g., STORM PEAK -> GLACIER RUN).
+3.  **Color Shift**: Change the Splash Screen **Background CSS Color** to a new hex code.
+4.  **Cache Busting**: Update the `?v=` parameter in every `<script>` and `<link>` tag in `index.html`.
+5.  **Commit Header**: Start the message with the identity (e.g., `GLACIER RUN v2.69.0: Fixed...`).
 
-## 3. Storage & Persistence Strategy
-Currently, Alppikello is "volatile" (RAM-based). 
+## 4. UI/UX & MOBILE PRINCIPLES
+*   **Aggressive Deduplication**: If a user has a session to continue, HIDE the manual code input. Only show one "primary" path to join.
+*   **Smart Rendering**: Before updating the DOM (especially lists with video), check if data has changed (Hash check). **Never reload a video element needlessly.**
+*   **Robustness**: Catch and handle browser errors like `AbortError` (canceled shares) or `NotAllowedError` (camera/location refused) gracefully.
 
-**STORAGE LAYERS:**
-- **Videos:** Permanent (AWS S3). They stay in the bucket forever unless manually deleted.
-- **Active Sessions:** Volatile (In-Memory `sessions` object). Lost on server restart.
-- **Public Shares:** Volatile (In-Memory `runCards` object). Lost on server restart.
+## 5. ENVIRONMENT-AWARE CODING
+*   **HTTPS Only**: Certain APIs (Camera, Location, Share) ONLY work in secure contexts.
+*   **Latency**: Always assume network latency. Use `getSyncedTime()` and `serverTimeOffset` for all timing calculations.
+*   **S3 Readiness**: Always check `s3Active` before attempting video features.
 
-**IMPROVEMENT PLAN (TO BE IMPLEMENTED):**
-- **Session Archiving:** When a session is ended, the server must save the entire session metadata (results, times, names, video links) into a JSON file in the `/archives` directory.
-- **Archive Browser:** A private "Coach Archive" view where old sessions can be picked and reviewed.
-
-## 4. Time Synchronization
-Alpine skiing requires millisecond precision.
-- System uses a **Server-Offset NTP-style sync**.
-- Devices calculate `serverTimeOffset = ((ServerTime - ClientTime) + (ServerTime - ResponseTime)) / 2`.
-- All timestamps sent to the server MUST be adjusted using `getSyncedTime()`.
-
-## 5. Device Communication (Socket.io)
-- **Rooms:** Devices for the same session are joined into a Socket.io room named after the `SessionId`.
-- **Heartbeats:** Devices send periodic heartbeats to keep the session alive.
-- **Housekeeping:** Sessions with no heartbeats for >12 hours are purged from memory.
-
----
-*Signed, Antigravity AI & Juha*
+***
+**FAILURE TO OBSERVE THESE RULES RESULTS IN SYSTEM FRAGMENTATION.**
