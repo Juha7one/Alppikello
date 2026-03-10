@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function createSession() {
     if (!userName) return showOnboardingStep('name');
 
-    const btn = document.querySelector('#ob-step-session .btn-primary');
+    const btn = document.querySelector('#coach-only-create .btn-outline');
     if (btn) {
         btn.disabled = true;
         btn.innerText = "LUODAAN...";
@@ -174,7 +174,7 @@ function showOnboardingStep(step) {
         if (titleEl) titleEl.innerText = isCoach ? 'LUO HARJOITUS' : 'LIITY HARJOITUKSEEN';
         
         // RESET BUTTON from previous "LUODAAN..." state
-        const createBtn = document.querySelector('#ob-step-session .btn-primary');
+        const createBtn = document.querySelector('#coach-only-create .btn-outline');
         if (createBtn) {
             createBtn.disabled = false;
             createBtn.innerText = "LUO UUSI HARJOITUS";
@@ -200,9 +200,9 @@ function showOnboardingStep(step) {
             if (contCont) {
                 contCont.style.display = 'block';
                 contCont.innerHTML = `
-                    <button class="btn btn-outline" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; border-color: var(--success); color: var(--success); margin-bottom: 25px; background: rgba(34, 197, 94, 0.05); height: 80px;">
+                    <button class="btn btn-success" onclick="joinNearbySession('${currentSession.id}')" style="width:100%; margin-bottom: 25px; height: 85px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); border: none;">
                         JATKA HARJOITUKSESSA:<br>
-                        <span style="font-size: 16px; font-weight: 900;">${currentSession.name.toUpperCase()}</span>
+                        <span style="font-size: 20px; font-weight: 900;">${currentSession.name.toUpperCase()}</span>
                     </button>
                 `;
             }
