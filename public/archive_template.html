@@ -276,6 +276,7 @@
             const date = new Date(session.archivedAt || session.timestamp);
             document.getElementById('session-date').innerText = date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 
+            const listEl = document.getElementById('results-list');
             const validResults = [...session.results]
                 .filter(r => r.totalTime > 0 && r.status !== 'DNF')
                 .sort((a,b) => a.totalTime - b.totalTime);

@@ -66,11 +66,19 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 // Archive directory
-const archiveDir = path.join(__dirname, 'archives');
-if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir);
+const archiveDir = path.resolve(__dirname, 'archives');
+if (!fs.existsSync(archiveDir)) {
+    fs.mkdirSync(archiveDir, { recursive: true });
+    console.log(`[INIT] Created archives directory at ${archiveDir}`);
+} else {
+    console.log(`[INIT] Archives directory found at ${archiveDir}`);
+}
 
 function archiveSession(session) {
-    if (!session || !session.results || session.results.length === 0) return;
+    if (!session || !session.results || session.results.length === 0) {
+        console.warn(`[ARCHIVE] Skipping empty session ${session ? session.id : 'null'}`);
+        return;
+    }
     const filename = `session_${session.id}_${Date.now()}.json`;
     const filePath = path.join(archiveDir, filename);
     try {
@@ -78,7 +86,7 @@ function archiveSession(session) {
             ...session,
             archivedAt: Date.now()
         }, null, 2));
-        console.log(`[ARCHIVE] Saved session ${session.id} to ${filename}`);
+        console.log(`[ARCHIVE] SUCCESSFULLY saved session ${session.id} to ${filename}`);
     } catch (err) {
         console.error(`[ARCHIVE ERROR] Failed to save session ${session.id}:`, err);
     }
@@ -309,22 +317,32 @@ app.get('/archive/:filename', (req, res) => {
     try {
         const filename = req.params.filename;
         const filePath = path.join(archiveDir, filename.endsWith('.json') ? filename : filename + '.json');
+        console.log(`[ROUTE] Accessing archive: ${filename} -> ${filePath}`);
         
         if (!fs.existsSync(filePath)) {
+            console.warn(`[ROUTE] Archive NOT FOUND: ${filePath}`);
             return res.status(404).send('<!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:#fff;"><h1>404 - ARKISTOA EI LÖYDY</h1><p>Tilaa vievä tai vanhentunut linkki.</p><a href="/" style="color:#3b82f6;">Takaisin pääsivulle</a></body></html>');
         }
 
         const templatePath = path.join(__dirname, 'public', 'archive_template.html');
         fs.readFile(templatePath, 'utf8', (err, templateData) => {
-            if (err) return res.status(500).send("Virhe luettaessa pohjaa.");
+            if (err) {
+                 console.error(`[ROUTE] Template error:`, err);
+                 return res.status(500).send("Virhe luettaessa pohjaa.");
+            }
             
             fs.readFile(filePath, 'utf8', (err, archiveData) => {
-                if (err) return res.status(500).send("Virhe luettaessa arkistoa.");
+                if (err) {
+                    console.error(`[ROUTE] File read error:`, err);
+                    return res.status(500).send("Virhe luettaessa arkistoa.");
+                }
                 const result = templateData.replace('{{SESSION_DATA}}', archiveData);
+                console.log(`[ROUTE] Serving archive: ${filename} (${archiveData.length} bytes)`);
                 res.send(result);
             });
         });
     } catch (err) {
+        console.error(`[ROUTE] /archive crash:`, err);
         res.status(500).send("Palvelinvirhe.");
     }
 });
