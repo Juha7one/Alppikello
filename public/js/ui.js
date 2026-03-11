@@ -165,7 +165,12 @@ function renderValmentajaView() {
     const resultEl = document.getElementById('result-list');
     const coachListEl = document.getElementById('coach-athlete-list');
     const coachCtrlEl = document.getElementById('coach-controls');
+    const sessionNameEl = document.getElementById('coach-session-name');
     if (!activeEl || !resultEl) return;
+
+    if (sessionNameEl && currentSession.name) {
+        sessionNameEl.innerText = currentSession.name.toUpperCase();
+    }
 
     const results = currentSession.results || [];
     const athletes = currentSession.allAthletes || [];
@@ -622,3 +627,10 @@ function playNextClip(runId) {
 
 window.switchClip = switchClip;
 window.playNextClip = playNextClip;
+function editSessionName() {
+    const currentName = currentSession.name || "";
+    const newName = prompt("ANNA HARJOITUKSELLE NIMI (esim. Levi SL, Ryhmä-A):", currentName);
+    if (newName !== null && newName !== currentName) {
+        socket.emit('update_session_name', { sessionId: currentSession.id, name: newName });
+    }
+}

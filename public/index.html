@@ -17,7 +17,7 @@
     <!-- Deployment Splash Screen (Identification for new pushes) -->
     <div id="deployment-splash" style="background: #581c87;">
         <h1 class="splash-title" style="color: #fff;">LEGACY OF SPEED</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.79.6</div>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.80.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -121,9 +121,12 @@
     <div id="view-valmentaja" class="view container">
         <!-- High-Contrast Session Control Card -->
         <div id="coach-session-card" class="card" style="background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); padding: 25px; margin-bottom: 35px; border-radius: 24px;">
-            <div style="text-align: left;">
-                <h1 id="coach-session-name" style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; color: #fff;">TREENI-10.03.26-12.00</h1>
-                <div id="s3-status-badge" style="display:inline-block; font-size: 11px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger); margin-top: 10px;">S3: VIRHE</div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="text-align: left;">
+                    <h1 id="coach-session-name" style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; color: #fff;">LATAUTUU...</h1>
+                    <button id="btn-edit-session-name" class="btn btn-outline btn-mini" onclick="editSessionName()" style="margin-top: 5px; font-size: 10px; padding: 4px 10px; border-color: rgba(255,255,255,0.2); opacity: 0.5; color: #fff;">MUOKKAA NIMI ✍️</button>
+                    <div id="s3-status-badge" style="display:inline-block; font-size: 11px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger); margin-top: 10px;">S3: POIS</div>
+                </div>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px;">
@@ -373,9 +376,13 @@
 
     <!-- Archive View -->
     <div id="view-archive" class="view container">
-        <header style="margin-bottom: 30px; text-align: center;">
+        <header style="margin-bottom: 20px; text-align: center;">
             <h1 style="font-weight: 900; letter-spacing: -1px; margin: 0; font-size: 32px;">ARKISTO 📁</h1>
         </header>
+        
+        <div id="archive-search-container" style="margin-bottom: 25px;">
+            <input type="text" id="input-archive-search" class="premium-input" placeholder="HAE NIMI TAI URHEILIJA..." onkeyup="filterArchives()" style="font-size: 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1);">
+        </div>
         <div id="archive-list" style="display: flex; flex-direction: column; gap: 12px;">
             <p style="opacity:0.4; text-align:center; padding:40px;">Ladataan arkistoa...</p>
         </div>
@@ -407,7 +414,7 @@
                 Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.79.6 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.80.0 | © 2026</p>
     </div>
 
     <!-- QR Modal -->
@@ -437,16 +444,16 @@
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/qrcode.min.js?v=2.79.6"></script>
-    <script src="js/state.js?v=2.79.6"></script>
-    <script src="js/utils.js?v=2.79.6"></script>
-    <script src="js/socket.js?v=2.79.6"></script>
-    <script src="js/video.js?v=2.79.6"></script>
-    <script src="js/cv.js?v=2.79.6"></script>
-    <script src="js/timing.js?v=2.79.6"></script>
-    <script src="js/ui.js?v=2.79.6"></script>
-    <script src="js/rangefinder.js?v=2.79.6"></script>
-    <script src="js/app.js?v=2.79.6"></script>
+    <script src="js/qrcode.min.js?v=2.80.0"></script>
+    <script src="js/state.js?v=2.80.0"></script>
+    <script src="js/utils.js?v=2.80.0"></script>
+    <script src="js/socket.js?v=2.80.0"></script>
+    <script src="js/video.js?v=2.80.0"></script>
+    <script src="js/cv.js?v=2.80.0"></script>
+    <script src="js/timing.js?v=2.80.0"></script>
+    <script src="js/ui.js?v=2.80.0"></script>
+    <script src="js/rangefinder.js?v=2.80.0"></script>
+    <script src="js/app.js?v=2.80.0"></script>
 </body>
 
 </html>

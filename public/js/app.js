@@ -1,4 +1,5 @@
 // --- Alppikello MAIN CONTROLLER ---
+let allArchives = []; // Global store for searching list
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Check for Splash Screen
@@ -560,25 +561,59 @@ async function loadArchives() {
     try {
         const baseUrl = SERVER_URL || window.location.origin;
         const resp = await fetch(`${baseUrl}/api/archives`);
-        const archives = await resp.json();
-
-        if (archives.length === 0) {
-            listEl.innerHTML = '<p style="opacity:0.4; text-align:center; padding:40px;">Ei vielä arkistoituja harjoituksia.</p>';
-            return;
-        }
-
-        listEl.innerHTML = archives.map(a => `
-            <div class="card" onclick="openArchive('${a.filename}')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-weight:900; font-size:18px;">${a.name.toUpperCase()}</div>
-                    <div style="font-size:11px; opacity:0.5; font-weight:700;">${new Date(a.date).toLocaleDateString()} • ${a.athleteCount} SUORITUSTA</div>
-                </div>
-                <div style="color:var(--accent); font-weight:900;">KATSO →</div>
-            </div>
-        `).join('');
+        allArchives = await resp.json();
+        renderArchiveList(allArchives);
     } catch (e) {
         listEl.innerHTML = '<p style="color:var(--danger); text-align:center;">Virhe ladattaessa arkistoa.</p>';
     }
+}
+
+function renderArchiveList(archives) {
+    const listEl = document.getElementById('archive-list');
+    if (archives.length === 0) {
+        listEl.innerHTML = '<p style="opacity:0.4; text-align:center; padding:40px;">Ei löydettyjä harjoituksia.</p>';
+        return;
+    }
+
+    listEl.innerHTML = archives.map(a => {
+        const dateStr = new Date(a.date).toLocaleDateString('fi-FI');
+        const autoLabel = a.autoArchived ? '<span style="font-size:9px; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:10px; margin-left:8px; opacity:0.5;">AUTOMAATTINEN</span>' : '';
+        const athleteNames = (a.athletes || []).slice(0, 3).join(', ') + ((a.athletes && a.athletes.length > 3) ? '...' : '');
+        
+        return `
+            <div class="card" onclick="openArchive('${a.filename}')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${a.autoArchived ? 'rgba(255,255,255,0.2)' : 'var(--accent)'};">
+                <div style="flex-grow:1; padding-right:15px;">
+                    <div style="font-weight:900; font-size:18px; display:flex; align-items:center;">
+                        ${a.name.toUpperCase()} ${autoLabel}
+                    </div>
+                    <div style="font-size:11px; opacity:0.5; font-weight:700; margin-bottom:4px;">
+                        ${dateStr} • ${a.athleteCount} SUORITUSTA
+                    </div>
+                    <div style="font-size:10px; opacity:0.3; font-weight:600; text-transform:uppercase;">
+                        ${athleteNames || 'Ei nimitietoja'}
+                    </div>
+                </div>
+                <div style="color:var(--accent); font-weight:900; white-space:nowrap; font-size:12px;">KATSO →</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function filterArchives() {
+    const query = document.getElementById('input-archive-search').value.toUpperCase();
+    if (!query) {
+        renderArchiveList(allArchives);
+        return;
+    }
+    
+    const filtered = allArchives.filter(a => {
+        const nameMatch = a.name.toUpperCase().includes(query);
+        const athleteMatch = a.athletes && a.athletes.some(name => name.toUpperCase().includes(query));
+        const dateMatch = new Date(a.date).toLocaleDateString('fi-FI').includes(query);
+        return nameMatch || athleteMatch || dateMatch;
+    });
+    
+    renderArchiveList(filtered);
 }
 
 async function openArchive(filename) {

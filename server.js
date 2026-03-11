@@ -275,7 +275,9 @@ app.get(['/api/archives', '/public/api/archives'], (req, res) => {
                     name: data.name,
                     date: data.archivedAt || Date.now(),
                     athleteCount: (data.results || []).length,
-                    filename: f
+                    athletes: [...new Set((data.results || []).map(r => r.name))], // Unique athlete names for search
+                    filename: f,
+                    autoArchived: data.autoArchived || false
                 };
             } catch(e) { return null; }
         }).filter(it => it).sort((a, b) => b.date - a.date);
@@ -368,7 +370,7 @@ app.get(['/archive/:filename', '/public/archive/:filename', '/alppikello/archive
 // Remove sessions with no heartbeats for > 12 hours
 setInterval(() => {
     const now = Date.now();
-    const MAX_IDLE = 12 * 60 * 60 * 1000; // 12 hours
+    const MAX_IDLE = 60 * 60 * 1000; // 60 minutes (User specified)
     for (const sid in sessions) {
         const session = sessions[sid];
         const lastActivity = Math.max(
@@ -377,7 +379,8 @@ setInterval(() => {
         );
         if (now - lastActivity > MAX_IDLE) {
             console.log(`[HOUSEKEEPING] Purging idle session: ${sid}`);
-            archiveSession(session); // Auto-archive before deleting if there are results
+            session.autoArchived = true;
+            archiveSession(session); // Auto-archive before deleting
             delete sessions[sid];
         }
     }
@@ -432,6 +435,16 @@ io.on('connection', (socket) => {
 
         socket.join(sessionId);
         socket.emit('session_created', sessions[sessionId]);
+    });
+
+    socket.on('update_session_name', (data) => {
+        const { sessionId, name } = data;
+        const session = sessions[sessionId];
+        if (session && session.adminId === socket.id) {
+            console.log(`[SESSION] Renaming ${sessionId} to: ${name}`);
+            session.name = name;
+            io.to(sessionId).emit('device_status_update', { session });
+        }
     });
 
 
