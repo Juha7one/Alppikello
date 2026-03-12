@@ -89,8 +89,9 @@ h3 {
 }
 
 @media (min-width: 768px) {
-    #view-run-card.container, #view-archive.container {
-        max-width: 1200px;
+    #view-run-card.container {
+        max-width: 100%;
+        padding: 24px !important;
     }
 }
 
