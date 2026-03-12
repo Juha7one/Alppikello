@@ -373,7 +373,9 @@ function checkDeepLink() {
     // 3. Whole Archive view
     const archFile = params.get('archive');
     if (archFile) {
-        openArchive(archFile + '.json');
+        const cleanFile = archFile.trim();
+        console.log(`[DEEP LINK] Opening archive: ${cleanFile}`);
+        openArchive(cleanFile + '.json');
     }
 }
 

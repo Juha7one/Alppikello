@@ -353,25 +353,30 @@ app.get(['/api/archives/:filename', '/public/api/archives/:filename'], async (re
     
     // 1. Try local first
     if (fs.existsSync(filePath)) {
+        res.setHeader('Cache-Control', 'no-cache');
         return res.sendFile(filePath);
     }
 
     // 2. Try S3
     if (useS3 && s3) {
         try {
-            console.log(`[API] Fetching ${filename} from S3...`);
+            console.log(`[API] Fetching ${filename} from S3 bucket ${process.env.AWS_S3_BUCKET}...`);
             const s3Obj = await s3.getObject({
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `archives/${filename}`
             }).promise();
+            
             res.contentType('application/json');
+            res.setHeader('Cache-Control', 'no-cache');
             return res.send(s3Obj.Body);
         } catch (e) {
-            console.error(`[API] S3 fetch failed for ${filename}:`, e);
+            console.error(`[API ERROR] S3 getObject failed for 'archives/${filename}':`, e.code, e.message);
+            // If it's a 404 on S3, we'll continue to the final 404 response
         }
     }
 
-    res.status(404).json({ error: 'Archive not found' });
+    console.warn(`[API] Archive NOT FOUND locally or on S3: ${filename}`);
+    res.status(404).json({ error: 'Arkistoa ei löydy palvelimelta (404).' });
 });
 
 // DELETE ARCHIVE
@@ -990,16 +995,16 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('end_session', (data) => {
+    socket.on('end_session', async (data) => {
         const sid = (data && typeof data === 'object') ? data.sessionId : data;
         const session = sessions[sid];
         
         const device = session ? session.devices[socket.id] : null;
 
         if (session && device && device.role === 'VALMENTAJA') {
-            console.log(`[SESSION] Coach closed session ${sid}`);
+            console.log(`[SESSION] Coach closing session ${sid}`);
             session.ended = true; // Mark as ended
-            archiveSession(session);
+            await archiveSession(session);
             io.to(sid).emit('session_ended');
             
             // Delete after a short delay to allow final emits to reach clients
