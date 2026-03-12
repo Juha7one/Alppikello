@@ -755,7 +755,10 @@ async function openArchive(filename) {
                     </div>
                     ${videoHtml}
                     <div style="margin-top: 10px;">${splitList}</div>
-                    <button class="btn-mini" onclick="shareRun('${r.runId}', '${filename}')" style="margin-top: 15px; width: 100%; background: rgba(255,255,255,0.05);">JAA TULOSKORTTI 🔗</button>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn-mini" onclick="shareRun('${r.runId}', '${filename}')" style="flex: 1; background: rgba(255,255,255,0.05);">JAA 🔗</button>
+                        <button class="btn-mini" onclick="loadRunCard('${r.runId}', '${filename}')" style="flex: 1; background: var(--accent); color: #000;">ANALYSOI 🤖</button>
+                    </div>
                 </div>
             `;
         }).join('');
