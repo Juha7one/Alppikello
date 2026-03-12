@@ -332,7 +332,7 @@ async function shareArchive(filename) {
     
     // Consistent with shareRun: use query parameter on the main page
     const baseUrl = window.location.origin + window.location.pathname;
-    const url = `${baseUrl}?archive=${filename.replace('.json', '')}`;
+    const url = `${baseUrl}?archive=${filename.replace(/\.json$/i, '')}`;
     
     if (navigator.share) {
         isSharing = true;
@@ -632,7 +632,15 @@ async function openArchive(filename) {
 
     try {
         const baseUrl = SERVER_URL || window.location.origin;
-        const resp = await fetch(`${baseUrl}/api/archives/${filename}`);
+        const fetchUrl = `${baseUrl}/api/archives/${filename}`;
+        console.log(`[ARCHIVE] Fetching: ${fetchUrl}`);
+        
+        const resp = await fetch(fetchUrl);
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({ error: resp.statusText }));
+            throw new Error(errData.error || `HTTP ${resp.status}`);
+        }
+        
         const session = await resp.json();
 
         titleEl.innerText = session.name.toUpperCase();
@@ -712,7 +720,8 @@ async function openArchive(filename) {
         });
 
     } catch (e) {
-        alert("Virhe avattaessa arkistoa.");
+        console.error("[ARCHIVE] Load failed:", e);
+        alert(`Virhe avattaessa arkistoa: ${e.message}`);
     }
 }
 

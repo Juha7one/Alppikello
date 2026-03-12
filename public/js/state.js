@@ -1,8 +1,8 @@
 // --- Alppikello State ---
 
-const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const SERVER_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? undefined
-    : 'https://alppikello-backend.onrender.com';
+    : window.location.origin; // Use current host by default
 
 const socket = io(SERVER_URL);
 

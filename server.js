@@ -289,8 +289,14 @@ app.get(['/api/archives', '/public/api/archives'], (req, res) => {
 });
 
 app.get(['/api/archives/:filename', '/public/api/archives/:filename'], (req, res) => {
-    const filePath = path.join(archiveDir, req.params.filename);
-    if (!fs.existsSync(filePath)) return res.status(404).send("Archive not found");
+    let filename = req.params.filename;
+    if (!filename.endsWith('.json')) filename += '.json';
+    const filePath = path.join(archiveDir, filename);
+    
+    if (!fs.existsSync(filePath)) {
+        console.warn(`[API] Archive not found: ${filePath}`);
+        return res.status(404).json({ error: 'Archive not found' });
+    }
     res.sendFile(filePath);
 });
 
