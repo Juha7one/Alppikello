@@ -26,11 +26,32 @@ function toggleStickman() {
     }
 }
 
+function initCanvasContexts() {
+    if(!aiCtx) {
+        aiVideo = document.getElementById('card-video');
+        aiCanvas = document.getElementById('card-ai-canvas');
+        if(aiCanvas) {
+            aiCtx = aiCanvas.getContext('2d');
+            if(aiVideo) {
+                const rect = aiVideo.getBoundingClientRect();
+                if(rect.width > 0) {
+                    aiCanvas.width = Math.floor(rect.width);
+                    aiCanvas.height = Math.floor(rect.height);
+                }
+            }
+        }
+    }
+}
+
 function toggleDrawingMode() {
     drawingModeActive = !drawingModeActive;
     const btn = document.getElementById('btn-toggle-draw');
     const cvs = document.getElementById('card-ai-canvas');
     
+    if(drawingModeActive) {
+        initCanvasContexts();
+    }
+
     if(btn) {
         btn.style.border = drawingModeActive ? "2px solid #fff" : "2px solid transparent";
         btn.style.background = drawingModeActive ? "var(--accent)" : "rgba(255,255,255,0.05)";
@@ -43,17 +64,14 @@ function toggleDrawingMode() {
 }
 
 function startAI() {
-    aiVideo = document.getElementById('card-video');
-    aiCanvas = document.getElementById('card-ai-canvas');
+    initCanvasContexts();
     if(!aiVideo || !aiCanvas) return;
 
-    aiCtx = aiCanvas.getContext('2d');
-    
     // Ensure canvas matches video display size precisely
     const rect = aiVideo.getBoundingClientRect();
-    if (rect.width > 0) {
-        aiCanvas.width = rect.width;
-        aiCanvas.height = rect.height;
+    if (rect.width > 0 && (aiCanvas.width !== Math.floor(rect.width) || aiCanvas.height !== Math.floor(rect.height))) {
+        aiCanvas.width = Math.floor(rect.width);
+        aiCanvas.height = Math.floor(rect.height);
     }
 
     if(!poseEngine && window.Pose) {
