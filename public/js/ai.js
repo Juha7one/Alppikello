@@ -7,6 +7,7 @@ let aiVideo = null;
 let aiRafId = null;
 
 let isDrawing = false;
+let drawingModeActive = false;
 let drawings = []; // Store lines as [{x, y}, {x, y}] paths
 let drawPath = [];
 
@@ -22,6 +23,22 @@ function toggleStickman() {
         startAI();
     } else {
         stopAI();
+    }
+}
+
+function toggleDrawingMode() {
+    drawingModeActive = !drawingModeActive;
+    const btn = document.getElementById('btn-toggle-draw');
+    const cvs = document.getElementById('card-ai-canvas');
+    
+    if(btn) {
+        btn.style.border = drawingModeActive ? "2px solid #fff" : "2px solid transparent";
+        btn.style.background = drawingModeActive ? "var(--accent)" : "rgba(255,255,255,0.1)";
+        btn.innerText = drawingModeActive ? "✏️ PIIRTÄMINEN PÄÄLLÄ" : "✏️ PIIRRÄ";
+    }
+
+    if(cvs) {
+        cvs.style.pointerEvents = drawingModeActive ? "auto" : "none";
     }
 }
 
@@ -235,3 +252,4 @@ setInterval(() => {
 
 window.toggleStickman = toggleStickman;
 window.clearAIDrawings = clearAIDrawings;
+window.toggleDrawingMode = toggleDrawingMode;
