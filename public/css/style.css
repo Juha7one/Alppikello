@@ -88,6 +88,12 @@ h3 {
     /* Force center children */
 }
 
+@media (min-width: 768px) {
+    #view-run-card.container, #view-archive.container {
+        max-width: 1200px;
+    }
+}
+
 .view {
     display: none;
     animation: fadeIn 0.3s ease-out;
