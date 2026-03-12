@@ -355,26 +355,31 @@ async function shareArchive(filename) {
 function checkDeepLink() {
     const params = new URLSearchParams(window.location.search);
     
-    // 1. Session join
+    // 1. Session join (Still needs onboarding to confirm name/role)
     const sid = params.get('s');
     if (sid) {
         document.getElementById('input-session-id').value = sid.toUpperCase();
         showOnboardingStep('name');
+        return true; 
     }
 
-    // 2. Individual Run Card view
+    // 2. Individual Run Card view (Bypasses onboarding)
     const runId = params.get('run');
     if (runId) {
         loadRunCard(runId);
+        return true;
     }
 
-    // 3. Whole Archive view
+    // 3. Whole Archive view (Bypasses onboarding)
     const archFile = params.get('archive');
     if (archFile) {
         const cleanFile = archFile.trim();
         console.log(`[DEEP LINK] Opening archive: ${cleanFile}`);
         openArchive(cleanFile + '.json');
+        return true;
     }
+
+    return false;
 }
 
 async function loadRunCard(runId) {
@@ -636,6 +641,11 @@ async function openArchive(filename) {
     const resultsEl = document.getElementById('archive-results');
     const resultsList = document.getElementById('archive-results-list');
     const titleEl = document.getElementById('archive-session-title');
+
+    // Ensure we show the archive view and hide onboarding (important for deep links)
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const archView = document.getElementById('view-archive');
+    if (archView) archView.classList.add('active');
 
     try {
         const baseUrl = SERVER_URL || window.location.origin;

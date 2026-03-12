@@ -7,13 +7,17 @@ socket.on('connect', () => {
     if (connText) connText.innerText = 'Yhdistetty';
     
     startTimeSync();
-    checkDeepLink();
+    const deepLinkHandled = checkDeepLink();
     startDiscoveryGPS(); 
     
     if (userName && document.getElementById('input-profile-name')) {
         document.getElementById('input-profile-name').value = userName;
     }
-    showOnboardingStep('name');
+
+    // Only show onboarding if we didn't land directly on a run card or archive
+    if (!deepLinkHandled) {
+        showOnboardingStep('name');
+    }
 });
 
 socket.on('disconnect', () => {
