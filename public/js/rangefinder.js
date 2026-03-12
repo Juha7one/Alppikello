@@ -105,11 +105,16 @@ function processRangefinderFrame() {
     let colStarts = new Array(procW).fill(-1);
     let colEnds = new Array(procW).fill(-1);
 
+    // Limit scanning area to the center 40% (x from 0.3 to 0.7)
+    const scanStartX = Math.floor(procW * 0.3);
+    const scanEndX = Math.floor(procW * 0.7);
+
     // Color detection loop
-    for (let x = 0; x < procW; x++) {
-        let firstY = -1;
-        let lastY = -1;
-        let count = 0;
+    for (let x = scanStartX; x < scanEndX; x++) {
+        let currentSegmentStart = -1;
+        let currentSegmentLength = 0;
+        let bestSegmentStart = -1;
+        let bestSegmentLength = 0;
 
         for (let y = 0; y < procH; y++) {
             const i = (y * procW + x) * 4;
@@ -118,37 +123,53 @@ function processRangefinderFrame() {
             const b = data[i+2];
 
             let match = false;
-            if (rfColor === 'red') {
-                // Strong Red: R dominant and higher than threshold
-                if (r > 120 && r > g * 1.5 && r > b * 1.5) match = true;
-            } else {
-                // Strong Blue: B dominant
-                if (b > 100 && b > r * 1.3 && b > g * 1.1) match = true;
+            
+            // Handle bright/dark lighting by looking at color dominance
+            const maxVal = Math.max(r, g, b);
+            
+            if (maxVal > 30) { // Ignore pure noise/black
+                if (rfColor === 'red') {
+                    // Red must be dominant. Use relative ratios.
+                    if (r === maxVal && r > g * 1.3 && r > b * 1.3) match = true;
+                } else {
+                    // Blue must be dominant.
+                    if (b === maxVal && b > r * 1.2 && b > g * 1.1) match = true;
+                }
             }
 
             if (match) {
-                if (firstY === -1) firstY = y;
-                lastY = y;
-                count++;
+                if (currentSegmentStart === -1) currentSegmentStart = y;
+                currentSegmentLength++;
+            } else {
+                if (currentSegmentLength > bestSegmentLength) {
+                    bestSegmentLength = currentSegmentLength;
+                    bestSegmentStart = currentSegmentStart;
+                }
+                currentSegmentStart = -1;
+                currentSegmentLength = 0;
             }
         }
 
-        // Only count if it looks like part of a vertical pole (enough density)
-        if (count > procH * 0.05) {
-            columns[x] = count;
-            colStarts[x] = firstY;
-            colEnds[x] = lastY;
+        if (currentSegmentLength > bestSegmentLength) {
+            bestSegmentLength = currentSegmentLength;
+            bestSegmentStart = currentSegmentStart;
+        }
+
+        // Only keep if it's a reasonably continuous tall segment
+        if (bestSegmentLength > procH * 0.05) {
+            columns[x] = bestSegmentLength;
+            colStarts[x] = bestSegmentStart;
+            colEnds[x] = bestSegmentStart + bestSegmentLength;
         }
     }
 
-    // Find the best cluster (the pole)
+    // Find the best cluster (the tallest pole in the center area)
     let bestX = -1;
     let bestHeight = 0;
     let bestYStart = 0;
     let bestYEnd = 0;
 
-    for (let x = 1; x < procW - 1; x++) {
-        // Simple peak finding for the tallest vertical segment
+    for (let x = scanStartX; x < scanEndX; x++) {
         if (columns[x] > bestHeight) {
             bestHeight = columns[x];
             bestX = x;
@@ -159,28 +180,41 @@ function processRangefinderFrame() {
 
     ctx.clearRect(0, 0, w, h);
 
+    // Draw scanning guide (center area)
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    ctx.lineWidth = 2;
+    const guideW = w * 0.4;
+    const guideX = w * 0.3;
+    ctx.strokeRect(guideX, 0, guideW, h);
+    
+    // Draw crosshair
+    ctx.beginPath();
+    ctx.moveTo(w/2 - 20, h/2);
+    ctx.lineTo(w/2 + 20, h/2);
+    ctx.moveTo(w/2, h/2 - 20);
+    ctx.lineTo(w/2, h/2 + 20);
+    ctx.stroke();
+
     if (bestHeight > 5) {
         const drawX = (bestX / procW) * w;
         const drawYStart = (bestYStart / procH) * h;
         const drawYEnd = (bestYEnd / procH) * h;
         const pixelHeight = drawYEnd - drawYStart;
 
-        // Visual feedback (The box)
+        // Visual feedback (The box around the detected pole)
         ctx.strokeStyle = rfColor === 'red' ? "#ef4444" : "#3b82f6";
         ctx.lineWidth = 4;
         ctx.strokeRect(drawX - 20, drawYStart, 40, pixelHeight);
         
-        // Target line
+        // Target lines
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
-        ctx.moveTo(0, drawYStart); ctx.lineTo(w, drawYStart);
-        ctx.moveTo(0, drawYEnd); ctx.lineTo(w, drawYEnd);
+        ctx.moveTo(guideX, drawYStart); ctx.lineTo(guideX + guideW, drawYStart);
+        ctx.moveTo(guideX, drawYEnd); ctx.lineTo(guideX + guideW, drawYEnd);
         ctx.stroke();
         ctx.setLineDash([]);
 
         // CALCULATION
-        // f = (pixels * distance) / objectHeight
-        // we'll use a reference focal factor adjusted by calibration
         const adjustedFocal = BASE_FOCAL_FACTOR * rfCalibration;
         const distance = (POLE_HEIGHT_M * adjustedFocal) / pixelHeight;
 
