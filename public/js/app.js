@@ -311,8 +311,7 @@ async function shareSession() {
         isSharing = true;
         try {
             await navigator.share({
-                title: 'Alppikello - Liity Harjoitukseen',
-                text: `Liity harjoitukseen: ${currentSession.name.toUpperCase()}`,
+                title: `Alppikello - Liity: ${currentSession.name.toUpperCase()}`,
                 url: url
             });
         } catch (e) {
@@ -339,7 +338,6 @@ async function shareArchive(filename) {
         try {
             await navigator.share({
                 title: 'Alppikello - Harjoituksen Tulokset',
-                text: 'Katso harjoituksen tulokset täältä!',
                 url: url
             });
         } catch (e) {
