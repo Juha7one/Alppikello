@@ -2,7 +2,6 @@
 
 let rfStream = null;
 let rfActive = false;
-let rfColor = 'red'; // 'red' or 'blue'
 let rfCalibration = 1.0;
 let rfInterval = null;
 
@@ -55,14 +54,6 @@ function stopRangefinder() {
     }
 }
 
-function setRFColor(color) {
-    rfColor = color;
-    document.getElementById('btn-rf-red').style.opacity = color === 'red' ? '1' : '0.5';
-    document.getElementById('btn-rf-red').style.border = color === 'red' ? '2px solid #fff' : 'none';
-    document.getElementById('btn-rf-blue').style.opacity = color === 'blue' ? '1' : '0.5';
-    document.getElementById('btn-rf-blue').style.border = color === 'blue' ? '2px solid #fff' : 'none';
-}
-
 function adjustRFCalibration(delta) {
     rfCalibration += delta;
     if (rfCalibration < 0.1) rfCalibration = 0.1;
@@ -101,9 +92,7 @@ function processRangefinderFrame() {
     const imageData = tCtx.getImageData(0, 0, procW, procH);
     const data = imageData.data;
 
-    let columns = new Array(procW).fill(0);
-    let colStarts = new Array(procW).fill(-1);
-    let colEnds = new Array(procW).fill(-1);
+    let columns = new Array(procW).fill(0).map(() => ({ height: 0, start: -1, end: -1, color: 'red' }));
 
     // Limit scanning area to the center 40% (x from 0.3 to 0.7)
     const scanStartX = Math.floor(procW * 0.3);
@@ -111,10 +100,8 @@ function processRangefinderFrame() {
 
     // Color detection loop
     for (let x = scanStartX; x < scanEndX; x++) {
-        let currentSegmentStart = -1;
-        let currentSegmentLength = 0;
-        let bestSegmentStart = -1;
-        let bestSegmentLength = 0;
+        let currentRedStart = -1, currentRedLen = 0, bestRedStart = -1, bestRedLen = 0;
+        let currentBlueStart = -1, currentBlueLen = 0, bestBlueStart = -1, bestBlueLen = 0;
 
         for (let y = 0; y < procH; y++) {
             const i = (y * procW + x) * 4;
@@ -122,59 +109,54 @@ function processRangefinderFrame() {
             const g = data[i+1];
             const b = data[i+2];
 
-            let match = false;
+            let isRed = false, isBlue = false;
             
-            // Handle bright/dark lighting by looking at color dominance
             const maxVal = Math.max(r, g, b);
             
-            if (maxVal > 30) { // Ignore pure noise/black
-                if (rfColor === 'red') {
-                    // Red must be dominant. Use relative ratios.
-                    if (r === maxVal && r > g * 1.3 && r > b * 1.3) match = true;
-                } else {
-                    // Blue must be dominant.
-                    if (b === maxVal && b > r * 1.2 && b > g * 1.1) match = true;
-                }
+            if (maxVal > 30) { 
+                if (r === maxVal && r > g * 1.3 && r > b * 1.3) isRed = true;
+                if (b === maxVal && b > r * 1.2 && b > g * 1.1) isBlue = true;
             }
 
-            if (match) {
-                if (currentSegmentStart === -1) currentSegmentStart = y;
-                currentSegmentLength++;
+            if (isRed) {
+                if (currentRedStart === -1) currentRedStart = y;
+                currentRedLen++;
             } else {
-                if (currentSegmentLength > bestSegmentLength) {
-                    bestSegmentLength = currentSegmentLength;
-                    bestSegmentStart = currentSegmentStart;
-                }
-                currentSegmentStart = -1;
-                currentSegmentLength = 0;
+                if (currentRedLen > bestRedLen) { bestRedLen = currentRedLen; bestRedStart = currentRedStart; }
+                currentRedStart = -1; currentRedLen = 0;
+            }
+
+            if (isBlue) {
+                if (currentBlueStart === -1) currentBlueStart = y;
+                currentBlueLen++;
+            } else {
+                if (currentBlueLen > bestBlueLen) { bestBlueLen = currentBlueLen; bestBlueStart = currentBlueStart; }
+                currentBlueStart = -1; currentBlueLen = 0;
             }
         }
 
-        if (currentSegmentLength > bestSegmentLength) {
-            bestSegmentLength = currentSegmentLength;
-            bestSegmentStart = currentSegmentStart;
-        }
+        if (currentRedLen > bestRedLen) { bestRedLen = currentRedLen; bestRedStart = currentRedStart; }
+        if (currentBlueLen > bestBlueLen) { bestBlueLen = currentBlueLen; bestBlueStart = currentBlueStart; }
 
-        // Only keep if it's a reasonably continuous tall segment
-        if (bestSegmentLength > procH * 0.05) {
-            columns[x] = bestSegmentLength;
-            colStarts[x] = bestSegmentStart;
-            colEnds[x] = bestSegmentStart + bestSegmentLength;
+        let bestStart = -1, bestLen = 0, bestColor = 'red';
+        if (bestRedLen > bestBlueLen) { bestStart = bestRedStart; bestLen = bestRedLen; bestColor = 'red'; }
+        else { bestStart = bestBlueStart; bestLen = bestBlueLen; bestColor = 'blue'; }
+
+        if (bestLen > procH * 0.05) {
+            columns[x] = { height: bestLen, start: bestStart, end: bestStart + bestLen, color: bestColor };
         }
     }
 
     // Find the best cluster (the tallest pole in the center area)
-    let bestX = -1;
-    let bestHeight = 0;
-    let bestYStart = 0;
-    let bestYEnd = 0;
+    let bestX = -1, bestHeight = 0, bestYStart = 0, bestYEnd = 0, bestColor = 'red';
 
     for (let x = scanStartX; x < scanEndX; x++) {
-        if (columns[x] > bestHeight) {
-            bestHeight = columns[x];
+        if (columns[x].height > bestHeight) {
+            bestHeight = columns[x].height;
             bestX = x;
-            bestYStart = colStarts[x];
-            bestYEnd = colEnds[x];
+            bestYStart = columns[x].start;
+            bestYEnd = columns[x].end;
+            bestColor = columns[x].color;
         }
     }
 
@@ -202,7 +184,7 @@ function processRangefinderFrame() {
         const pixelHeight = drawYEnd - drawYStart;
 
         // Visual feedback (The box around the detected pole)
-        ctx.strokeStyle = rfColor === 'red' ? "#ef4444" : "#3b82f6";
+        ctx.strokeStyle = bestColor === 'red' ? "#ef4444" : "#3b82f6";
         ctx.lineWidth = 4;
         ctx.strokeRect(drawX - 20, drawYStart, 40, pixelHeight);
         
@@ -236,5 +218,4 @@ function processRangefinderFrame() {
 
 // Global exposure
 window.toggleRangefinder = toggleRangefinder;
-window.setRFColor = setRFColor;
 window.adjustRFCalibration = adjustRFCalibration;
