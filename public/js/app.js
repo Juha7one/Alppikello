@@ -283,11 +283,17 @@ function startTimeSync() {
 // --- Global Actions (Links) ---
 
 let isSharing = false;
-async function shareRun(runId) {
+async function shareRun(runId, archiveFilename = null) {
     if (isSharing) return;
     if (!runId || runId === 'undefined') return alert("Tallenne ei ole vielä valmis.");
     
-    const url = window.location.origin + window.location.pathname + '?run=' + runId;
+    let url = window.location.origin + window.location.pathname;
+    if (archiveFilename) {
+        url += `?archive=${archiveFilename.replace(/\.json$/i, '')}&run=${runId}`;
+    } else {
+        url += `?run=${runId}`;
+    }
+    
     if (navigator.share) {
         isSharing = true;
         try {
@@ -363,15 +369,23 @@ function checkDeepLink() {
         return true; 
     }
 
-    // 2. Individual Run Card view (Bypasses onboarding)
+    const archFile = params.get('archive');
     const runId = params.get('run');
+
+    if (archFile && runId) {
+        const cleanFile = archFile.trim();
+        console.log(`[DEEP LINK] Opening archive run: ${runId} from ${cleanFile}`);
+        loadRunCard(runId, cleanFile + '.json');
+        return true;
+    }
+
+    // 2. Individual Run Card view (Bypasses onboarding)
     if (runId) {
         loadRunCard(runId);
         return true;
     }
 
     // 3. Whole Archive view (Bypasses onboarding)
-    const archFile = params.get('archive');
     if (archFile) {
         const cleanFile = archFile.trim();
         console.log(`[DEEP LINK] Opening archive: ${cleanFile}`);
@@ -382,7 +396,7 @@ function checkDeepLink() {
     return false;
 }
 
-async function loadRunCard(runId) {
+async function loadRunCard(runId, archiveFilename = null) {
     // Show view
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-onboarding').classList.remove('active');
@@ -390,14 +404,42 @@ async function loadRunCard(runId) {
     
     const loading = document.getElementById('run-card-loading');
     const content = document.getElementById('run-card-content');
+    loading.style.display = 'flex';
+    content.style.display = 'none';
     
     try {
-        // Fetch from Render backend
+        let data;
         const baseUrl = SERVER_URL || window.location.origin;
-        const resp = await fetch(`${baseUrl}/api/run/${runId}`);
-        if (!resp.ok) throw new Error("Suoritusta ei löytynyt");
         
-        const data = await resp.json();
+        if (archiveFilename) {
+            const resp = await fetch(`${baseUrl}/api/archives/${archiveFilename}`);
+            if (!resp.ok) throw new Error("Arkistoa ei löytynyt");
+            const session = await resp.json();
+            const foundRun = (session.results || []).find(r => r.runId === runId);
+            if (!foundRun) throw new Error("Suoritusta ei löytynyt arkistosta");
+            
+            const userRuns = session.results.filter(r => r.name === foundRun.name);
+            const finalRunNumber = userRuns.findIndex(r => r.runId === runId) + 1;
+            
+            data = {
+                id: foundRun.runId,
+                name: foundRun.name,
+                runNumber: finalRunNumber,
+                startTime: foundRun.startTime || session.timestamp || Date.now(),
+                totalTime: foundRun.totalTime,
+                videoUrl: foundRun.videoUrl || null,
+                videos: foundRun.videos || [],
+                splits: foundRun.splits || [],
+                sessionName: session.name || "Arkistoitu Harkka",
+                timestamp: session.archivedAt || Date.now(),
+                status: foundRun.status,
+                sessionResults: session.results.map(r => ({ name: r.name, totalTime: r.totalTime, status: r.status, runId: r.runId }))
+            };
+        } else {
+            const resp = await fetch(`${baseUrl}/api/run/${runId}`);
+            if (!resp.ok) throw new Error("Suoritusta ei löytynyt aktiivisista harjoituksista. Onko se kenties arkistoitu?");
+            data = await resp.json();
+        }
         
         // NEW REDESIGN context: Use sessionResults if available to calculate labels
         const sessionResults = data.sessionResults || [];
@@ -713,7 +755,7 @@ async function openArchive(filename) {
                     </div>
                     ${videoHtml}
                     <div style="margin-top: 10px;">${splitList}</div>
-                    <button class="btn-mini" onclick="shareRun('${r.runId}')" style="margin-top: 15px; width: 100%; background: rgba(255,255,255,0.05);">JAA TULOSKORTTI 🔗</button>
+                    <button class="btn-mini" onclick="shareRun('${r.runId}', '${filename}')" style="margin-top: 15px; width: 100%; background: rgba(255,255,255,0.05);">JAA TULOSKORTTI 🔗</button>
                 </div>
             `;
         }).join('');
