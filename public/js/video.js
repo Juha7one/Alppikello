@@ -169,8 +169,8 @@ function uploadVideoToServer(blob, runner) {
     const formData = new FormData();
     const captureRole = runner.captureRole || currentRole || 'VIDEO';
     const safeRole = captureRole.replace(/[ÄÖ]/g, (m) => m === 'Ä' ? 'A' : 'O').replace(/[^a-zA-Z0-9]/g, '_');
-    formData.append('video', blob, `${safeRole}_${runner.name}.mp4`);
     formData.append('sessionId', currentSession ? currentSession.id : '');
+    formData.append('sessionName', currentSession ? currentSession.name : 'HARJOITUS');
     formData.append('runnerId', runner.id || '');
     formData.append('runId', runner.runId || 'N/A');
     formData.append('runnerName', runner.name || 'LASKIJA');
@@ -178,6 +178,8 @@ function uploadVideoToServer(blob, runner) {
     formData.append('triggerTime', runner.triggerTime || Date.now());
     formData.append('videoCaptureStartTime', runner.videoCaptureStartTime || 0);
     formData.append('role', captureRole);
+    // MUST BE LAST so multer has access to the body fields above when generating the filename
+    formData.append('video', blob, `${safeRole}_${runner.name}.mp4`);
 
     if (!runner.runId) {
         console.warn("[VIDEO UPLOAD] Runner runId is missing! Video might not pair correctly.", runner);

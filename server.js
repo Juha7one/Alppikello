@@ -30,8 +30,13 @@ if (useS3) {
         bucket: process.env.AWS_S3_BUCKET,
         contentType: multerS3.AUTO_CONTENT_TYPE,
         key: function (req, file, cb) {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            cb(null, 'videos/' + uniqueSuffix + path.extname(file.originalname));
+            const runnerName = req.body.runnerName ? req.body.runnerName.replace(/[^a-zA-Z0-9]/g, '_') : 'LASKIJA';
+            const sName = req.body.sessionName ? req.body.sessionName.replace(/[^a-zA-Z0-9]/g, '_') : 'HARJOITUS';
+            const role = req.body.role ? req.body.role.replace(/[^a-zA-Z0-9]/g, '_') : 'VIDEO';
+            const runId = req.body.runId && req.body.runId !== 'N/A' ? req.body.runId.substring(0,8) : Math.round(Math.random() * 1E6);
+            const ts = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const ext = path.extname(file.originalname) || '.mp4';
+            cb(null, `videos/${sName}_${runnerName}_${role}_${ts}_${runId}${ext}`);
         }
     });
     console.log("Using S3 for video storage.");
@@ -39,8 +44,13 @@ if (useS3) {
     storage = multer.diskStorage({
         destination: (req, file, cb) => cb(null, uploadDir),
         filename: (req, file, cb) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+            const runnerName = req.body.runnerName ? req.body.runnerName.replace(/[^a-zA-Z0-9]/g, '_') : 'LASKIJA';
+            const sName = req.body.sessionName ? req.body.sessionName.replace(/[^a-zA-Z0-9]/g, '_') : 'HARJOITUS';
+            const role = req.body.role ? req.body.role.replace(/[^a-zA-Z0-9]/g, '_') : 'VIDEO';
+            const runId = req.body.runId && req.body.runId !== 'N/A' ? req.body.runId.substring(0,8) : Math.round(Math.random() * 1E6);
+            const ts = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const ext = path.extname(file.originalname) || '.mp4';
+            cb(null, `${sName}_${runnerName}_${role}_${ts}_${runId}${ext}`);
         }
     });
     console.log("Using local disk for video storage.");
