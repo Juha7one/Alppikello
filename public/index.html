@@ -15,9 +15,9 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #0f172a;">
-        <h1 class="splash-title" style="color: #fff;">UNIFIED INTERFACE</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.86.0</div>
+    <div id="deployment-splash" style="background: #991b1b;">
+        <h1 class="splash-title" style="color: #fff;">PRECISION SCALING</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.87.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -268,7 +268,7 @@
                 <div style="font-size: 10px; opacity: 0.6; font-weight: 900;">ETÄISYYS:</div>
                 <div id="rf-distance" style="font-size: 32px; font-weight: 900; color: #fbbf24;">-- m</div>
             </div>
-            <button class="btn" onclick="toggleRangefinder()" style="pointer-events: auto; background: #ef4444; margin:0; padding: 15px 20px; width: auto; font-size: 14px;">SULJE</button>
+            <button class="btn" onclick="toggleRangefinder()" style="pointer-events: auto; background: var(--danger); margin:0; padding: 0; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid rgba(255,255,255,0.2);">✕</button>
         </div>
 
         <div style="position: absolute; bottom: 40px; left: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px;">
@@ -276,8 +276,8 @@
             <div style="background: rgba(0,0,0,0.8); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
                 <button class="btn btn-outline" onclick="adjustRFCalibration(-0.05)" style="font-size: 24px; padding: 15px; margin: 0; width: 60px;">-</button>
                 <div style="text-align: center; flex: 1;">
-                    <div style="font-size: 10px; opacity: 0.5;">KALIBROINTI</div>
-                    <div id="rf-calib-val" style="font-weight: 900;">1.00</div>
+                    <div style="font-size: 10px; opacity: 0.5;">KORJAUSKERROIN</div>
+                    <div id="rf-calib-val" style="font-weight: 900;">1.00x</div>
                 </div>
                 <button class="btn btn-outline" onclick="adjustRFCalibration(0.05)" style="font-size: 24px; padding: 15px; margin: 0; width: 60px;">+</button>
             </div>
@@ -454,17 +454,17 @@
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/qrcode.min.js?v=2.86.0"></script>
-    <script src="js/state.js?v=2.86.0"></script>
-    <script src="js/utils.js?v=2.86.0"></script>
-    <script src="js/socket.js?v=2.86.0"></script>
-    <script src="js/video.js?v=2.86.0"></script>
-    <script src="js/cv.js?v=2.86.0"></script>
-    <script src="js/ai.js?v=2.86.0"></script>
-    <script src="js/timing.js?v=2.86.0"></script>
-    <script src="js/ui.js?v=2.86.0"></script>
-    <script src="js/rangefinder.js?v=2.86.0"></script>
-    <script src="js/app.js?v=2.86.0"></script>
+    <script src="js/qrcode.min.js?v=2.87.0"></script>
+    <script src="js/state.js?v=2.87.0"></script>
+    <script src="js/utils.js?v=2.87.0"></script>
+    <script src="js/socket.js?v=2.87.0"></script>
+    <script src="js/video.js?v=2.87.0"></script>
+    <script src="js/cv.js?v=2.87.0"></script>
+    <script src="js/ai.js?v=2.87.0"></script>
+    <script src="js/timing.js?v=2.87.0"></script>
+    <script src="js/ui.js?v=2.87.0"></script>
+    <script src="js/rangefinder.js?v=2.87.0"></script>
+    <script src="js/app.js?v=2.87.0"></script>
 </body>
 
 </html>

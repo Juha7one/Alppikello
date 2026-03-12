@@ -37,7 +37,7 @@ async function startRangefinder() {
         video.play();
         
         // Initial Calibration display
-        document.getElementById('rf-calib-val').innerText = rfCalibration.toFixed(2);
+        document.getElementById('rf-calib-val').innerText = rfCalibration.toFixed(2) + 'x';
         
         requestAnimationFrame(processRangefinderFrame);
     } catch (e) {
@@ -58,7 +58,7 @@ function adjustRFCalibration(delta) {
     rfCalibration += delta;
     if (rfCalibration < 0.1) rfCalibration = 0.1;
     if (rfCalibration > 5.0) rfCalibration = 5.0;
-    document.getElementById('rf-calib-val').innerText = rfCalibration.toFixed(2);
+    document.getElementById('rf-calib-val').innerText = rfCalibration.toFixed(2) + 'x';
 }
 
 function processRangefinderFrame() {
