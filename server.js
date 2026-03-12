@@ -339,15 +339,21 @@ app.get(['/archive/:filename', '/public/archive/:filename', '/alppikello/archive
             return res.status(404).send('<!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:#fff;"><h1>404 - ARKISTOA EI LÖYDY</h1><p>Tilaa vievä tai vanhentunut linkki.</p><a href="/" style="color:#3b82f6;">Takaisin pääsivulle</a></body></html>');
         }
 
-        const templatePath = path.join(__dirname, 'public', 'archive_template.html');
-        // Fallback for subfolders
+        let templatePath = path.join(__dirname, 'public', 'archive_template.html');
+        // Fallback for different deployment structures
         if (!fs.existsSync(templatePath)) {
-            console.warn(`[ROUTE] Template not in public/! trying local public/ folder...`);
+            const fallbackPath = path.join(__dirname, 'archive_template.html');
+            if (fs.existsSync(fallbackPath)) {
+                templatePath = fallbackPath;
+            } else {
+                console.error("[ERROR] archive_template.html missing at:", templatePath, "and fallback:", fallbackPath);
+                return res.status(500).send("Palvelinvirhe: Pohjatiedosto puuttuu.");
+            }
         }
 
         fs.readFile(templatePath, 'utf8', (templateErr, templateData) => {
             if (templateErr) {
-                 console.error(`[ROUTE] Template error:`, templateErr);
+                 console.error(`[ROUTE] Template read error:`, templateErr);
                  return res.status(500).send("Virhe luettaessa pohjaa.");
             }
             
@@ -356,6 +362,11 @@ app.get(['/archive/:filename', '/public/archive/:filename', '/alppikello/archive
                     console.error(`[ROUTE] File read error:`, fileErr);
                     return res.status(500).send("Virhe luettaessa arkistoa.");
                 }
+                
+                if (!templateData.includes('{{SESSION_DATA}}')) {
+                    console.error(`[ROUTE] Template at ${templatePath} missing {{SESSION_DATA}} placeholder`);
+                }
+
                 // USE split/join to avoid special replacement patterns in huge JSON string
                 const result = templateData.split('{{SESSION_DATA}}').join(archiveData);
                 res.send(result);

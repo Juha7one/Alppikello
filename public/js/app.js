@@ -329,8 +329,10 @@ async function shareSession() {
 
 async function shareArchive(filename) {
     if (isSharing) return;
-    const baseUrl = window.location.origin;
-    const url = `${baseUrl}/archive/${filename.replace('.json', '')}`;
+    
+    // Consistent with shareRun: use query parameter on the main page
+    const baseUrl = window.location.origin + window.location.pathname;
+    const url = `${baseUrl}?archive=${filename.replace('.json', '')}`;
     
     if (navigator.share) {
         isSharing = true;
@@ -366,6 +368,12 @@ function checkDeepLink() {
     const runId = params.get('run');
     if (runId) {
         loadRunCard(runId);
+    }
+
+    // 3. Whole Archive view
+    const archFile = params.get('archive');
+    if (archFile) {
+        openArchive(archFile + '.json');
     }
 }
 
