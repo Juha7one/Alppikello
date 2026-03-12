@@ -16,10 +16,11 @@ if (!fs.existsSync(uploadDir)) {
 
 // Multer config
 let storage;
+let s3 = null;
 const useS3 = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_S3_BUCKET;
 
 if (useS3) {
-    const s3 = new AWS.S3({
+    s3 = new AWS.S3({
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: process.env.AWS_REGION
@@ -74,19 +75,33 @@ if (!fs.existsSync(archiveDir)) {
     console.log(`[INIT] Archives directory found at ${archiveDir}`);
 }
 
-function archiveSession(session) {
+async function archiveSession(session) {
     if (!session || !session.results || session.results.length === 0) {
         console.warn(`[ARCHIVE] Skipping empty session ${session ? session.id : 'null'}`);
         return;
     }
     const filename = `session_${session.id}_${Date.now()}.json`;
     const filePath = path.join(archiveDir, filename);
+    const sessionData = JSON.stringify({
+        ...session,
+        archivedAt: Date.now()
+    }, null, 2);
+
     try {
-        fs.writeFileSync(filePath, JSON.stringify({
-            ...session,
-            archivedAt: Date.now()
-        }, null, 2));
-        console.log(`[ARCHIVE] SUCCESSFULLY saved session ${session.id} to ${filename}`);
+        // 1. Save locally (ephemeral but fast)
+        fs.writeFileSync(filePath, sessionData);
+        console.log(`[ARCHIVE] Saved locally: ${filename}`);
+
+        // 2. Upload to S3 if available (persistent)
+        if (useS3 && s3) {
+            await s3.putObject({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: `archives/${filename}`,
+                Body: sessionData,
+                ContentType: 'application/json'
+            }).promise();
+            console.log(`[ARCHIVE] PERSISTED to S3: archives/${filename}`);
+        }
     } catch (err) {
         console.error(`[ARCHIVE ERROR] Failed to save session ${session.id}:`, err);
     }
@@ -263,41 +278,181 @@ app.get(['/api/run/:runId', '/public/api/run/:runId'], (req, res) => {
     res.json(run);
 });
 
-app.get(['/api/archives', '/public/api/archives'], (req, res) => {
+app.get(['/api/archives', '/public/api/archives'], async (req, res) => {
     try {
-        if (!fs.existsSync(archiveDir)) return res.json([]);
-        const files = fs.readdirSync(archiveDir);
-        const archives = files.filter(f => f.endsWith('.json')).map(f => {
-            try {
-                const data = JSON.parse(fs.readFileSync(path.join(archiveDir, f)));
-                return {
-                    id: data.id,
-                    name: data.name,
-                    date: data.archivedAt || Date.now(),
-                    athleteCount: (data.results || []).length,
-                    athletes: [...new Set((data.results || []).map(r => r.name))], // Unique athlete names for search
-                    filename: f,
-                    autoArchived: data.autoArchived || false
-                };
-            } catch(e) { return null; }
-        }).filter(it => it).sort((a, b) => b.date - a.date);
-        res.json(archives);
+        let archives = [];
+        
+        // 1. Load local archives (if any)
+        if (fs.existsSync(archiveDir)) {
+            const localFiles = fs.readdirSync(archiveDir).filter(f => f.endsWith('.json'));
+            localFiles.forEach(f => {
+                try {
+                    const data = JSON.parse(fs.readFileSync(path.join(archiveDir, f)));
+                    archives.push({
+                        id: data.id,
+                        name: data.name,
+                        date: data.archivedAt || Date.now(),
+                        athleteCount: (data.results || []).length,
+                        athletes: [...new Set((data.results || []).map(r => r.name))],
+                        filename: f,
+                        autoArchived: data.autoArchived || false,
+                        source: 'local'
+                    });
+                } catch(e) {}
+            });
+        }
+
+        // 2. Load S3 archives (merging with local, deduplicating)
+        if (useS3 && s3) {
+            const s3Data = await s3.listObjectsV2({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Prefix: 'archives/'
+            }).promise();
+            
+            const s3Promises = (s3Data.Contents || [])
+                .filter(obj => obj.Key.endsWith('.json'))
+                .map(async (obj) => {
+                    const filename = obj.Key.replace('archives/', '');
+                    // Skip if already loaded locally
+                    if (archives.some(a => a.filename === filename)) return null;
+
+                    try {
+                        const fileData = await s3.getObject({
+                            Bucket: process.env.AWS_S3_BUCKET,
+                            Key: obj.Key
+                        }).promise();
+                        const data = JSON.parse(fileData.Body.toString());
+                        return {
+                            id: data.id,
+                            name: data.name,
+                            date: data.archivedAt || Date.now(),
+                            athleteCount: (data.results || []).length,
+                            athletes: [...new Set((data.results || []).map(r => r.name))],
+                            filename: filename,
+                            autoArchived: data.autoArchived || false,
+                            source: 's3'
+                        };
+                    } catch(e) { return null; }
+                });
+            
+            const results = await Promise.all(s3Promises);
+            archives = archives.concat(results.filter(it => it));
+        }
+
+        res.json(archives.sort((a, b) => b.date - a.date));
     } catch (err) {
         console.error("[API ERROR] Archives list failed:", err);
         res.status(500).json({ error: "Failed to list archives" });
     }
 });
 
-app.get(['/api/archives/:filename', '/public/api/archives/:filename'], (req, res) => {
+app.get(['/api/archives/:filename', '/public/api/archives/:filename'], async (req, res) => {
     let filename = req.params.filename;
     if (!filename.endsWith('.json')) filename += '.json';
     const filePath = path.join(archiveDir, filename);
     
-    if (!fs.existsSync(filePath)) {
-        console.warn(`[API] Archive not found: ${filePath}`);
-        return res.status(404).json({ error: 'Archive not found' });
+    // 1. Try local first
+    if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
     }
-    res.sendFile(filePath);
+
+    // 2. Try S3
+    if (useS3 && s3) {
+        try {
+            console.log(`[API] Fetching ${filename} from S3...`);
+            const s3Obj = await s3.getObject({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: `archives/${filename}`
+            }).promise();
+            res.contentType('application/json');
+            return res.send(s3Obj.Body);
+        } catch (e) {
+            console.error(`[API] S3 fetch failed for ${filename}:`, e);
+        }
+    }
+
+    res.status(404).json({ error: 'Archive not found' });
+});
+
+// DELETE ARCHIVE
+app.post(['/api/archives/:filename/delete', '/public/api/archives/:filename/delete'], async (req, res) => {
+    let filename = req.params.filename;
+    if (!filename.endsWith('.json')) filename += '.json';
+    const filePath = path.join(archiveDir, filename);
+
+    try {
+        // Delete local
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        // Delete S3
+        if (useS3 && s3) {
+            await s3.deleteObject({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: `archives/${filename}`
+            }).promise();
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(`[API DELETE ERROR]`, err);
+        res.status(500).json({ error: "Failed to delete archive" });
+    }
+});
+
+// DELETE INDIVIDUAL RUN FROM ARCHIVE
+app.post(['/api/archives/:filename/runs/:runId/delete', '/public/api/archives/:filename/runs/:runId/delete'], async (req, res) => {
+    let filename = req.params.filename;
+    if (!filename.endsWith('.json')) filename += '.json';
+    const filePath = path.join(archiveDir, filename);
+    const runId = req.params.runId;
+
+    try {
+        let archiveData = null;
+
+        // 1. Get current data
+        if (fs.existsSync(filePath)) {
+            archiveData = JSON.parse(fs.readFileSync(filePath));
+        } else if (useS3 && s3) {
+            const s3Obj = await s3.getObject({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: `archives/${filename}`
+            }).promise();
+            archiveData = JSON.parse(s3Obj.Body.toString());
+        }
+
+        if (!archiveData) return res.status(404).json({ error: "Archive not found" });
+
+        // 2. Filter out the run
+        const initialCount = (archiveData.results || []).length;
+        archiveData.results = (archiveData.results || []).filter(r => r.runId !== runId);
+        
+        if (initialCount === archiveData.results.length) {
+            return res.status(404).json({ error: "Run not found in archive" });
+        }
+
+        const sessionData = JSON.stringify(archiveData, null, 2);
+
+        // 3. Save back
+        if (fs.existsSync(filePath) || !useS3) {
+            fs.writeFileSync(filePath, sessionData);
+        }
+        
+        if (useS3 && s3) {
+            await s3.putObject({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: `archives/${filename}`,
+                Body: sessionData,
+                ContentType: 'application/json'
+            }).promise();
+        }
+
+        res.json({ success: true, remaining: archiveData.results.length });
+    } catch (err) {
+        console.error(`[API DELETE RUN ERROR]`, err);
+        res.status(500).json({ error: "Failed to delete run from archive" });
+    }
 });
 
 app.get(['/run/:runId', '/public/run/:runId', '/alppikello/run/:runId'], (req, res) => {

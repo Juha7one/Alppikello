@@ -588,6 +588,10 @@ function renderArchiveList(archives) {
         const autoLabel = a.autoArchived ? '<span style="font-size:9px; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:10px; margin-left:8px; opacity:0.5;">AUTOMAATTINEN</span>' : '';
         const athleteNames = (a.athletes || []).slice(0, 3).join(', ') + ((a.athletes && a.athletes.length > 3) ? '...' : '');
         
+        const deleteBtn = (selectedRole === 'VALMENTAJA' || currentRole === 'VALMENTAJA') 
+            ? `<button onclick="event.stopPropagation(); deleteArchive('${a.filename}')" style="background:#ef4444; color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:900; font-size:10px; cursor:pointer; margin-left:10px;">POISTA 🗑️</button>` 
+            : '';
+
         return `
             <div class="card" onclick="openArchive('${a.filename}')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${a.autoArchived ? 'rgba(255,255,255,0.2)' : 'var(--accent)'};">
                 <div style="flex-grow:1; padding-right:15px;">
@@ -601,7 +605,10 @@ function renderArchiveList(archives) {
                         ${athleteNames || 'Ei nimitietoja'}
                     </div>
                 </div>
-                <div style="color:var(--accent); font-weight:900; white-space:nowrap; font-size:12px;">KATSO →</div>
+                <div style="display:flex; align-items:center;">
+                    <div style="color:var(--accent); font-weight:900; white-space:nowrap; font-size:12px;">KATSO →</div>
+                    ${deleteBtn}
+                </div>
             </div>
         `;
     }).join('');
@@ -678,8 +685,12 @@ async function openArchive(filename) {
                 </div>
             `;
 
+            const deleteRunBtn = (selectedRole === 'VALMENTAJA' || currentRole === 'VALMENTAJA')
+                ? `<button onclick="deleteRunFromArchive('${filename}', '${r.runId}')" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.2); padding:4px 8px; border-radius:4px; font-size:9px; font-weight:800; cursor:pointer;">POISTA SUORITUS 🗑️</button>`
+                : '';
+
             return `
-                <div class="card" style="margin-bottom:15px; border-left: 4px solid #fff;">
+                <div class="card" id="run-card-${r.runId}" style="margin-bottom:15px; border-left: 4px solid #fff;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
                         <div>
                             <span style="opacity:0.3; font-size: 11px;">#${session.results.length - i}</span>
@@ -687,6 +698,7 @@ async function openArchive(filename) {
                         </div>
                         <div style="text-align:right;">
                             <div style="font-size: 28px; font-weight: 900; color: var(--accent);">${formatDuration(r.totalTime)}</div>
+                            ${deleteRunBtn}
                         </div>
                     </div>
                     ${videoHtml}
@@ -783,5 +795,54 @@ function hideQRModal() {
     }
 }
 
+async function deleteArchive(filename) {
+    if (!confirm("Haluatko varmasti poistaa koko harjoituksen arkistosta? Tätä ei voi perua.")) return;
+
+    try {
+        const baseUrl = SERVER_URL || window.location.origin;
+        const resp = await fetch(`${baseUrl}/api/archives/${filename}/delete`, { method: 'POST' });
+        const data = await resp.json();
+
+        if (data.success) {
+            alert("Harjoitus poistettu.");
+            loadArchives(); // Refresh list
+        } else {
+            throw new Error(data.error || "Poisto epäonnistui.");
+        }
+    } catch (e) {
+        alert("Virhe poistettaessa: " + e.message);
+    }
+}
+
+async function deleteRunFromArchive(filename, runId) {
+    if (!confirm("Haluatko varmasti poistaa tämän yksittäisen suorituksen?")) return;
+
+    try {
+        const baseUrl = SERVER_URL || window.location.origin;
+        const resp = await fetch(`${baseUrl}/api/archives/${filename}/runs/${runId}/delete`, { method: 'POST' });
+        const data = await resp.json();
+
+        if (data.success) {
+            const card = document.getElementById(`run-card-${runId}`);
+            if (card) {
+                card.style.opacity = '0.3';
+                card.style.pointerEvents = 'none';
+                card.innerHTML = `<div style="padding:40px; text-align:center; font-weight:900; color:#ef4444;">SUORITUS POISTETTU</div>`;
+            }
+            if (data.remaining === 0) {
+                // If last run was deleted, the archive might still exist but be empty.
+                // We could just reload archives list.
+            }
+        } else {
+            throw new Error(data.error || "Poisto epäonnistui.");
+        }
+    } catch (e) {
+        alert("Virhe poistettaessa suoritusta: " + e.message);
+    }
+}
+
+window.deleteArchive = deleteArchive;
+window.deleteRunFromArchive = deleteRunFromArchive;
+window.cardPlayerLoad = (idx) => { /* Placeholder if needed globally */ };
 window.showQRModal = showQRModal;
 window.hideQRModal = hideQRModal;
