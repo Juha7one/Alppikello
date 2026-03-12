@@ -38,8 +38,11 @@ Kun liityt harjoitukseen, valitset laitteesi tarvitseman roolin:
 ## 🚀 Keskeiset Ominaisuudet
 
 *   **Konenäkö-ajanotto (Computer Vision)**: Laitteiden selaimessa suoritettava algoritmi (HTML5 Canvas), joka havaitsee liikkeen asetetulla kohdealueella ja toimii kellon katkaisijana.
+*   **Visuaalinen Analyysi ja Tekoäly (MediaPipe Pose)**: Valmentajat voivat avata minkä tahansa suorituksen Tuloskortti-analyysiin. Sivulla suoritetaan konepellin alla Googlen konenäkömalli, joka piirtää reaaliajassa "tikku-ukon" hiihtäjän nivelien ja asentojen päälle auttaen hahmottamaan laskukulmia. Työpöytäversio skaalautuu näyttäväksi koko ruudun kokoiseksi analytiikkanäkymäksi.
+*   **Piirtotyökalut**: Analyysivideon päälle voi piirtää sormella (tai hiirellä) omia analyysilinjoja esimerkiksi rinteeseen tai hartialinjaan.
 *   **Älykäs etäisyysmittari (Rangefinder)**: Valmentajan työkalu rataan tutustumiseen. Analysoi kännykän kamerakuvan keskiosan värejä ja tunnistaa automaattisesti ratalipun (punainen tai sininen) laskien etäisyyden kepille suoraan näytölle hyödyntäen polttovälimatematiikkaa.
-*   **Tuloskorttien ja arkistojen jakaminen (Deep Linking)**: Yksittäisen suorituksen tai kokonaisen päivän harjoittelutulokset (videoidoineen) voi jakaa yhdellä WhatsApp-linkillä. Sovellus osaa poimia linkistä oikean arkiston ja näyttää sen suoraan lukijalle.
+*   **Ihmisluettavat Videonimet**: Ohjelmisto kokoaa videoiden tiedostonimiin kaiken tiedon (harjoituksen nimi, urheilija, rooli ja aika), tehden videoiden selaamisesta esimerkiksi puhelimen galleriassa vaivatonta.
+*   **Tuloskorttien ja arkistojen jakaminen (Deep Linking)**: Yksittäisen suorituksen tai kokonaisen päivän harjoittelutulokset (videoidoineen) voi jakaa yhdellä WhatsApp-linkillä. Uusimmassa versiossa valmentaja voi jakaa suoraan yksittäisen laskun analyysikortin suoraan pysyvästä arkistosta (`?archive=XXX&run=YYY`). Selain osaa noutaa pelkän puuttuvan tuloksen esiin ilman, että itse harjoituksen tarvitsee olla käynnissä.
 *   **Pysyvä pilviarkisto**: Tulokset tallentuvat JSON-muodossa paikallisesti nopeaa käyttöä varten, mutta siirtyvät aina lopuksi AWS S3 -pilveen turvaan.
 *   **QR-Koodi liittyminen**: Uudet puhelimet saa liitettyä sekunnissa skannaamalla QR-koodin "Master"-laitteesta (Valmentajalta).
 
