@@ -16,7 +16,7 @@ function toggleStickman() {
     const btn = document.getElementById('btn-toggle-ai');
     if(btn) {
         btn.style.border = strickmanActive ? "2px solid #fff" : "2px solid transparent";
-        btn.style.background = strickmanActive ? "var(--accent)" : "rgba(255,255,255,0.1)";
+        btn.style.background = strickmanActive ? "var(--accent)" : "rgba(255,255,255,0.05)";
     }
 
     if(strickmanActive) {
@@ -33,7 +33,7 @@ function toggleDrawingMode() {
     
     if(btn) {
         btn.style.border = drawingModeActive ? "2px solid #fff" : "2px solid transparent";
-        btn.style.background = drawingModeActive ? "var(--accent)" : "rgba(255,255,255,0.1)";
+        btn.style.background = drawingModeActive ? "var(--accent)" : "rgba(255,255,255,0.05)";
         btn.innerText = drawingModeActive ? "✏️ PIIRTÄMINEN PÄÄLLÄ" : "✏️ PIIRRÄ";
     }
 

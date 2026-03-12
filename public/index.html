@@ -15,9 +15,9 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #581c87;">
-        <h1 class="splash-title" style="color: #fff;">LEGACY OF SPEED</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.80.0</div>
+    <div id="deployment-splash" style="background: #020617;">
+        <h1 class="splash-title" style="color: #fff;">VISUAL ANALYSIS</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.83.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -367,9 +367,9 @@
                     
                     <!-- AI Tools -->
                     <div style="display: flex; gap: 10px; margin-bottom: 25px; align-items: center; flex-wrap: wrap;">
-                        <button id="btn-toggle-draw" class="btn-mini" onclick="toggleDrawingMode()" style="background: rgba(255,255,255,0.1); border: 2px solid transparent; min-width: 100px;">✏️ PIIRRÄ</button>
-                        <button id="btn-toggle-ai" class="btn-mini" onclick="toggleStickman()" style="background: rgba(255,255,255,0.1); border: 2px solid transparent; min-width: 100px;">🤖 AI (TIKKU-UKKO)</button>
-                        <button class="btn-mini" onclick="clearAIDrawings()" style="background: #ef4444; width: 60px;">🗑️</button>
+                        <button id="btn-toggle-draw" class="btn" onclick="toggleDrawingMode()" style="background: rgba(255,255,255,0.05); color: #fff; border: 2px solid transparent; flex: 1; padding: 15px; font-size: 14px; border-radius: var(--border-radius); margin: 0;">✏️ PIIRRÄ</button>
+                        <button id="btn-toggle-ai" class="btn" onclick="toggleStickman()" style="background: rgba(255,255,255,0.05); color: #fff; border: 2px solid transparent; flex: 1; padding: 15px; font-size: 14px; border-radius: var(--border-radius); margin: 0;">🤖 TIKKU-UKKO</button>
+                        <button class="btn" onclick="clearAIDrawings()" style="background: var(--danger); color: #fff; width: 60px; padding: 15px; border-radius: var(--border-radius); border: 2px solid rgba(255,255,255,0.1); margin: 0; display: flex; align-items: center; justify-content: center;">🗑️</button>
                     </div>
 
                     <div id="card-splits" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-bottom: 25px;"></div>
@@ -454,17 +454,17 @@
 
     <!-- Core App Logic -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/qrcode.min.js?v=2.82.0"></script>
-    <script src="js/state.js?v=2.82.0"></script>
-    <script src="js/utils.js?v=2.82.0"></script>
-    <script src="js/socket.js?v=2.82.0"></script>
-    <script src="js/video.js?v=2.82.0"></script>
-    <script src="js/cv.js?v=2.82.0"></script>
-    <script src="js/ai.js?v=2.82.0"></script>
-    <script src="js/timing.js?v=2.82.0"></script>
-    <script src="js/ui.js?v=2.82.0"></script>
-    <script src="js/rangefinder.js?v=2.82.0"></script>
-    <script src="js/app.js?v=2.82.0"></script>
+    <script src="js/qrcode.min.js?v=2.83.0"></script>
+    <script src="js/state.js?v=2.83.0"></script>
+    <script src="js/utils.js?v=2.83.0"></script>
+    <script src="js/socket.js?v=2.83.0"></script>
+    <script src="js/video.js?v=2.83.0"></script>
+    <script src="js/cv.js?v=2.83.0"></script>
+    <script src="js/ai.js?v=2.83.0"></script>
+    <script src="js/timing.js?v=2.83.0"></script>
+    <script src="js/ui.js?v=2.83.0"></script>
+    <script src="js/rangefinder.js?v=2.83.0"></script>
+    <script src="js/app.js?v=2.83.0"></script>
 </body>
 
 </html>
