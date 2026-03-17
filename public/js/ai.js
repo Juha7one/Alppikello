@@ -86,10 +86,10 @@ function startAI() {
         });
 
         poseEngine.setOptions({
-            modelComplexity: 1, // 0=fast, 1=accurate, 2=heavy (reverted to 1 to prevent OOM on mobile)
+            modelComplexity: 2, // 0=fast, 1=accurate, 2=heavy (better for blurry/far objects)
             smoothLandmarks: true,
-            minDetectionConfidence: 0.1, // Even lower threshold to force detection
-            minTrackingConfidence: 0.1
+            minDetectionConfidence: 0.4, // Increased to 0.4 to prevent false guesses
+            minTrackingConfidence: 0.4
         });
 
         poseEngine.onResults(onPoseResults);
