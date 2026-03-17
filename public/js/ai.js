@@ -6,6 +6,9 @@ let aiCtx = null;
 let aiVideo = null;
 let aiRafId = null;
 
+let lastProcessedTime = -1;
+let forceProcess = false;
+
 let isDrawing = false;
 let drawingModeActive = false;
 let drawings = []; // Store lines as [{x, y}, {x, y}] paths
@@ -20,6 +23,7 @@ function toggleStickman() {
     }
 
     if(strickmanActive) {
+        forceProcess = true;
         startAI();
     } else {
         stopAI();
@@ -107,10 +111,18 @@ function stopAI() {
 async function aiLoop() {
     if(!strickmanActive || !poseEngine || !aiVideo) return;
     
-    // Only process if video is actually playing and has dimensions, to save battery
-    if(aiVideo.readyState >= 2 && !aiVideo.paused && !aiVideo.ended) {
+    const currentTime = aiVideo.currentTime;
+    const shouldProcess = (aiVideo.readyState >= 2) && (
+        (!aiVideo.paused && !aiVideo.ended) || 
+        (currentTime !== lastProcessedTime) ||
+        forceProcess
+    );
+
+    if (shouldProcess) {
         try {
             await poseEngine.send({image: aiVideo});
+            lastProcessedTime = currentTime;
+            forceProcess = false;
         } catch(e) {
             console.warn("Pose processing failed/skipped frame:", e);
         }

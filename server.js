@@ -5,7 +5,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const fs = require('fs');
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const multerS3 = require('multer-s3');
 
 // Ensure uploads directory exists
@@ -20,9 +20,11 @@ let s3 = null;
 const useS3 = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_S3_BUCKET;
 
 if (useS3) {
-    s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    s3 = new S3Client({
+        credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
         region: process.env.AWS_REGION
     });
     storage = multerS3({
@@ -104,12 +106,12 @@ async function archiveSession(session) {
 
         // 2. Upload to S3 if available (persistent)
         if (useS3 && s3) {
-            await s3.putObject({
+            await s3.send(new PutObjectCommand({
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `archives/${filename}`,
                 Body: sessionData,
                 ContentType: 'application/json'
-            }).promise();
+            }));
             console.log(`[ARCHIVE] PERSISTED to S3: archives/${filename}`);
         }
     } catch (err) {
@@ -314,10 +316,10 @@ app.get(['/api/archives', '/public/api/archives'], async (req, res) => {
 
         // 2. Load S3 archives (merging with local, deduplicating)
         if (useS3 && s3) {
-            const s3Data = await s3.listObjectsV2({
+            const s3Data = await s3.send(new ListObjectsV2Command({
                 Bucket: process.env.AWS_S3_BUCKET,
                 Prefix: 'archives/'
-            }).promise();
+            }));
             
             const s3Promises = (s3Data.Contents || [])
                 .filter(obj => obj.Key.endsWith('.json'))
@@ -327,11 +329,12 @@ app.get(['/api/archives', '/public/api/archives'], async (req, res) => {
                     if (archives.some(a => a.filename === filename)) return null;
 
                     try {
-                        const fileData = await s3.getObject({
+                        const fileData = await s3.send(new GetObjectCommand({
                             Bucket: process.env.AWS_S3_BUCKET,
                             Key: obj.Key
-                        }).promise();
-                        const data = JSON.parse(fileData.Body.toString());
+                        }));
+                        const fileBodyString = await fileData.Body.transformToString();
+                        const data = JSON.parse(fileBodyString);
                         return {
                             id: data.id,
                             name: data.name,
@@ -371,14 +374,15 @@ app.get(['/api/archives/:filename', '/public/api/archives/:filename'], async (re
     if (useS3 && s3) {
         try {
             console.log(`[API] Fetching ${filename} from S3 bucket ${process.env.AWS_S3_BUCKET}...`);
-            const s3Obj = await s3.getObject({
+            const s3Obj = await s3.send(new GetObjectCommand({
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `archives/${filename}`
-            }).promise();
+            }));
             
             res.contentType('application/json');
             res.setHeader('Cache-Control', 'no-cache');
-            return res.send(s3Obj.Body);
+            s3Obj.Body.pipe(res);
+            return;
         } catch (e) {
             console.error(`[API ERROR] S3 getObject failed for 'archives/${filename}':`, e.code, e.message);
             // If it's a 404 on S3, we'll continue to the final 404 response
@@ -403,10 +407,10 @@ app.post(['/api/archives/:filename/delete', '/public/api/archives/:filename/dele
 
         // Delete S3
         if (useS3 && s3) {
-            await s3.deleteObject({
+            await s3.send(new DeleteObjectCommand({
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `archives/${filename}`
-            }).promise();
+            }));
         }
 
         res.json({ success: true });
@@ -430,11 +434,12 @@ app.post(['/api/archives/:filename/runs/:runId/delete', '/public/api/archives/:f
         if (fs.existsSync(filePath)) {
             archiveData = JSON.parse(fs.readFileSync(filePath));
         } else if (useS3 && s3) {
-            const s3Obj = await s3.getObject({
+            const s3Obj = await s3.send(new GetObjectCommand({
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `archives/${filename}`
-            }).promise();
-            archiveData = JSON.parse(s3Obj.Body.toString());
+            }));
+            const fileBodyString = await s3Obj.Body.transformToString();
+            archiveData = JSON.parse(fileBodyString);
         }
 
         if (!archiveData) return res.status(404).json({ error: "Archive not found" });
@@ -453,14 +458,13 @@ app.post(['/api/archives/:filename/runs/:runId/delete', '/public/api/archives/:f
         if (fs.existsSync(filePath) || !useS3) {
             fs.writeFileSync(filePath, sessionData);
         }
-        
         if (useS3 && s3) {
-            await s3.putObject({
+            await s3.send(new PutObjectCommand({
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `archives/${filename}`,
                 Body: sessionData,
                 ContentType: 'application/json'
-            }).promise();
+            }));
         }
 
         res.json({ success: true, remaining: archiveData.results.length });
