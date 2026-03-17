@@ -1,6 +1,6 @@
 {
   "name": "alppikello",
-  "version": "2.89.2",
+  "version": "2.89.3",
   "description": "Smart Alpine Skiing Timing System",
   "main": "server.js",
   "scripts": {

@@ -125,6 +125,18 @@ async function aiLoop() {
             forceProcess = false;
         } catch(e) {
             console.warn("Pose processing failed/skipped frame:", e);
+            if(e.name === 'SecurityError' || (e.message && e.message.includes('tainted'))) {
+                if(aiCtx && aiCanvas) {
+                    aiCtx.clearRect(0,0, aiCanvas.width, aiCanvas.height);
+                    aiCtx.fillStyle = 'rgba(239, 68, 68, 0.9)'; // Red alert bg
+                    aiCtx.fillRect(10, 10, 240, 50);
+                    aiCtx.font = "bold 12px Inter, sans-serif";
+                    aiCtx.fillStyle = '#fff';
+                    aiCtx.fillText("🔒 S3 CORS-ESTO", 20, 30);
+                    aiCtx.font = "10px Inter, sans-serif";
+                    aiCtx.fillText("Tekoäly ei voi tutkia tätä videota.", 20, 48);
+                }
+            }
         }
     }
     
