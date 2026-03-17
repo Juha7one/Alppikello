@@ -8,7 +8,9 @@ let aiRafId = null;
 
 let lastProcessedTime = -1;
 let forceProcess = false;
-
+let POSE_WORKER_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose_solution_packed_assets.data';
+let lastPoseLandmarks = null;
+let lastPoseTime = 0;
 let isDrawing = false;
 let drawingModeActive = false;
 let drawings = []; // Store lines as [{x, y}, {x, y}] paths
@@ -86,10 +88,10 @@ function startAI() {
         });
 
         poseEngine.setOptions({
-            modelComplexity: 2, // 0=fast, 1=accurate, 2=heavy (better for blurry/far objects)
+            modelComplexity: 1, // 1=accurate (better balance for dark outfits on bright snow than 2)
             smoothLandmarks: true,
-            minDetectionConfidence: 0.4, // Increased to 0.4 to prevent false guesses
-            minTrackingConfidence: 0.4
+            minDetectionConfidence: 0.1, // Super low to catch blurry frames
+            minTrackingConfidence: 0.1
         });
 
         poseEngine.onResults(onPoseResults);
@@ -159,10 +161,18 @@ function onPoseResults(results) {
     redrawUserLines();
 
     if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks && window.POSE_CONNECTIONS) {
+        lastPoseLandmarks = results.poseLandmarks;
+        lastPoseTime = Date.now();
         window.drawConnectors(aiCtx, results.poseLandmarks, window.POSE_CONNECTIONS,
                        {color: '#00FF00', lineWidth: 4});
         window.drawLandmarks(aiCtx, results.poseLandmarks,
                       {color: '#FF0000', lineWidth: 2, radius: 3});
+    } else if (lastPoseLandmarks && (Date.now() - lastPoseTime) < 1000 && window.drawConnectors && window.drawLandmarks && window.POSE_CONNECTIONS) {
+        // Elastic Memory: Draw last known pose with faded colors to indicate loss of tracking
+        window.drawConnectors(aiCtx, lastPoseLandmarks, window.POSE_CONNECTIONS,
+                       {color: 'rgba(0, 255, 0, 0.4)', lineWidth: 4});
+        window.drawLandmarks(aiCtx, lastPoseLandmarks,
+                      {color: 'rgba(255, 0, 0, 0.4)', lineWidth: 2, radius: 3});
     } else {
         // Visual feedback that the AI is trying but cannot detect a pose
         aiCtx.fillStyle = 'rgba(239, 68, 68, 0.8)'; // Red background
