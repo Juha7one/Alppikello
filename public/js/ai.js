@@ -86,10 +86,10 @@ function startAI() {
         });
 
         poseEngine.setOptions({
-            modelComplexity: 1, // 0=fast, 1=accurate, 2=heavy
+            modelComplexity: 1, // 0=fast, 1=accurate, 2=heavy (reverted to 1 to prevent OOM on mobile)
             smoothLandmarks: true,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
+            minDetectionConfidence: 0.1, // Even lower threshold to force detection
+            minTrackingConfidence: 0.1
         });
 
         poseEngine.onResults(onPoseResults);
@@ -147,11 +147,17 @@ function onPoseResults(results) {
     redrawUserLines();
 
     if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks && window.POSE_CONNECTIONS) {
-        // We use window.drawConnectors from mediapipe drawing_utils
         window.drawConnectors(aiCtx, results.poseLandmarks, window.POSE_CONNECTIONS,
                        {color: '#00FF00', lineWidth: 4});
         window.drawLandmarks(aiCtx, results.poseLandmarks,
                       {color: '#FF0000', lineWidth: 2, radius: 3});
+    } else {
+        // Visual feedback that the AI is trying but cannot detect a pose
+        aiCtx.fillStyle = 'rgba(239, 68, 68, 0.8)'; // Red background
+        aiCtx.fillRect(10, 10, 120, 26);
+        aiCtx.font = "12px Inter, sans-serif";
+        aiCtx.fillStyle = '#fff';
+        aiCtx.fillText("⚠️ HAHMOA EI LÖYDY", 15, 27);
     }
 }
 
