@@ -338,7 +338,7 @@
                     <div class="run-card" style="animation-delay: ${i * 0.1}s; border-left: 4px solid var(--accent);">
                         <div class="video-container">
                             ${r.videoUrl ? `
-                                <video id="vid-${r.runId}" src="${r.videoUrl}" playsinline controls></video>
+                                <video id="vid-${r.runId}" src="${r.videoUrl}" playsinline controls crossorigin="anonymous"></video>
                                 <div id="clock-${r.runId}" class="clock-overlay">
                                     <div id="badge-${r.runId}" style="position: absolute; top: -110px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10; text-transform: uppercase;">VIDEO</div>
                                     <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${r.name.toUpperCase()}</div>
