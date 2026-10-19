@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ALPPIKELLO - Älykäs Ajanotto</title>
-    <link rel="stylesheet" href="css/style.css?v=3.0.0">
+    <link rel="stylesheet" href="css/style.css?v=3.1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
@@ -15,9 +15,9 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #0f766e;">
-        <h1 class="splash-title" style="color: #fff;">QUARTZ PEAK</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v3.0.0</div>
+    <div id="deployment-splash" style="background: #1e3a8a;">
+        <h1 class="splash-title" style="color: #fff;">ARCTIC VOICE</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v3.1.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -32,7 +32,16 @@
 
         <!-- Step 2: Role -->
         <div id="ob-step-role" class="ob-step" style="display:none;">
-            <h2 style="margin-bottom: 30px; font-weight: 900; letter-spacing: -1px;">VALITSE ROOLI</h2>
+            <h2 style="margin-bottom: 16px; font-weight: 900; letter-spacing: -1px;">VALITSE ROOLI</h2>
+            <div style="margin-bottom: 20px; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto;">
+                <div class="voice-lang-bar" style="margin-bottom: 10px;">
+                    <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
+                    <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
+                    <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
+                    <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+                </div>
+                <button type="button" id="btn-role-mic" class="voice-mic-btn" style="padding: 14px; font-size: 13px;" onclick="toggleVoiceListening('role')">🎤 VALITSE ROOLI ÄÄNELLÄ</button>
+            </div>
             <div class="role-grid">
                 <div class="role-card" data-role="LÄHTÖ" onclick="selectRole('LÄHTÖ')">
                     <span class="role-icon">⏲️</span>
@@ -133,6 +142,17 @@
                 <button class="btn btn-primary" onclick="shareSession()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800;">JAA LINKKI</button>
                 <button class="btn btn-outline" onclick="showQRModal()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800; border-color: #fff; color: #fff; border-width: 2px;">JAA QR</button>
             </div>
+
+            <!-- Audio Announcer & Multi-Language Bar (Coach / Spectator) -->
+            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn-voice-tts-toggle tts-active" onclick="toggleVoiceTts()">🔊 KUULUTUS: PÄÄLLÄ</button>
+                <div class="voice-lang-bar">
+                    <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
+                    <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
+                    <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
+                    <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+                </div>
+            </div>
         </div>
 
         <section id="coach-athlete-management" style="margin-bottom: 40px;">
@@ -182,16 +202,60 @@
 
     <!-- Urheilija View -->
     <div id="view-urheilija" class="view container">
-        <h1 id="athlete-welcome" style="font-weight: 900; margin-bottom: 40px;">MORO, LASKIJA!</h1>
+        <h1 id="athlete-welcome" style="font-weight: 900; margin-bottom: 20px;">MORO, LASKIJA!</h1>
+        <!-- Athlete Audio Announcer Bar -->
+        <div class="card" style="padding: 16px; margin-bottom: 25px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-voice-tts-toggle tts-active" onclick="toggleVoiceTts()">🔊 KUULUTUS: PÄÄLLÄ</button>
+                <button type="button" id="btn-athlete-voice-filter" class="btn-voice-tts-toggle" onclick="toggleVoiceAthleteFilter()">🌐 KAIKKI LASKUT</button>
+            </div>
+            <div class="voice-lang-bar">
+                <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
+                <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
+                <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
+                <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+            </div>
+        </div>
         <div id="athlete-results-list"></div>
     </div>
 
     <!-- Lähtöjärjestys / Lähettäjä View -->
     <div id="view-lahettaja" class="view container">
         <div id="lahettaja-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">HARJOITUS</div>
-        <h1 style="font-weight: 900; margin-bottom: 30px;">LÄHTÖPAIKKA</h1>
+        <h1 style="font-weight: 900; margin-bottom: 20px;">LÄHTÖPAIKKA</h1>
+
+        <!-- Hands-Free Voice Control & Course Traffic Lights -->
+        <div class="card" style="padding: 18px; margin-bottom: 24px; border: 1px solid rgba(59, 130, 246, 0.25);">
+            <div class="starter-traffic-light">
+                <div class="tl-bulbs">
+                    <div id="tl-bulb-red" class="tl-bulb"></div>
+                    <div id="tl-bulb-yellow" class="tl-bulb"></div>
+                    <div id="tl-bulb-green" class="tl-bulb active-green"></div>
+                </div>
+                <div id="tl-status-label" style="font-size: 13px; font-weight: 900; color: var(--success); text-align: right;">🟢 RATA VAPAA</div>
+            </div>
+
+            <button type="button" id="btn-starter-mic" class="voice-mic-btn" onclick="toggleVoiceListening('starter')">
+                🎤 KÄYNNISTÄ ÄÄNIOHJAUS
+            </button>
+
+            <div id="starter-voice-transcript" style="margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.35); font-size: 13px; font-weight: 700; color: var(--text-secondary); min-height: 40px; display: flex; align-items: center; justify-content: center;">
+                Sano laskijan nimi (esim. "Matti") tai lisää uusi: "Uusi [Nimi]"
+            </div>
+
+            <div style="margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn-voice-tts-toggle tts-active" onclick="toggleVoiceTts()">🔊 KUULUTUS: PÄÄLLÄ</button>
+                <div class="voice-lang-bar">
+                    <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
+                    <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
+                    <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
+                    <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+                </div>
+            </div>
+        </div>
+
         <div id="starter-queue-view"></div>
-        <div style="margin-top: 40px;">
+        <div style="margin-top: 40px; width: 100%;">
             <p style="font-size: 12px; color: var(--text-secondary); font-weight: 900; text-transform: uppercase; margin-bottom: 20px;">
                 Seuraavaksi lähtevä:</p>
             <div id="starter-skier-list"
@@ -217,8 +281,8 @@
                 <div id="start-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-
             <p id="start-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
+            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
         </div>
     </div>
 
@@ -234,8 +298,8 @@
                 <div id="maali-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-
             <p id="finish-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
+            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
         </div>
     </div>
 
@@ -251,8 +315,8 @@
                 <div id="väliaika-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
             </div>
 
-
             <p id="split-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
+            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
         </div>
     </div>
 
@@ -307,6 +371,7 @@
             </div>
             <p id="video-node-info" style="font-size: 16px; font-weight: 700;">ODOTTAA SIJAINTITIETOA</p>
             <p style="font-size: 12px; color: var(--text-secondary); margin-top: 16px;">KAMERA VALMIINA - ODOTTAA LASKIJAA 🎬</p>
+            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
         </div>
 
         <div class="card" style="text-align: left;">
@@ -424,7 +489,21 @@
                 Kello: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v3.0.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v3.1.0 | © 2026</p>
+    </div>
+
+    <!-- Cold-Weather OLED Blackout Overlay (Tap anywhere to wake preview for 25s) -->
+    <div id="sensor-eco-overlay" onclick="wakeSensorScreen(true)">
+        <div style="font-size: 42px; margin-bottom: 14px; opacity: 0.5;">🔋</div>
+        <div id="eco-overlay-role" style="font-size: 16px; font-weight: 900; letter-spacing: 1px; color: rgba(255,255,255,0.65); margin-bottom: 10px;">
+            ANTURI – VIRRANSÄÄSTÖTILA
+        </div>
+        <div id="eco-overlay-status" style="font-size: 14px; font-weight: 800; color: #10b981; margin-bottom: 28px;">
+            KAMERA JA VALOKENNO AKTIIVISENA TAUSTALLA
+        </div>
+        <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.12); padding: 10px 18px; border-radius: 20px;">
+            KOSKETA NÄYTTÖÄ HERÄTTÄÄKSESI ESIKATSELU (25s)
+        </div>
     </div>
 
     <!-- QR Modal -->
@@ -456,18 +535,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
-    <!-- Core App Logic (Stateless PHP/REST + Monotonic Clock Edition) -->
-    <script src="js/qrcode.min.js?v=3.0.0"></script>
-    <script src="js/state.js?v=3.0.0"></script>
-    <script src="js/utils.js?v=3.0.0"></script>
-    <script src="js/socket.js?v=3.0.0"></script>
-    <script src="js/video.js?v=3.0.0"></script>
-    <script src="js/cv.js?v=3.0.0"></script>
-    <script src="js/ai.js?v=3.0.0"></script>
-    <script src="js/timing.js?v=3.0.0"></script>
-    <script src="js/ui.js?v=3.0.0"></script>
-    <script src="js/rangefinder.js?v=3.0.0"></script>
-    <script src="js/app.js?v=3.0.0"></script>
+    <!-- Core App Logic (Stateless PHP/REST + Monotonic Clock + Multi-Language Voice Edition) -->
+    <script src="js/qrcode.min.js?v=3.1.0"></script>
+    <script src="js/state.js?v=3.1.0"></script>
+    <script src="js/utils.js?v=3.1.0"></script>
+    <script src="js/voice.js?v=3.1.0"></script>
+    <script src="js/socket.js?v=3.1.0"></script>
+    <script src="js/video.js?v=3.1.0"></script>
+    <script src="js/cv.js?v=3.1.0"></script>
+    <script src="js/ai.js?v=3.1.0"></script>
+    <script src="js/timing.js?v=3.1.0"></script>
+    <script src="js/ui.js?v=3.1.0"></script>
+    <script src="js/rangefinder.js?v=3.1.0"></script>
+    <script src="js/app.js?v=3.1.0"></script>
 </body>
 
 </html>

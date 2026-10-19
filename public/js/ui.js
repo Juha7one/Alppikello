@@ -790,6 +790,10 @@ function renderStarterView() {
     const listEl = document.getElementById('starter-skier-list');
     if (!queueEl || !listEl) return;
 
+    if (typeof updateStarterTrafficLight === 'function') {
+        updateStarterTrafficLight(currentSession);
+    }
+
     const queue = currentSession.activeQueue || [];
     const athletes = currentSession.allAthletes || [];
 
@@ -799,7 +803,7 @@ function renderStarterView() {
             <div onclick="clearQueue()" style="background: var(--accent); padding: 40px; border-radius: 24px; text-align: center; cursor: pointer; border: 2px solid rgba(255,255,255,0.2);">
                 <p style="font-weight:900; opacity:0.8; margin:0 0 10px 0;">SEURAAVA LÄHTIJÄ:</p>
                 <h1 style="font-size: 72px; margin:0; line-height: 1;">${next.name.toUpperCase()}</h1>
-                <p style="font-size: 11px; margin-top: 15px; opacity: 0.6;">(Paina peruaksesi)</p>
+                <p style="font-size: 11px; margin-top: 15px; opacity: 0.6;">(Paina tai sano "Peruuta" poistaaksesi)</p>
             </div>
         `;
     } else {

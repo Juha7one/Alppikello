@@ -100,13 +100,36 @@ function startCVLogic(roleType, video, canvas) {
     if (roleType === 'video') triggerType = 'video_clip';
 
     let previousIntensity = -1;
+    let lastEcoFrameAt = 0;
     const threshold = 12; 
     const gateX = 0.5; 
+
+    const statusId = roleType === 'lähtö' ? 'start-status-overlay' : (roleType === 'maali' ? 'maali-status-overlay' : (roleType === 'väliaika' ? 'väliaika-status-overlay' : 'video-status-overlay'));
+    const statusBadge = document.getElementById(statusId);
 
     const processFrame = () => {
         if (!cvStream || currentCVRole !== roleType) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             return;
+        }
+
+        // Cold-Weather Battery Saver: Throttle pixel analysis to ~4fps when course/queue is idle
+        const isEcoIdle = (typeof shouldThrottleCV === 'function') && shouldThrottleCV(roleType);
+        const perfNow = performance.now();
+        if (isEcoIdle && (perfNow - lastEcoFrameAt < 250)) {
+            requestAnimationFrame(processFrame);
+            return;
+        }
+        lastEcoFrameAt = perfNow;
+
+        if (statusBadge) {
+            if (isEcoIdle) {
+                statusBadge.innerText = "CV ECO (4 FPS)";
+                statusBadge.style.background = "rgba(16, 185, 129, 0.45)";
+            } else {
+                statusBadge.innerText = "CV AKTIIVINEN (60 FPS)";
+                statusBadge.style.background = "var(--success)";
+            }
         }
 
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -136,7 +159,7 @@ function startCVLogic(roleType, video, canvas) {
 
             ctx.fillStyle = "white";
             ctx.font = "bold 18px Courier";
-            ctx.fillText(`RAW: ${avgIntensity.toFixed(0)}  DIFF: ${diff.toFixed(1)}`, 15, 30);
+            ctx.fillText(`RAW: ${avgIntensity.toFixed(0)}  DIFF: ${diff.toFixed(1)}${isEcoIdle ? ' [ECO]' : ''}`, 15, 30);
 
             if (previousIntensity !== -1) {
                 const meterW = Math.min((diff / 40) * canvas.width, canvas.width);

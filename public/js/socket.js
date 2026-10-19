@@ -226,12 +226,17 @@ function applyServerSessionState(session, timingEvent = null) {
         return;
     }
 
+    const prevSession = currentSession;
     const prevVideoCount = currentSession && currentSession.results
         ? currentSession.results.reduce((acc, r) => acc + (r.videos ? r.videos.length : 0), 0)
         : 0;
 
     currentSession = session;
     currentSessionVersion = session.version || currentSessionVersion;
+
+    if (typeof handleVoiceSessionUpdate === 'function') {
+        handleVoiceSessionUpdate(prevSession, currentSession);
+    }
 
     if (currentSession.onCourse && currentSession.onCourse.length > 0) {
         const firstRunner = currentSession.onCourse[0];

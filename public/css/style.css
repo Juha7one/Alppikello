@@ -534,3 +534,140 @@ video::-webkit-media-controls-duration-display {
     opacity: 0.6;
     margin-left: 8px;
 }
+
+/* --- Multi-Language Voice UI & Cold-Weather Eco Mode --- */
+
+.voice-lang-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.voice-lang-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.voice-lang-btn.active {
+    background: var(--accent);
+    border-color: #fff;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.voice-mic-btn {
+    width: 100%;
+    padding: 20px;
+    font-size: 16px;
+    font-weight: 900;
+    border-radius: 16px;
+    border: 2px solid rgba(59, 130, 246, 0.4);
+    background: rgba(59, 130, 246, 0.12);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.voice-mic-btn.listening {
+    background: var(--danger);
+    border-color: #fff;
+    color: #fff;
+    animation: voicePulse 1.6s infinite;
+}
+
+@keyframes voicePulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.65); }
+    70% { box-shadow: 0 0 0 18px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.btn-voice-tts-toggle {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-secondary);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-voice-tts-toggle.tts-active {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: var(--success);
+    color: #10b981;
+}
+
+/* Starter Traffic Lights */
+.starter-traffic-light {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 14px;
+}
+
+.tl-bulbs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.tl-bulb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.25s;
+}
+
+.tl-bulb.active-red {
+    background: var(--danger);
+    border-color: #fca5a5;
+    box-shadow: 0 0 16px var(--danger);
+}
+
+.tl-bulb.active-yellow {
+    background: var(--warning);
+    border-color: #fde68a;
+    box-shadow: 0 0 16px var(--warning);
+}
+
+.tl-bulb.active-green {
+    background: var(--success);
+    border-color: #6ee7b7;
+    box-shadow: 0 0 16px var(--success);
+}
+
+/* Cold-Weather OLED Blackout Overlay */
+#sensor-eco-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.96);
+    z-index: 9500;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+

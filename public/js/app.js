@@ -146,6 +146,13 @@ function handleSessionJoin(session, role) {
         if (!isRecording) stopCV();
     }
 
+    if (typeof applyRolePowerAndVoicePolicy === 'function') {
+        applyRolePowerAndVoicePolicy(role);
+    }
+    if (typeof handleVoiceSessionUpdate === 'function') {
+        handleVoiceSessionUpdate(null, session);
+    }
+
     updateUILayout();
     updateUI();
 }
@@ -164,6 +171,10 @@ function showOnboardingStep(step) {
     document.querySelectorAll('.ob-step').forEach(el => el.style.display = 'none');
     const stepEl = document.getElementById('ob-step-' + step);
     if (stepEl) stepEl.style.display = 'block';
+
+    if (step !== 'role' && typeof stopVoiceListening === 'function' && voiceListenMode === 'role') {
+        stopVoiceListening();
+    }
 
     if (step === 'session') {
         const isCoach = selectedRole === 'VALMENTAJA';
@@ -233,6 +244,7 @@ function saveName() {
 }
 
 function showRoleSelection() {
+    if (typeof wakeSensorScreen === 'function') wakeSensorScreen(false);
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-onboarding').classList.add('active');
     showOnboardingStep('role');
@@ -244,9 +256,13 @@ function showRoleSelection() {
 
 function startGPSTracking() {
     if (watchId) navigator.geolocation.clearWatch(watchId);
+    gpsFixCount = 0;
+    gpsLockedForSession = false;
     if ("geolocation" in navigator) {
         watchId = navigator.geolocation.watchPosition((pos) => {
-            if (currentSession) {
+            if (typeof handleGpsPositionForBattery === 'function') {
+                handleGpsPositionForBattery(pos);
+            } else if (currentSession) {
                 socket.emit('update_location', {
                     sessionId: currentSession.id,
                     lat: pos.coords.latitude,
