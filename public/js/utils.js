@@ -68,6 +68,14 @@ function showVideoNotification(msg) {
     }
 }
 
+/**
+ * Returns the exact synchronized epoch time (ms) using the device's internal
+ * high-precision monotonic clock (performance.now()) anchored to the one-shot
+ * server clock calibration. Immune to OS wall-clock jumps during a session.
+ */
 function getSyncedTime() {
+    if (clockCalibrated && typeof performance !== 'undefined') {
+        return Math.round(clockBaseServerTime + (performance.now() - clockBasePerfTime));
+    }
     return Date.now() - serverTimeOffset;
 }

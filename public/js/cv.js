@@ -131,7 +131,7 @@ function startCVLogic(roleType, video, canvas) {
             for (let i = 0; i < data.length; i += 4) totalB += (data[i] + data[i + 1] + data[i + 2]) / 3;
             const avgIntensity = totalB / (data.length / 4);
 
-            const now = Date.now();
+            const now = getSyncedTime();
             const diff = (previousIntensity !== -1) ? Math.abs(avgIntensity - previousIntensity) : 0;
 
             ctx.fillStyle = "white";
@@ -164,7 +164,7 @@ function startCVLogic(roleType, video, canvas) {
                             lastTriggerTime = now;
                             hasRecordedForCurrentRunner = true; 
                             showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()} 📹`);
-                            setTimeout(() => saveVideoClip(runnerToSave), 5000);
+                            saveVideoClip(runnerToSave, 'video_clip', now);
                             ctx.fillStyle = "rgba(16, 185, 129, 0.6)"; 
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
                         }
@@ -186,7 +186,7 @@ function startCVLogic(roleType, video, canvas) {
                             }
 
                             lastTriggerTime = now;
-                            simulateTrigger(triggerType);
+                            simulateTrigger(triggerType, now);
 
                             // --- RECORD CLIP FOR THIS ROLE ---
                             if (mediaRecorder && mediaRecorder.state === 'recording') {

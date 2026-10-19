@@ -1,123 +1,441 @@
-// --- Alppikello Socket Event Listeners ---
+// --- Alppikello Stateless Sync, One-Shot Clock Calibration & Store-and-Forward Outbox ---
 
-socket.on('connect', () => {
+const OUTBOX_STORAGE_KEY = 'alppikello_event_outbox_v1';
+let outboxFlushInFlight = false;
+let sessionPollTimer = null;
+let currentSessionVersion = -1;
+let lastLocationSentAt = 0;
+
+/**
+ * Update the footer status indicator (Connected / Offline Queue / Calibrated)
+ */
+function setConnectionStatus(state, detail = '') {
     const connDot = document.getElementById('conn-dot');
     const connText = document.getElementById('conn-text');
-    if (connDot) connDot.classList.add('connected');
-    if (connText) connText.innerText = 'Yhdistetty';
-    
-    startTimeSync();
-    const deepLinkHandled = checkDeepLink();
-    startDiscoveryGPS(); 
-    
-    if (userName && document.getElementById('input-profile-name')) {
-        document.getElementById('input-profile-name').value = userName;
-    }
+    if (!connDot || !connText) return;
 
-    // Only show onboarding if we didn't land directly on a run card or archive
-    if (!deepLinkHandled) {
-        showOnboardingStep('name');
-    }
-});
-
-socket.on('disconnect', () => {
-    const connDot = document.getElementById('conn-dot');
-    const connText = document.getElementById('conn-text');
-    if (connDot) connDot.classList.remove('connected');
-    if (connText) connText.innerText = 'Yhteys katkesi';
-});
-
-socket.on('s3_status', (data) => {
-    s3Active = data.active;
-    updateUILayout();
-});
-
-socket.on('session_created', (session) => {
-    handleSessionJoin(session, 'VALMENTAJA');
-});
-
-socket.on('session_joined', (data) => {
-    if (data.success) {
-        handleSessionJoin(data.session, data.role);
+    if (state === 'online') {
+        connDot.classList.add('connected');
+        connDot.style.background = '';
+        connText.innerText = detail || 'Kalibroitu (Valmis)';
+    } else if (state === 'queued') {
+        connDot.classList.add('connected');
+        connDot.style.background = '#f59e0b';
+        connText.innerText = detail || 'Puskurissa (Odottaa verkkoa)';
     } else {
-        alert('Liittyminen epäonnistui: ' + data.error);
-        showOnboardingStep('name');
+        connDot.classList.remove('connected');
+        connDot.style.background = '#ef4444';
+        connText.innerText = detail || 'Offline (Kello toimii paikallisesti)';
     }
-});
+}
 
-socket.on('device_status_update', (data) => {
-    currentSession = data.session;
+/**
+ * Calibrate the device's internal monotonic clock (performance.now()) ONCE against
+ * the server clock using 5 quick HTTP samples and picking the minimum-RTT sample.
+ */
+async function calibrateClockOnce() {
+    let bestRtt = Infinity;
+    let bestServerTimeAtPerf = 0;
+    let bestPerfTime = 0;
+    let bestWallOffset = 0;
+
+    for (let i = 0; i < 5; i++) {
+        try {
+            const wallStart = Date.now();
+            const p0 = performance.now();
+            const resp = await fetch(`${API_URL}?action=time&_=${wallStart}_${i}`, {
+                cache: 'no-store'
+            });
+            const p1 = performance.now();
+            const wallEnd = Date.now();
+
+            if (!resp.ok) continue;
+            const data = await resp.json();
+            const sampleRtt = p1 - p0;
+            const serverTime = Number(data.serverTime);
+
+            if (typeof data.storageActive === 'boolean') {
+                s3Active = data.storageActive;
+            }
+
+            if (serverTime > 0 && sampleRtt < bestRtt) {
+                bestRtt = sampleRtt;
+                // At the moment p1, server time was serverTime + (sampleRtt / 2)
+                bestServerTimeAtPerf = serverTime + (sampleRtt / 2);
+                bestPerfTime = p1;
+                bestWallOffset = ((wallStart + wallEnd) / 2) - serverTime;
+            }
+        } catch (err) {
+            console.warn('[CLOCK] Calibration sample failed:', err.message);
+        }
+    }
+
+    if (bestRtt < Infinity) {
+        clockBaseServerTime = bestServerTimeAtPerf;
+        clockBasePerfTime = bestPerfTime;
+        serverTimeOffset = Math.round(bestWallOffset);
+        rtt = Math.round(bestRtt);
+        clockCalibrated = true;
+
+        const syncOffsetEl = document.getElementById('sync-offset');
+        if (syncOffsetEl) {
+            const sign = serverTimeOffset >= 0 ? '+' : '';
+            syncOffsetEl.innerText = `${sign}${serverTimeOffset}ms (RTT: ${rtt}ms, LUKITTU)`;
+        }
+        setConnectionStatus('online', 'Kello lukittu');
+        console.log(`[CLOCK] Calibrated ONCE! Offset=${serverTimeOffset}ms, MinRTT=${rtt}ms`);
+        return true;
+    } else {
+        setConnectionStatus('offline', 'Offline (Paikallinen kello)');
+        return false;
+    }
+}
+
+// ============================================================================
+// STORE & FORWARD OUTBOX (Offline-Resilient Event Queue)
+// ============================================================================
+
+function getOutbox() {
+    try {
+        const raw = localStorage.getItem(OUTBOX_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveOutbox(list) {
+    try {
+        localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(list));
+    } catch (e) {
+        console.warn('[OUTBOX] Could not save to localStorage:', e);
+    }
+}
+
+function enqueueEvent(type, payload = {}) {
+    const ev = {
+        eventId: 'evt_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8),
+        type: type,
+        sessionId: payload.sessionId || (currentSession ? currentSession.id : ''),
+        timestamp: payload.timestamp || getSyncedTime(),
+        deviceId: deviceId,
+        ...payload
+    };
+
+    const box = getOutbox();
+    box.push(ev);
+    saveOutbox(box);
+
+    // Apply immediate optimistic local state update so UI never lags
+    applyOptimisticEvent(ev);
+
+    // Trigger immediate flush attempt
+    flushOutbox();
+    return ev;
+}
+
+function applyOptimisticEvent(ev) {
+    if (!currentSession || ev.sessionId !== currentSession.id) return;
+
+    if (ev.type === 'trigger_start' && currentSession.activeQueue && currentSession.activeQueue.length > 0) {
+        const nextAthlete = currentSession.activeQueue[0];
+        const optimisticRunner = {
+            id: nextAthlete.id,
+            runId: ev.runId || ('run_' + ev.timestamp),
+            name: nextAthlete.name,
+            startTime: ev.timestamp,
+            splits: [],
+            videos: [],
+            done: false
+        };
+        activeRunnerOnCourse = optimisticRunner;
+        hasRecordedForCurrentRunner = false;
+    }
+}
+
+async function flushOutbox() {
+    if (outboxFlushInFlight) return;
+    const box = getOutbox();
+    if (box.length === 0) return;
+
+    outboxFlushInFlight = true;
+    try {
+        // Group by sessionId
+        const targetSessionId = box[0].sessionId;
+        const batch = box.filter(item => item.sessionId === targetSessionId);
+        const batchIds = new Set(batch.map(b => b.eventId));
+
+        const resp = await fetch(`${API_URL}?action=event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: targetSessionId,
+                events: batch
+            })
+        });
+
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+
+        // Remove sent events from outbox
+        const currentBox = getOutbox().filter(item => !batchIds.has(item.eventId));
+        saveOutbox(currentBox);
+
+        if (currentBox.length === 0) {
+            setConnectionStatus('online', 'Tallennettu');
+        } else {
+            setConnectionStatus('queued', `Jonossa (${currentBox.length})`);
+        }
+
+        if (data.session) {
+            applyServerSessionState(data.session, data.timingEvent || null);
+        }
+    } catch (err) {
+        const remaining = getOutbox().length;
+        setConnectionStatus('queued', `Puskurissa (${remaining} odottaa verkkoa)`);
+        console.warn('[OUTBOX] Network busy/offline, will retry automatically:', err.message);
+    } finally {
+        outboxFlushInFlight = false;
+    }
+}
+
+// ============================================================================
+// SESSION STATE SYNCHRONIZATION
+// ============================================================================
+
+function applyServerSessionState(session, timingEvent = null) {
+    if (!session) return;
+
+    // Detect if session was ended by coach
+    if (session.ended) {
+        stopSessionPolling();
+        currentSession = null;
+        showPremiumModal({
+            title: 'HARJOITUS LOPETETTU',
+            text: 'Valmentaja on lopettanut harjoituksen. Kaikki suoritukset on arkistoitu.',
+            icon: '🏁',
+            confirmText: 'SELVÄ',
+            cancelText: '',
+            onConfirm: () => {
+                location.reload();
+            }
+        });
+        return;
+    }
+
+    const prevVideoCount = currentSession && currentSession.results
+        ? currentSession.results.reduce((acc, r) => acc + (r.videos ? r.videos.length : 0), 0)
+        : 0;
+
+    currentSession = session;
+    currentSessionVersion = session.version || currentSessionVersion;
+
     if (currentSession.onCourse && currentSession.onCourse.length > 0) {
         const firstRunner = currentSession.onCourse[0];
-        // CRITICAL: Must use runId, as athlete id remains same across multiple runs
         if (!activeRunnerOnCourse || activeRunnerOnCourse.runId !== firstRunner.runId) {
             activeRunnerOnCourse = firstRunner;
             hasRecordedForCurrentRunner = false;
+            if (currentRole === 'VIDEO') {
+                showVideoNotification(`LASKIJA LÄHTI: ${firstRunner.name}`);
+            }
+        } else {
+            activeRunnerOnCourse = firstRunner;
         }
     } else {
         activeRunnerOnCourse = null;
         hasRecordedForCurrentRunner = false;
     }
-    updateUILayout();
-    updateUI();
-});
 
-socket.on('session_ended', () => {
-    currentSession = null; // Clear local state immediately
-    showPremiumModal({
-        title: 'HARJOITUS LOPETETTU',
-        text: 'Valmentaja on lopettanut harjoituksen. Kaikki suoritukset on arkistoitu.',
-        icon: '🏁',
-        confirmText: 'SELVÄ',
-        cancelText: '',
-        onConfirm: () => {
-            location.reload();
-        }
-    });
-});
+    const newVideoCount = currentSession.results
+        ? currentSession.results.reduce((acc, r) => acc + (r.videos ? r.videos.length : 0), 0)
+        : 0;
 
-socket.on('timing_update', (data) => {
-    currentSession = data.session;
-    
-    if (data.type === 'START') {
-        // Crucial: Update our local tracker with the new runId immediately
-        activeRunnerOnCourse = data.runner;
-        hasRecordedForCurrentRunner = false;
-        console.log(`[STATE] Active runner now: ${activeRunnerOnCourse.name} (ID: ${activeRunnerOnCourse.runId})`);
-    } else if (data.type === 'FINISH' || data.type === 'DNF') {
-        const runner = data.runner;
-        
-        // --- DO NOT STOP IMMEDIATELY ---
-        // Let the video.js safety timers (4s for MAALI, 20s for others) handle the stop.
-        // This ensures the video captures the moment after the finish line.
-
-        if (activeRunnerOnCourse && activeRunnerOnCourse.runId === runner.runId) {
-            activeRunnerOnCourse = null;
+    if (newVideoCount > prevVideoCount && currentSession.results.length > 0) {
+        const latestRunner = currentSession.results[0];
+        if (typeof showVideoNotification === 'function') {
+            showVideoNotification(`VIDEO VALMIS: ${latestRunner.name.toUpperCase()} 🎬`);
         }
     }
 
     updateUILayout();
     updateUI();
+}
 
-    if (currentRole === 'VIDEO' && data.type === 'START') {
-        showVideoNotification(`LASKIJA LÄHTI: ${data.runner.name}`);
+async function pollSessionState() {
+    if (!currentSession || !currentSession.id) return;
+
+    // First flush any pending events in outbox
+    if (getOutbox().length > 0) {
+        await flushOutbox();
     }
-    console.log(`TIMING [${data.type}]: ${data.runner.name}`);
-});
 
-socket.on('nearby_sessions_found', (sessions) => {
+    try {
+        const params = new URLSearchParams({
+            action: 'session_state',
+            sessionId: currentSession.id,
+            v: String(currentSessionVersion),
+            deviceId: deviceId
+        });
+
+        // Piggyback GPS coordinates at most every 15 seconds if available
+        if (userLocation && (Date.now() - lastLocationSentAt > 15000)) {
+            params.set('lat', String(userLocation.lat));
+            params.set('lon', String(userLocation.lon));
+            lastLocationSentAt = Date.now();
+        }
+
+        const resp = await fetch(`${API_URL}?${params.toString()}`, { cache: 'no-store' });
+        if (!resp.ok) return;
+
+        const data = await resp.json();
+        if (data.ended) {
+            applyServerSessionState({ ended: true });
+            return;
+        }
+
+        if (!data.notModified && data.session) {
+            applyServerSessionState(data.session);
+        }
+    } catch (err) {
+        // Silent in background during temporary cellular drop
+    }
+}
+
+function startSessionPolling() {
+    stopSessionPolling();
+    // Poll every 1.5s for UI updates (timing itself does NOT depend on polling)
+    sessionPollTimer = setInterval(pollSessionState, 1500);
+}
+
+function stopSessionPolling() {
+    if (sessionPollTimer) {
+        clearInterval(sessionPollTimer);
+        sessionPollTimer = null;
+    }
+}
+
+// ============================================================================
+// API DISPATCHER (Replaces socket.emit calls cleanly)
+// ============================================================================
+
+async function handleApiEmit(event, payload) {
+    switch (event) {
+        case 'sync_time': {
+            if (!clockCalibrated) {
+                await calibrateClockOnce();
+            }
+            break;
+        }
+
+        case 'create_session': {
+            try {
+                const resp = await fetch(`${API_URL}?action=create_session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...payload,
+                        deviceId: deviceId
+                    })
+                });
+                const data = await resp.json();
+                if (data.success && data.session) {
+                    currentSessionVersion = data.session.version || 1;
+                    handleSessionJoin(data.session, 'VALMENTAJA');
+                    startSessionPolling();
+                } else {
+                    alert('Harjoituksen luonti epäonnistui: ' + (data.error || 'Tuntematon virhe'));
+                }
+            } catch (e) {
+                alert('Palvelimeen ei saatu yhteyttä: ' + e.message);
+            }
+            break;
+        }
+
+        case 'join_session': {
+            try {
+                const resp = await fetch(`${API_URL}?action=join_session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...payload,
+                        deviceId: deviceId,
+                        location: userLocation
+                    })
+                });
+                const data = await resp.json();
+                if (data.success && data.session) {
+                    currentSessionVersion = data.session.version || 1;
+                    handleSessionJoin(data.session, data.role);
+                    startSessionPolling();
+                } else {
+                    alert('Liittyminen epäonnistui: ' + (data.error || 'Istuntoa ei löytynyt'));
+                    showOnboardingStep('name');
+                }
+            } catch (e) {
+                alert('Liittyminen epäonnistui (verkkovirhe): ' + e.message);
+            }
+            break;
+        }
+
+        case 'find_nearby_sessions':
+        case 'get_nearby_sessions': {
+            try {
+                const lat = payload?.lat ?? userLocation?.lat ?? '';
+                const lon = payload?.lon ?? userLocation?.lon ?? '';
+                const resp = await fetch(`${API_URL}?action=nearby_sessions&lat=${lat}&lon=${lon}`, {
+                    cache: 'no-store'
+                });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                renderNearbySessionsList(data.sessions || []);
+            } catch (e) {
+                // Ignore discovery errors
+            }
+            break;
+        }
+
+        case 'update_location': {
+            if (payload && payload.lat && payload.lon) {
+                userLocation = {
+                    lat: payload.lat,
+                    lon: payload.lon,
+                    accuracy: payload.accuracy
+                };
+            }
+            break;
+        }
+
+        case 'end_session': {
+            const sid = typeof payload === 'object' ? payload.sessionId : payload;
+            enqueueEvent('end_session', { sessionId: sid });
+            break;
+        }
+
+        default: {
+            // All timing and queue actions go through the offline-safe Outbox
+            enqueueEvent(event, typeof payload === 'object' ? payload : { value: payload });
+            break;
+        }
+    }
+}
+
+window.handleApiEmit = handleApiEmit;
+window.calibrateClockOnce = calibrateClockOnce;
+window.enqueueEvent = enqueueEvent;
+window.flushOutbox = flushOutbox;
+
+function renderNearbySessionsList(sessions) {
     const listEl = document.getElementById('nearby-sessions-list');
     const container = document.getElementById('nearby-sessions-container');
     if (!listEl || !container) return;
 
     if (sessions && sessions.length > 0) {
-        // FILTER: Remove currentSession from nearby list to avoid duplication
         const filtered = sessions.filter(s => !currentSession || s.id !== currentSession.id);
-        
         if (filtered.length > 0) {
             container.style.display = 'block';
-            
-            // If we have nearby, hide manual join to clean up UI
             const manualCont = document.getElementById('manual-join-container');
             const toggleBtn = document.getElementById('btn-toggle-manual');
             if (manualCont) manualCont.style.display = 'none';
@@ -135,116 +453,37 @@ socket.on('nearby_sessions_found', (sessions) => {
                     </div>
                 </div>
             `).join('');
-        } else {
-            container.style.display = 'none';
+            return;
         }
-    } else {
-        container.style.display = 'none';
     }
-});
+    container.style.display = 'none';
+}
 
-socket.on('session_names_list', (data) => {
-    const listEl = document.getElementById('valitse-nimi-lista');
-    const introEl = document.getElementById('setup-name-instruction');
-    const labelEl = document.getElementById('setup-name-new-label');
-    const inputEl = document.getElementById('name-input');
-    if (!listEl) return;
+// ============================================================================
+// INITIALIZATION ON PAGE LOAD
+// ============================================================================
 
-    let itemsToShow = [];
-    let icon = '👤';
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Calibrate device monotonic clock ONCE at startup
+    await calibrateClockOnce();
 
-    if (selectedRole === 'VÄLIAIKA') {
-        introEl.innerText = "Valitse väliaikapiste tai luo uusi:";
-        labelEl.innerText = "TAI UUSI VÄLIAIKAPISTE:";
-        inputEl.placeholder = "PISTEEN NIMI";
-        icon = '⏱️';
-        if (data.devices) itemsToShow = data.devices.filter(d => d.role === 'VÄLIAIKA');
-    } else if (selectedRole === 'VIDEO') {
-        introEl.innerText = "Valitse kamera tai luo uusi:";
-        labelEl.innerText = "TAI UUSI KAMERA:";
-        inputEl.placeholder = "KAMERAN NIMI";
-        icon = '📹';
-        if (data.devices) itemsToShow = data.devices.filter(d => d.role === 'VIDEO');
-    } else if (selectedRole === 'LÄHTÖ') {
-        introEl.innerText = "Valitse korvattava Starttikello tai nimeä tämä laite:";
-        labelEl.innerText = "TAI UUSI LAITENIMI:";
-        inputEl.placeholder = "ESIM. VARAPUHELIN";
-        icon = '⏲️';
-        if (data.devices) itemsToShow = data.devices.filter(d => d.role === 'LÄHTÖ');
-    } else if (selectedRole === 'MAALI') {
-        introEl.innerText = "Valitse korvattava Maalikamera tai nimeä tämä laite:";
-        labelEl.innerText = "TAI UUSI LAITENIMI:";
-        inputEl.placeholder = "ESIM. IPAD LOPPU";
-        icon = '🏁';
-        if (data.devices) itemsToShow = data.devices.filter(d => d.role === 'MAALI');
-    } else if (selectedRole === 'VALMENTAJA' || selectedRole === 'LÄHETTÄJÄ' || selectedRole === 'KATSOMO') {
-        introEl.innerText = "Anna laitteelle tai sijainnille nimi:";
-        labelEl.innerText = "LAITTEEN NIMI:";
-        inputEl.placeholder = "NIMI TAI TUNNISTE";
-        itemsToShow = [];
-    } else {
-        introEl.innerText = "Valitse nimesi alta tai kirjoita uusi:";
-        labelEl.innerText = "TAI UUSI LASKIJA:";
-        inputEl.placeholder = "OMA NIMESI";
-        itemsToShow = data.athletes || [];
+    // 2. Flush any leftover offline events from previous run
+    flushOutbox();
+    setInterval(flushOutbox, 2500);
+    window.addEventListener('online', () => {
+        if (!clockCalibrated) calibrateClockOnce();
+        flushOutbox();
+    });
+
+    // 3. Deep link & Onboarding setup
+    const deepLinkHandled = (typeof checkDeepLink === 'function') ? checkDeepLink() : false;
+    if (typeof startDiscoveryGPS === 'function') startDiscoveryGPS();
+
+    if (userName && document.getElementById('input-profile-name')) {
+        document.getElementById('input-profile-name').value = userName;
     }
 
-    if (userName) inputEl.value = userName;
-    showOnboardingStep('setup-name');
-
-    const uniqueNames = [...new Set(itemsToShow.map(item => item.name))].filter(n => n);
-
-    if (uniqueNames.length > 0) {
-        listEl.innerHTML = uniqueNames.map(name => `
-            <button class="btn btn-outline btn-mini" style="text-align:left; justify-content:flex-start; font-size:16px;" onclick="selectExistingName('${name.replace(/'/g, "\\'")}')">
-                ${icon} ${name}
-            </button>
-        `).join('');
-        listEl.style.display = 'flex';
-    } else {
-        listEl.style.display = 'none';
-    }
-});
-
-socket.on('sync_response', (data) => {
-    const t4 = Date.now();
-    serverTimeOffset = ((data.serverReceivedTime - data.clientSentTime) + (data.serverReceivedTime - t4)) / 2;
-    rtt = t4 - data.clientSentTime;
-    const syncOffsetEl = document.getElementById('sync-offset');
-    if (syncOffsetEl) syncOffsetEl.innerText = `${Math.round(serverTimeOffset)}ms (RTT: ${rtt}ms)`;
-});
-
-socket.on('video_available', (payload) => {
-    console.log("[VIDEO] New video available for:", payload.runnerName, "(Run:", payload.runId, ")");
-    
-    // 1. Show notification
-    if (typeof showVideoNotification === 'function') {
-        showVideoNotification(`VIDEO VALMIS: ${payload.runnerName.toUpperCase()} 🎬`);
-    }
-
-    // 2. CRITICAL: Inject the videoUrl directly into our local session state
-    // so updateUI() will see it on the next tick
-    if (currentSession && currentSession.results) {
-        let found = false;
-        // Search in results
-        const res = currentSession.results.find(r => r.runId === payload.runId);
-        if (res) {
-            res.videoUrl = payload.videoUrl;
-            res.videos = payload.videos; // Update gallery
-            found = true;
-        }
-        
-        // Search in onCourse
-        if (!found && currentSession.onCourse) {
-            const oc = currentSession.onCourse.find(r => r.runId === payload.runId);
-            if (oc) {
-                oc.videoUrl = payload.videoUrl;
-                oc.videos = payload.videos; // Update gallery
-            }
-        }
-
-        // Trigger a UI refresh if we found it
-        updateUILayout();
-        updateUI();
+    if (!deepLinkHandled && typeof showOnboardingStep === 'function') {
+        showOnboardingStep('name');
     }
 });

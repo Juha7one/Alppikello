@@ -1,4 +1,4 @@
-// --- Alppikello Video Recording & Uploads ---
+// --- Alppikello Video Recording & Multi-Camera Timestamp Uploads ---
 
 let pendingRunnerMetadata = null;
 let recordingSafetyTimer = null;
@@ -15,35 +15,40 @@ function startVideoBuffer(stream) {
         mediaRecorder = new MediaRecorder(stream, { mimeType: supportedType });
         recordingChunks = [];
 
-        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordingChunks.push(e.data); };
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) recordingChunks.push(e.data);
+        };
+
         mediaRecorder.onstop = () => {
             const runner = pendingRunnerMetadata;
-            console.log(`[VIDEO] Recorder stopped. Metadata for: ${runner ? runner.name : 'NULL'}, Chunks: ${recordingChunks.length}`);
-            pendingRunnerMetadata = null; // Clear immediately
-            
+            const captureEndTime = getSyncedTime();
+            console.log(`[VIDEO] Recorder stopped. Metadata for: ${runner ? runner.name : 'BUFFER_RESET'}, Chunks: ${recordingChunks.length}`);
+            pendingRunnerMetadata = null;
+
             if (runner && recordingChunks.length > 0) {
+                runner.videoCaptureEndTime = captureEndTime;
                 processAndSaveVideo(runner, recordingChunks);
             } else if (runner) {
-                // Runner was set but no chunks - this is a real issue
                 console.warn("[VIDEO] Skip save: missing chunks for runner", runner.name);
             }
-            // else: runner is null, this was just a buffer reset or view switch, no need for warning
-            
-            // Always restart buffer if stream is active
+
+            // Always restart rolling buffer if camera stream is active
             if (cvStream) {
                 setTimeout(() => startVideoBuffer(cvStream), 100);
             }
         };
+
         mediaRecorder.start(1000);
-        videoCaptureStartTime = Date.now();
+        // CRITICAL: Anchor buffer start to the calibrated monotonic clock
+        videoCaptureStartTime = getSyncedTime();
 
         if (bufferResetTimer) clearTimeout(bufferResetTimer);
         bufferResetTimer = setTimeout(() => {
-            // Buffer reset - just stop, onstop will restart it and skip saving since runner is null
-            if (!activeRunnerOnCourse && mediaRecorder && mediaRecorder.state === 'recording') {
+            // Reset rolling buffer when idle so clips stay compact (~40s max)
+            if (!pendingRunnerMetadata && !activeRunnerOnCourse && mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
             }
-        }, 40000); // 40s buffer safety
+        }, 40000);
     } catch (e) {
         console.error("MediaRecorder start failed:", e);
     }
@@ -52,48 +57,56 @@ function startVideoBuffer(stream) {
 function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime = null) {
     if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
 
-    // 1. Capture metadata
-    const runner = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : null);
-    if (!runner) return;
+    const syncedTriggerTime = triggerTime || getSyncedTime();
 
-    // 2. Prevent overlapping captures for DIFFERENT runners. 
-    // If it's the SAME runner, we allow UPDATING metadata (e.g. from split to finish)
-    // and RESETTING the timer to ensure enough "post-trigger" time.
-    const isSameRun = pendingRunnerMetadata && pendingRunnerMetadata.runId === runner.runId;
+    // Even if activeRunnerOnCourse is not yet known on this device, record the clip!
+    // The PHP backend pairs clips by synchronized [videoStartTime, videoEndTime] overlap.
+    const runner = explicitRunner || (activeRunnerOnCourse ? { ...activeRunnerOnCourse } : {
+        id: '',
+        runId: '',
+        name: 'Laskija'
+    });
 
-    // LOCK the role at the first capture in this role, but allows updating triggerTime
-    const captureRole = (isSameRun && pendingRunnerMetadata.captureRole) ? pendingRunnerMetadata.captureRole : (currentRole || 'unknown');
+    const isSameRun = pendingRunnerMetadata && runner.runId && pendingRunnerMetadata.runId === runner.runId;
+    const captureRole = (isSameRun && pendingRunnerMetadata.captureRole)
+        ? pendingRunnerMetadata.captureRole
+        : (currentRole || 'VIDEO');
 
-    pendingRunnerMetadata = { 
-        ...runner, 
-        triggerType, 
-        triggerTime: triggerTime || Date.now(),
+    pendingRunnerMetadata = {
+        ...runner,
+        triggerType,
+        triggerTime: syncedTriggerTime,
         videoCaptureStartTime: videoCaptureStartTime,
-        captureRole: captureRole
+        captureRole: captureRole,
+        cameraName: userName || captureRole
     };
-    
-    // 3. Role-based safety timeout
-    let safetyDuration = 20000; // Default (LÄHTÖ, VÄLIAIKA, VIDEO)
+
+    // Role-based post-trigger duration
+    let safetyDuration = 8000; // Default post-trigger tail (8s after passing camera)
     if (captureRole === 'MAALI') {
-        safetyDuration = 4000; // 4s for finish
+        safetyDuration = 4000; // 4s after crossing finish line
+    } else if (captureRole === 'LÄHTÖ') {
+        safetyDuration = 6000; // 6s after start gate
     }
 
-    console.log(`[VIDEO] Trigger for ${runner.name} (Role: ${captureRole}). Timer reset to: ${safetyDuration/1000}s`);
-    
-    // Always reset/refresh the timer for the same run to ensure post-trigger time
+    const activeRunKey = runner.runId || ('ts_' + syncedTriggerTime);
+    pendingRunnerMetadata._stopKey = activeRunKey;
+
+    console.log(`[VIDEO] Trigger for ${runner.name} (Cam: ${pendingRunnerMetadata.cameraName}). Post-trigger tail: ${safetyDuration / 1000}s`);
+
     if (recordingSafetyTimer) {
         clearTimeout(recordingSafetyTimer);
     }
-    
+
     recordingSafetyTimer = setTimeout(() => {
-        stopRecordingForRun(runner.runId);
+        stopRecordingForRun(activeRunKey);
     }, safetyDuration);
 }
 
-function stopRecordingForRun(runId) {
-    if (pendingRunnerMetadata && pendingRunnerMetadata.runId === runId) {
+function stopRecordingForRun(stopKey) {
+    if (pendingRunnerMetadata && (pendingRunnerMetadata.runId === stopKey || pendingRunnerMetadata._stopKey === stopKey)) {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
-            console.log(`[VIDEO] Stopping recording for run: ${runId}`);
+            console.log(`[VIDEO] Stopping recording for clip: ${stopKey}`);
             mediaRecorder.requestData();
             setTimeout(() => {
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -109,50 +122,49 @@ function stopRecordingForRun(runId) {
 }
 
 function stopAndUploadRunVideo(runner) {
-    // Deprecated for now, using trigger-based clips
-    console.log("[VIDEO] stopAndUploadRunVideo skipped - using clips.");
+    console.log("[VIDEO] stopAndUploadRunVideo skipped - using timestamped clips.");
 }
 
 function processAndSaveVideo(runner, chunks) {
     const blob = new Blob(chunks, { type: chunks[0].type });
-    console.log(`[VIDEO] Created blob: ${Math.round(blob.size / 1024)} KB, type: ${chunks[0].type}, chunks: ${chunks.length}`);
+    console.log(`[VIDEO] Created blob: ${Math.round(blob.size / 1024)} KB, window: [${runner.videoCaptureStartTime} -> ${runner.videoCaptureEndTime}]`);
     const url = URL.createObjectURL(blob);
 
     recordedClips.unshift({
-        name: runner.name,
+        name: runner.name || 'Laskija',
+        cameraName: runner.cameraName || currentRole || 'VIDEO',
         url: url,
         time: new Date().toLocaleTimeString(),
         size: Math.round(blob.size / 1024)
     });
 
-    // Limit stored clips to 20 to prevent memory bloat
     if (recordedClips.length > 20) {
         const removed = recordedClips.pop();
         if (removed && removed.url) URL.revokeObjectURL(removed.url);
     }
 
     renderVideoGallery();
-    showVideoNotification(`VIDEO TALLESSA: ${runner.name.toUpperCase()} 🎬`);
-    
-    // Attempt one last deep search for runId if it was missing during capture
+    showVideoNotification(`VIDEO TALLESSA: ${(runner.name || 'LASKIJA').toUpperCase()} 🎬`);
+
+    // Try matching runId locally if available, otherwise backend pairs by timestamp window
     if (!runner.runId && currentSession) {
-        const foundOnCourse = (currentSession.onCourse || []).find(r => r.id === runner.id);
-        if (foundOnCourse && foundOnCourse.runId) {
-            runner.runId = foundOnCourse.runId;
-            console.log("[VIDEO] Late runId recovery success!");
+        const candidates = [...(currentSession.onCourse || []), ...(currentSession.results || [])];
+        const vStart = runner.videoCaptureStartTime || 0;
+        const vEnd = runner.videoCaptureEndTime || getSyncedTime();
+        const found = candidates.find(r => {
+            if (runner.id && r.id === runner.id) return true;
+            const rStart = r.startTime || 0;
+            const rEnd = r.finishTime || (rStart + 90000);
+            return (vStart <= rEnd + 5000) && (vEnd >= rStart - 5000);
+        });
+        if (found && found.runId) {
+            runner.runId = found.runId;
+            runner.name = found.name || runner.name;
         }
     }
 
-    // Delay upload slightly to ensure the server has processed the timing trigger
-    // and generated the runId, and the client has received it back.
-    setTimeout(() => {
-        // One LAST attempt to recover runId from state before sending
-        if (!runner.runId && activeRunnerOnCourse && activeRunnerOnCourse.id === runner.id) {
-            runner.runId = activeRunnerOnCourse.runId;
-            console.log("[VIDEO] Recovered runId from activeRunnerOnCourse at upload time!");
-        }
-        uploadVideoToServer(blob, runner);
-    }, 2000); // 2s delay for better pairing sync
+    // Upload immediately — no artificial 2000ms delay needed because server pairs by timestamps!
+    uploadVideoToServer(blob, runner);
 }
 
 function clearVideoGallery() {
@@ -163,29 +175,29 @@ function clearVideoGallery() {
     }
 }
 
-function uploadVideoToServer(blob, runner) {
+function uploadVideoToServer(blob, runner, retryCount = 0) {
     if (!currentSession) return;
 
     const formData = new FormData();
     const captureRole = runner.captureRole || currentRole || 'VIDEO';
-    const safeRole = captureRole.replace(/[ÄÖ]/g, (m) => m === 'Ä' ? 'A' : 'O').replace(/[^a-zA-Z0-9]/g, '_');
+    const cameraName = runner.cameraName || userName || captureRole;
+    const safeRole = cameraName.replace(/[ÄÖäö]/g, (m) => m.toUpperCase() === 'Ä' ? 'A' : 'O').replace(/[^a-zA-Z0-9]/g, '_');
+
+    formData.append('action', 'upload_video');
     formData.append('sessionId', currentSession ? currentSession.id : '');
     formData.append('sessionName', currentSession ? currentSession.name : 'HARJOITUS');
     formData.append('runnerId', runner.id || '');
     formData.append('runId', runner.runId || 'N/A');
     formData.append('runnerName', runner.name || 'LASKIJA');
     formData.append('triggerType', runner.triggerType || 'clip');
-    formData.append('triggerTime', runner.triggerTime || Date.now());
-    formData.append('videoCaptureStartTime', runner.videoCaptureStartTime || 0);
+    formData.append('triggerTime', String(runner.triggerTime || getSyncedTime()));
+    formData.append('videoCaptureStartTime', String(runner.videoCaptureStartTime || 0));
+    formData.append('videoCaptureEndTime', String(runner.videoCaptureEndTime || getSyncedTime()));
     formData.append('role', captureRole);
-    // MUST BE LAST so multer has access to the body fields above when generating the filename
-    formData.append('video', blob, `${safeRole}_${runner.name}.mp4`);
+    formData.append('cameraName', cameraName);
+    formData.append('video', blob, `${safeRole}_${runner.name || 'Laskija'}.mp4`);
 
-    if (!runner.runId) {
-        console.warn("[VIDEO UPLOAD] Runner runId is missing! Video might not pair correctly.", runner);
-    }
-
-    const uploadUrl = (typeof SERVER_URL !== 'undefined' && SERVER_URL) ? `${SERVER_URL}/upload` : '/upload';
+    const uploadUrl = `${API_URL}?action=upload_video`;
 
     fetch(uploadUrl, { method: 'POST', body: formData })
         .then(async res => {
@@ -193,19 +205,27 @@ function uploadVideoToServer(blob, runner) {
             try {
                 return JSON.parse(text);
             } catch (e) {
-                throw new Error(`Server returned non-JSON: ${text.substring(0, 100)}... (Status: ${res.status})`);
+                throw new Error(`Virheellinen palvelinvastaus (${res.status})`);
             }
         })
         .then(data => {
             if (data.success && data.url) {
-                console.log("[UPLOAD SUCCESS] Video URL:", data.url);
+                console.log("[UPLOAD SUCCESS] Video URL:", data.url, "Paired:", data.paired);
+                if (data.session && typeof applyServerSessionState === 'function') {
+                    applyServerSessionState(data.session);
+                }
             } else {
-                console.error("[UPLOAD ERROR] Server returned error or missing URL:", data);
+                console.error("[UPLOAD ERROR] Server returned error:", data);
                 showVideoNotification(`VIRHE TALLENNUKSESSA: ${data.error || 'Tuntematon syy'}`);
             }
         })
         .catch(err => {
-            console.error("[UPLOAD CRITICAL] Fetch failed:", err.message);
+            console.warn("[UPLOAD RETRY] Video upload failed, retrying in 5s:", err.message);
+            if (retryCount < 5) {
+                setTimeout(() => uploadVideoToServer(blob, runner, retryCount + 1), 5000);
+            } else {
+                showVideoNotification("VIDEON LÄHETYS EPÄONNISTUI (Tallennettu laitteelle)");
+            }
         });
 }
 
@@ -221,7 +241,7 @@ function renderVideoGallery() {
     gallery.innerHTML = recordedClips.map((clip) => `
         <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); margin-bottom: 8px;">
             <div>
-                <div style="font-weight: 800; font-size: 14px;">${(clip.name || 'TUNTEMATON').toUpperCase()}</div>
+                <div style="font-weight: 800; font-size: 14px;">${(clip.name || 'LASKIJA').toUpperCase()} <span style="font-size:10px; color:var(--accent);">(${clip.cameraName || 'VIDEO'})</span></div>
                 <div style="font-size: 10px; opacity: 0.5;">${clip.time} • ${clip.size} KB</div>
             </div>
             <div style="display: flex; gap: 8px;">

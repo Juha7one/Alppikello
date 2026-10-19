@@ -1,7 +1,7 @@
 {
   "name": "alppikello",
-  "version": "2.89.6",
-  "description": "Smart Alpine Skiing Timing System",
+  "version": "3.0.0",
+  "description": "Smart Alpine Skiing Timing System (Stateless ToD & Multi-Camera Edition)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

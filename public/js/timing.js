@@ -19,12 +19,17 @@ function markReady() {
     }
 }
 
-function simulateTrigger(type) {
+function simulateTrigger(type, explicitTimestamp = null) {
     if (!currentSession) return;
-    const timestamp = getSyncedTime();
+    const timestamp = explicitTimestamp || getSyncedTime();
+    const runId = (type === 'start')
+        ? ('run_' + timestamp + '_' + Math.random().toString(36).substring(2, 6))
+        : undefined;
+
     socket.emit(`trigger_${type}`, {
         sessionId: currentSession.id,
         timestamp,
+        runId,
         deviceName: userName || 'Tuntematon laite'
     });
 
@@ -56,7 +61,7 @@ function rejectResult(runnerId) {
 
 function manualFinish(runnerId) {
     if (confirm("Lopetetaanko ajanotto manuaalisesti?")) {
-        socket.emit('manual_finish', { sessionId: currentSession.id, runnerId });
+        socket.emit('manual_finish', { sessionId: currentSession.id, runnerId, timestamp: getSyncedTime() });
     }
 }
 

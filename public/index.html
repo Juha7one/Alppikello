@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ALPPIKELLO - Älykäs Ajanotto</title>
-    <link rel="stylesheet" href="css/style.css?v=2.65.0">
+    <link rel="stylesheet" href="css/style.css?v=3.0.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
@@ -15,9 +15,9 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #4f46e5;">
-        <h1 class="splash-title" style="color: #fff;">INDIGO V</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v2.89.6</div>
+    <div id="deployment-splash" style="background: #0f766e;">
+        <h1 class="splash-title" style="color: #fff;">QUARTZ PEAK</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v3.0.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -344,9 +344,13 @@
                             <div id="card-video-clock" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
                         </div>
                     </div>
-                    <!-- Playlist Dots -->
+                    <!-- Playlist Dots & Active Camera Badge -->
                     <div id="card-playlist-dots" style="position: absolute; top: 15px; left: 15px; display: flex; gap: 5px; z-index: 20;"></div>
+                    <div id="card-role-badge" class="role-badge" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.75); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 20;">VIDEO</div>
                 </div>
+                <!-- Multi-Camera Selector & Dual Split-Screen Container for Analysis View -->
+                <div id="card-multicam-controls" style="display: none; padding: 12px 24px 0 24px;"></div>
+                <div id="card-dual-container" style="display: none; padding: 12px 24px 0 24px;"></div>
                 <div style="padding: 24px;">
                     <div id="card-session-badge" style="background: var(--success); color: #000; font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-bottom: 8px;">HARJOITUS</div>
                     <div id="card-runner-name" style="margin-bottom: 20px;">
@@ -414,13 +418,13 @@
         <div style="display: flex; gap: 30px; opacity: 0.4;">
             <div class="status-indicator">
                 <span id="conn-dot" class="dot"></span>
-                <span id="conn-text">Yhdistetty</span>
+                <span id="conn-text">Kalibroidaan...</span>
             </div>
             <div class="sync-info">
-                Viive: <span id="sync-offset" class="sync-badge">-- ms</span>
+                Kello: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v2.80.0 | © 2026</p>
+        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v3.0.0 | © 2026</p>
     </div>
 
     <!-- QR Modal -->
@@ -452,19 +456,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
-    <!-- Core App Logic -->
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/qrcode.min.js?v=2.89.6"></script>
-    <script src="js/state.js?v=2.89.6"></script>
-    <script src="js/utils.js?v=2.89.6"></script>
-    <script src="js/socket.js?v=2.89.6"></script>
-    <script src="js/video.js?v=2.89.6"></script>
-    <script src="js/cv.js?v=2.89.6"></script>
-    <script src="js/ai.js?v=2.89.6"></script>
-    <script src="js/timing.js?v=2.89.6"></script>
-    <script src="js/ui.js?v=2.89.6"></script>
-    <script src="js/rangefinder.js?v=2.89.6"></script>
-    <script src="js/app.js?v=2.89.6"></script>
+    <!-- Core App Logic (Stateless PHP/REST + Monotonic Clock Edition) -->
+    <script src="js/qrcode.min.js?v=3.0.0"></script>
+    <script src="js/state.js?v=3.0.0"></script>
+    <script src="js/utils.js?v=3.0.0"></script>
+    <script src="js/socket.js?v=3.0.0"></script>
+    <script src="js/video.js?v=3.0.0"></script>
+    <script src="js/cv.js?v=3.0.0"></script>
+    <script src="js/ai.js?v=3.0.0"></script>
+    <script src="js/timing.js?v=3.0.0"></script>
+    <script src="js/ui.js?v=3.0.0"></script>
+    <script src="js/rangefinder.js?v=3.0.0"></script>
+    <script src="js/app.js?v=3.0.0"></script>
 </body>
 
 </html>

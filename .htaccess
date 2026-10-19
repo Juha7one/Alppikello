@@ -1,10 +1,16 @@
-DirectoryIndex public/index.html
+DirectoryIndex public/index.html index.html index.php
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
-RewriteBase /
 RewriteRule ^$ public/index.html [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ public/$1 [L]
+RewriteCond %{REQUEST_URI} !/public/
+RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
+
+<IfModule mod_php.c>
+php_value upload_max_filesize 64M
+php_value post_max_size 64M
+php_value max_execution_time 120
 </IfModule>

@@ -1,4 +1,4 @@
-// --- Alppikello MAIN CONTROLLER ---
+// --- Alppikello MAIN CONTROLLER (Stateless ToD & Multi-Camera Edition) ---
 let allArchives = []; // Global store for searching list
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,8 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Initialize UI
-    if (userName) document.getElementById('input-profile-name').value = userName;
-    showOnboardingStep('name');
+    if (userName && document.getElementById('input-profile-name')) {
+        document.getElementById('input-profile-name').value = userName;
+    }
 });
 
 // --- Session Management ---
@@ -31,8 +32,7 @@ async function createSession() {
     let initialLocation = null;
     if ("geolocation" in navigator) {
         try {
-            // Increased timeout for slow mobile GPS
-            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true }));
+            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 6000, enableHighAccuracy: true }));
             initialLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
             const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
             const data = await resp.json();
@@ -50,7 +50,7 @@ async function createSession() {
 
     socket.emit('create_session', { 
         id: generatedId,
-        name: generatedId, // Name and code are now the same
+        name: generatedId,
         creatorName: userName,
         location: initialLocation 
     });
@@ -142,7 +142,6 @@ function handleSessionJoin(session, role) {
         console.log(`[AUTO-CV] Smarter activation for ${role}`);
         startCV(roleForCV);
     } else if (typeof stopCV === 'function') {
-        // Only stop CV if we are not recording a run or a clip
         const isRecording = (typeof mediaRecorder !== 'undefined' && mediaRecorder && mediaRecorder.state === 'recording' && pendingRunnerMetadata);
         if (!isRecording) stopCV();
     }
@@ -174,25 +173,20 @@ function showOnboardingStep(step) {
         const titleEl = document.getElementById('session-step-title');
         if (titleEl) titleEl.innerText = isCoach ? 'LUO HARJOITUS' : 'LIITY HARJOITUKSEEN';
         
-        // RESET BUTTON from previous "LUODAAN..." state
         const createBtn = document.querySelector('#coach-only-create .btn-outline');
         if (createBtn) {
             createBtn.disabled = false;
             createBtn.innerText = "LUO UUSI HARJOITUS";
         }
 
-        // RESET Manual Join Toggle
         const manualToggle = document.getElementById('btn-toggle-manual');
         if (manualToggle) manualToggle.style.display = 'none';
 
-        // SMART AGGRESSIVE DEDUPLICATION:
         const manualCont = document.getElementById('manual-join-container');
         const contCont = document.getElementById('continue-session-container');
-        const nearbyCont = document.getElementById('nearby-sessions-container');
         const toggle = document.getElementById('btn-toggle-manual');
         
-        // Fetch fresh nearby sessions
-        if (socket && socket.connected) socket.emit('get_nearby_sessions', { lat: userLocation?.lat, lon: userLocation?.lon });
+        socket.emit('get_nearby_sessions', { lat: userLocation?.lat, lon: userLocation?.lon });
 
         let hasEasyJoin = false;
 
@@ -211,7 +205,6 @@ function showOnboardingStep(step) {
             contCont.style.display = 'none';
         }
 
-        // Initial UI state: if we have currentSession, hide manual section
         if (hasEasyJoin) {
             if (manualCont) manualCont.style.display = 'none';
             if (toggle) toggle.style.display = 'block';
@@ -273,11 +266,12 @@ function startDiscoveryGPS() {
     }, null, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
 }
 
-// --- Time Sync ---
+// --- One-Shot Time Sync ---
 
 function startTimeSync() {
-    for (let i = 0; i < 5; i++) setTimeout(() => socket.emit('sync_time', Date.now()), i * 500);
-    setInterval(() => socket.emit('sync_time', Date.now()), 30000);
+    if (typeof calibrateClockOnce === 'function') {
+        calibrateClockOnce();
+    }
 }
 
 // --- Global Actions (Links) ---
@@ -335,7 +329,6 @@ async function shareSession() {
 async function shareArchive(filename) {
     if (isSharing) return;
     
-    // Consistent with shareRun: use query parameter on the main page
     const baseUrl = window.location.origin + window.location.pathname;
     const url = `${baseUrl}?archive=${filename.replace(/\.json$/i, '')}`;
     
@@ -361,7 +354,7 @@ async function shareArchive(filename) {
 function checkDeepLink() {
     const params = new URLSearchParams(window.location.search);
     
-    // 1. Session join (Still needs onboarding to confirm name/role)
+    // 1. Session join
     const sid = params.get('s');
     if (sid) {
         document.getElementById('input-session-id').value = sid.toUpperCase();
@@ -374,21 +367,19 @@ function checkDeepLink() {
 
     if (archFile && runId) {
         const cleanFile = archFile.trim();
-        console.log(`[DEEP LINK] Opening archive run: ${runId} from ${cleanFile}`);
         loadRunCard(runId, cleanFile + '.json');
         return true;
     }
 
-    // 2. Individual Run Card view (Bypasses onboarding)
+    // 2. Individual Run Card view
     if (runId) {
         loadRunCard(runId);
         return true;
     }
 
-    // 3. Whole Archive view (Bypasses onboarding)
+    // 3. Whole Archive view
     if (archFile) {
         const cleanFile = archFile.trim();
-        console.log(`[DEEP LINK] Opening archive: ${cleanFile}`);
         openArchive(cleanFile + '.json');
         return true;
     }
@@ -397,7 +388,6 @@ function checkDeepLink() {
 }
 
 async function loadRunCard(runId, archiveFilename = null) {
-    // Show view
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-onboarding').classList.remove('active');
     document.getElementById('view-run-card').classList.add('active');
@@ -409,10 +399,8 @@ async function loadRunCard(runId, archiveFilename = null) {
     
     try {
         let data;
-        const baseUrl = SERVER_URL || window.location.origin;
-        
         if (archiveFilename) {
-            const resp = await fetch(`${baseUrl}/api/archives/${archiveFilename}`);
+            const resp = await fetch(`${API_URL}?action=get_archive&filename=${encodeURIComponent(archiveFilename)}`);
             if (!resp.ok) throw new Error("Arkistoa ei löytynyt");
             const session = await resp.json();
             const foundRun = (session.results || []).find(r => r.runId === runId);
@@ -423,9 +411,11 @@ async function loadRunCard(runId, archiveFilename = null) {
             
             data = {
                 id: foundRun.runId,
+                runId: foundRun.runId,
                 name: foundRun.name,
                 runNumber: finalRunNumber,
                 startTime: foundRun.startTime || session.timestamp || Date.now(),
+                finishTime: foundRun.finishTime,
                 totalTime: foundRun.totalTime,
                 videoUrl: foundRun.videoUrl || null,
                 videos: foundRun.videos || [],
@@ -436,12 +426,11 @@ async function loadRunCard(runId, archiveFilename = null) {
                 sessionResults: session.results.map(r => ({ name: r.name, totalTime: r.totalTime, status: r.status, runId: r.runId }))
             };
         } else {
-            const resp = await fetch(`${baseUrl}/api/run/${runId}`);
-            if (!resp.ok) throw new Error("Suoritusta ei löytynyt aktiivisista harjoituksista. Onko se kenties arkistoitu?");
+            const resp = await fetch(`${API_URL}?action=get_run&runId=${encodeURIComponent(runId)}`);
+            if (!resp.ok) throw new Error("Suoritusta ei löytynyt aktiivisista harjoituksista tai arkistosta.");
             data = await resp.json();
         }
         
-        // NEW REDESIGN context: Use sessionResults if available to calculate labels
         const sessionResults = data.sessionResults || [];
         const validResults = [...sessionResults]
             .filter(r => r.totalTime > 0 && r.status !== 'DNF')
@@ -450,7 +439,6 @@ async function loadRunCard(runId, archiveFilename = null) {
         const isDNF = data.status === 'DNF';
         const rank = isDNF ? null : (validResults.findIndex(vr => vr.runId === data.id) + 1 || null);
         
-        // Personal best in this session
         const myRuns = sessionResults.filter(r => r.name === data.name && r.totalTime > 0);
         const personalBestTime = myRuns.length > 0 ? Math.min(...myRuns.map(r => r.totalTime)) : (data.totalTime || 0);
         const isPersonalBest = (data.totalTime > 0 && data.totalTime <= personalBestTime);
@@ -484,7 +472,6 @@ async function loadRunCard(runId, archiveFilename = null) {
             }
         }
 
-        // Populate UI
         document.getElementById('card-runner-name').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                 <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">${data.name.toUpperCase()}, #${data.runNumber || '?'}</div>
@@ -498,7 +485,6 @@ async function loadRunCard(runId, archiveFilename = null) {
         const date = new Date(data.timestamp);
         document.getElementById('card-run-date').innerText = date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
         
-        // Hide standard time-box if we used the header above
         const standardTimeBox = document.getElementById('card-total-time-box');
         if (standardTimeBox) standardTimeBox.style.display = 'none';
         
@@ -507,7 +493,7 @@ async function loadRunCard(runId, archiveFilename = null) {
         if (data.splits && data.splits.length > 0) {
             splitsEl.innerHTML = data.splits.map((s, idx) => `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
-                    <span style="opacity: 0.5; font-weight: 700;">VÄLIAIKA ${idx+1}</span>
+                    <span style="opacity: 0.5; font-weight: 700;">VÄLIAIKA ${idx+1} (${s.deviceName || 'Piste'})</span>
                     <span style="font-weight: 900;">${formatDuration(s.duration)}</span>
                 </div>
             `).join('');
@@ -516,81 +502,198 @@ async function loadRunCard(runId, archiveFilename = null) {
             splitsEl.style.display = 'none';
         }
 
-        // Video Handling
+        // Multi-Camera Synchronized Video Handling in Run Card
         const vCont = document.getElementById('card-video-container');
         const vEl = document.getElementById('card-video');
         const vPlaceholder = document.getElementById('card-video-placeholder');
         const vOverlay = document.getElementById('card-video-overlay');
         const vClock = document.getElementById('card-video-clock');
         const vName = document.getElementById('card-video-name');
+        const vBadge = document.getElementById('card-role-badge');
+        const multiControls = document.getElementById('card-multicam-controls');
+        const dualCont = document.getElementById('card-dual-container');
 
-        vCont.style.display = 'flex'; // ALWAYS show container
+        vCont.style.display = 'flex';
+        if (multiControls) multiControls.style.display = 'none';
+        if (dualCont) dualCont.style.display = 'none';
 
-        let videos = (data.videos || []).sort((a, b) => (a.triggerTime || 0) - (b.triggerTime || 0));
-        if (videos.length === 0 && data.videoUrl) {
-            videos = [{ url: data.videoUrl, role: 'video', triggerTime: (data.startTime || data.timestamp) + (data.totalTime || 0) }];
-        }
-        
+        const videos = normalizeRunVideos(data);
         const startTime = parseInt(data.startTime) || parseInt(data.timestamp) || Date.now();
+        const totalTimeMs = parseInt(data.totalTime) || 25000;
 
         if (videos.length > 0) {
             let currentIdx = 0;
-            const loadClip = (idx) => {
+
+            const updateCardCamButtons = (raceSec) => {
+                videos.forEach((v, idx) => {
+                    const btn = document.getElementById(`card-cam-btn-${idx}`);
+                    const dot = document.getElementById(`card-cam-dot-${idx}`);
+                    if (!btn || !dot) return;
+                    const covers = (raceSec >= v.relStartSec - 0.2) && (raceSec <= v.relEndSec + 0.2);
+                    if (idx === currentIdx) {
+                        btn.style.background = 'var(--accent)';
+                        btn.style.borderColor = '#fff';
+                        dot.style.background = '#fff';
+                    } else if (covers) {
+                        btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                        btn.style.borderColor = '#10b981';
+                        dot.style.background = '#10b981';
+                    } else {
+                        btn.style.background = 'rgba(255,255,255,0.06)';
+                        btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                        dot.style.background = 'rgba(255,255,255,0.25)';
+                    }
+                });
+            };
+
+            const loadClip = (idx, preserveRaceTime = false) => {
+                const prevRaceSec = preserveRaceTime ? getVideoRaceTimeSec(vEl) : 0;
+                const wasPaused = vEl.paused;
                 currentIdx = idx;
                 const vid = videos[idx];
+
                 vEl.src = vid.url;
                 vEl.setAttribute('data-trigger-time', vid.triggerTime || startTime);
                 vEl.setAttribute('data-video-start-time', vid.videoStartTime || 0);
                 vEl.setAttribute('data-start-time', startTime);
+                vEl.setAttribute('data-total-time', totalTimeMs);
                 vName.innerText = data.name.toUpperCase();
-                
-                // Update dots if container exists
+                if (vBadge) vBadge.innerText = `📹 ${vid.cameraLabel}`;
+
                 const dots = document.getElementById('card-playlist-dots');
                 if (dots) {
                     dots.innerHTML = videos.map((_, i) => 
-                        `<div style="width:20px; height:4px; background:${i === idx ? 'var(--accent)' : 'rgba(255,255,255,0.2)'}; border-radius:2px; cursor:pointer;" onclick="window.cardPlayerLoad(${i})"></div>`
+                        `<div style="width:20px; height:4px; background:${i === idx ? 'var(--accent)' : 'rgba(255,255,255,0.2)'}; border-radius:2px; cursor:pointer;" onclick="window.cardPlayerLoad(${i}, true)"></div>`
                     ).join('');
                 }
 
-                vEl.play().catch(() => {});
+                updateCardCamButtons(prevRaceSec);
+
+                const onLoaded = () => {
+                    vEl.removeEventListener('loadedmetadata', onLoaded);
+                    if (preserveRaceTime && startTime > 0 && vid.videoStartTime > 0) {
+                        const targetSec = getClipTimeForRaceSec(vid, startTime, prevRaceSec);
+                        if (targetSec > 0.1 && targetSec < (vEl.duration - 0.2)) {
+                            vEl.currentTime = targetSec;
+                        }
+                    }
+                    if (!wasPaused || !preserveRaceTime) {
+                        vEl.play().catch(() => {});
+                    }
+                };
+                vEl.addEventListener('loadedmetadata', onLoaded);
             };
 
-            window.cardPlayerLoad = loadClip; // For dot clicks
-            
+            window.cardPlayerLoad = loadClip;
+
+            // Render Multi-Camera Angle Switch Bar & Dual Split-Screen View if 2+ cameras filmed this run
+            if (videos.length > 1 && multiControls && dualCont) {
+                const first = videos[0];
+                const second = videos[1] || first;
+                const totalSec = (totalTimeMs / 1000).toFixed(2);
+
+                multiControls.style.display = 'block';
+                multiControls.innerHTML = `
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1;">
+                            ${videos.map((v, idx) => `
+                                <button type="button" id="card-cam-btn-${idx}" onclick="window.cardPlayerLoad(${idx}, true)"
+                                    style="background: ${idx === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.06)'}; color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                    <span id="card-cam-dot-${idx}" style="width: 7px; height: 7px; border-radius: 50%; background: #fff; display: inline-block;"></span>
+                                    📹 ${v.cameraLabel} <span style="opacity: 0.65; font-size: 9px;">(${v.relStartSec.toFixed(0)}–${v.relEndSec.toFixed(0)}s)</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <button type="button" id="dual-btn-cardmain" onclick="toggleCardDualMode()"
+                            style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer;">
+                            ⧉ 2 KAMERAA RINNAKKAIN
+                        </button>
+                    </div>
+                `;
+
+                const videoDataJson = JSON.stringify(videos).replace(/"/g, '&quot;');
+                dualCont.innerHTML = `
+                    <div id="player-cardmain" data-videos="${videoDataJson}" data-start-time="${startTime}" data-total-time="${totalTimeMs}" style="display:none;"></div>
+                    <div style="background: #050505; border-radius: 12px; padding: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
+                            <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                <video id="dual-vid-a-cardmain" src="${first.url}" playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
+                                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent);">📹 ${first.cameraLabel}</div>
+                                <div id="dual-wait-a-cardmain" style="position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); text-align: center; padding: 10px;"></div>
+                            </div>
+                            <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                <video id="dual-vid-b-cardmain" src="${second.url}" playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
+                                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #10b981;">📹 ${second.cameraLabel}</div>
+                                <div id="dual-wait-b-cardmain" style="position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); text-align: center; padding: 10px;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <button type="button" id="dual-play-btn-cardmain" onclick="toggleDualPlay('cardmain')"
+                                    style="background: var(--accent); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 900; font-size: 12px; cursor: pointer;">
+                                    ▶ TOISTA SYNKRONOITUNA
+                                </button>
+                                <div style="display: flex; gap: 4px;">
+                                    <button type="button" onclick="setDualSpeed('cardmain', 1.0)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">1x</button>
+                                    <button type="button" onclick="setDualSpeed('cardmain', 0.5)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">0.5x</button>
+                                    <button type="button" onclick="setDualSpeed('cardmain', 0.25)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">0.25x</button>
+                                </div>
+                                <div id="dual-clock-cardmain" style="margin-left: auto; font-family: monospace; font-size: 18px; font-weight: 900; color: #fff;">0,00 s</div>
+                            </div>
+                            <input type="range" id="dual-scrub-cardmain" min="0" max="${totalSec}" step="0.02" value="0"
+                                oninput="scrubDualCameras('cardmain', this.value)"
+                                style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+                        </div>
+                    </div>
+                `;
+
+                window.toggleCardDualMode = () => {
+                    const isOpening = dualCont.style.display === 'none';
+                    const btn = document.getElementById('dual-btn-cardmain');
+                    if (isOpening) {
+                        const raceSec = getVideoRaceTimeSec(vEl);
+                        vEl.pause();
+                        vCont.style.display = 'none';
+                        dualCont.style.display = 'block';
+                        if (btn) {
+                            btn.innerText = '✕ SULJE RINNAKKAISNÄKYMÄ';
+                            btn.style.background = 'var(--accent)';
+                            btn.style.color = '#fff';
+                        }
+                        scrubDualCameras('cardmain', raceSec);
+                    } else {
+                        stopDualPlay('cardmain');
+                        dualCont.style.display = 'none';
+                        vCont.style.display = 'flex';
+                        if (btn) {
+                            btn.innerText = '⧉ 2 KAMERAA RINNAKKAIN';
+                            btn.style.background = 'rgba(16, 185, 129, 0.15)';
+                            btn.style.color = '#10b981';
+                        }
+                    }
+                };
+            }
+
             vEl.onended = () => {
-                if (currentIdx < videos.length - 1) loadClip(currentIdx + 1);
+                // Smart TV-Cut: advance to next camera at the exact current race timestamp
+                if (currentIdx < videos.length - 1) {
+                    loadClip(currentIdx + 1, true);
+                }
             };
 
             vEl.ontimeupdate = () => {
-                const sTime = parseInt(vEl.getAttribute('data-start-time'));
-                const vAbsStart = parseInt(vEl.getAttribute('data-video-start-time'));
-                const officialTotalMs = data.totalTime || 0;
                 vOverlay.style.opacity = '1';
-
-                let raceTimeSec = 0;
-                if (sTime && vAbsStart && vAbsStart > 0) {
-                    const nowMs = vAbsStart + (vEl.currentTime * 1000);
-                    raceTimeSec = Math.max(0, (nowMs - sTime) / 1000);
-                } else {
-                    const tTime = parseInt(vEl.getAttribute('data-trigger-time'));
-                    const clipRelRace = (tTime - sTime) - 2000;
-                    const raceTimeMs = clipRelRace + (vEl.currentTime * 1000);
-                    raceTimeSec = Math.max(0, raceTimeMs / 1000);
-                }
-
-                if (officialTotalMs > 0) {
-                    raceTimeSec = Math.min(raceTimeSec, officialTotalMs / 1000);
-                }
+                const raceTimeSec = getVideoRaceTimeSec(vEl);
                 vClock.innerText = formatSeconds(raceTimeSec);
-                vClock.parentElement.querySelector('.role-badge').innerText = (videos[currentIdx].role || 'VIDEO').toUpperCase();
+                updateCardCamButtons(raceTimeSec);
             };
 
             vEl.onplay = () => { vOverlay.style.opacity = '1'; };
-            vEl.onpause = () => { vOverlay.style.opacity = '0.5'; };
+            vEl.onpause = () => { vOverlay.style.opacity = '0.75'; };
             
             vEl.style.display = 'block';
             vPlaceholder.style.display = 'none';
-            loadClip(0);
+            loadClip(0, false);
         } else {
             vEl.style.display = 'none';
             vPlaceholder.style.display = 'flex';
@@ -614,8 +717,7 @@ async function loadArchives() {
     listEl.innerHTML = '<p style="opacity:0.4; text-align:center; padding:40px;">Ladataan arkistoa...</p>';
 
     try {
-        const baseUrl = SERVER_URL || window.location.origin;
-        const resp = await fetch(`${baseUrl}/api/archives`);
+        const resp = await fetch(`${API_URL}?action=archives`);
         allArchives = await resp.json();
         renderArchiveList(allArchives);
     } catch (e) {
@@ -625,7 +727,7 @@ async function loadArchives() {
 
 function renderArchiveList(archives) {
     const listEl = document.getElementById('archive-list');
-    if (archives.length === 0) {
+    if (!archives || archives.length === 0) {
         listEl.innerHTML = '<p style="opacity:0.4; text-align:center; padding:40px;">Ei löydettyjä harjoituksia.</p>';
         return;
     }
@@ -684,16 +786,12 @@ async function openArchive(filename) {
     const resultsList = document.getElementById('archive-results-list');
     const titleEl = document.getElementById('archive-session-title');
 
-    // Ensure we show the archive view and hide onboarding (important for deep links)
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const archView = document.getElementById('view-archive');
     if (archView) archView.classList.add('active');
 
     try {
-        const baseUrl = SERVER_URL || window.location.origin;
-        const fetchUrl = `${baseUrl}/api/archives/${filename}`;
-        console.log(`[ARCHIVE] Fetching: ${fetchUrl}`);
-        
+        const fetchUrl = `${API_URL}?action=get_archive&filename=${encodeURIComponent(filename)}`;
         const resp = await fetch(fetchUrl);
         if (!resp.ok) {
             const errData = await resp.json().catch(() => ({ error: resp.statusText }));
@@ -706,7 +804,7 @@ async function openArchive(filename) {
         listEl.style.display = 'none';
         resultsEl.style.display = 'block';
 
-        if (session.results.length === 0) {
+        if (!session.results || session.results.length === 0) {
             resultsList.innerHTML = '<p style="opacity:0.4; text-align:center;">Ei tuloksia tässä harjoituksessa.</p>';
             return;
         }
@@ -719,23 +817,9 @@ async function openArchive(filename) {
                 </div>`
             ).join('');
 
-            const videoHtml = `
-                <div class="video-container" id="arc-video-placeholder-${r.runId}" style="width: 100%; aspect-ratio: 16/9; background: #000; margin: 12px 0; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                    ${r.videoUrl ? `
-                        <video id="arc-video-${r.runId}" src="${r.videoUrl}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
-                        <div id="arc-clock-${r.runId}" class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
-                            <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${r.name.toUpperCase()}</div>
-                            <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
-                        </div>
-                    ` : `
-                        <div style="text-align: center; opacity: 0.5;">
-                            <div style="font-size: 24px; margin-bottom: 8px;">🎬</div>
-                            <div style="font-size: 11px; font-weight: 900; letter-spacing: 1px;">VIDEOA EI LÖYDY</div>
-                            <div style="font-size: 9px; margin-top: 4px; opacity: 0.6;">(ID: ${r.runId})</div>
-                        </div>
-                    `}
-                </div>
-            `;
+            const safeArcId = `arc_${r.runId || i}`;
+            const videos = normalizeRunVideos(r);
+            const videoHtml = buildMultiCamPlayerHtml(safeArcId, r, videos);
 
             const deleteRunBtn = (selectedRole === 'VALMENTAJA' || currentRole === 'VALMENTAJA')
                 ? `<button onclick="deleteRunFromArchive('${filename}', '${r.runId}')" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.2); padding:4px 8px; border-radius:4px; font-size:9px; font-weight:800; cursor:pointer;">POISTA SUORITUS 🗑️</button>`
@@ -763,29 +847,11 @@ async function openArchive(filename) {
             `;
         }).join('');
 
-        // Add Share Entire Session Button at the bottom
         resultsList.innerHTML += `
             <div style="margin: 40px 0 20px 0; border-top: 2px solid rgba(255,255,255,0.05); padding-top: 30px;">
                 <button class="btn btn-primary" onclick="shareArchive('${filename}')" style="width: 100%; height: 80px; font-size: 20px;">JAA KOKO HARJOITUS 🔗</button>
             </div>
         `;
-
-        // Attach clock logic to archive videos
-        session.results.forEach(r => {
-            const vEl = document.getElementById(`arc-video-${r.runId}`);
-            const vClock = document.getElementById(`arc-clock-${r.runId}`);
-            if (vEl && vClock) {
-                const clockVal = vClock.querySelector('.clock-val');
-                vEl.ontimeupdate = () => {
-                    vClock.style.opacity = '1';
-                    const displayMs = Math.min(vEl.currentTime * 1000, r.totalTime || 999999);
-                    if (clockVal) clockVal.innerText = formatSeconds(displayMs / 1000);
-                };
-                vEl.onpause = () => vClock.style.opacity = '0.5';
-                vEl.onplay = () => vClock.style.opacity = '1';
-            }
-        });
-
     } catch (e) {
         console.error("[ARCHIVE] Load failed:", e);
         alert(`Virhe avattaessa arkistoa: ${e.message}`);
@@ -816,7 +882,6 @@ function generateQR(sid) {
             attempts++;
             setTimeout(tryRender, 200);
         } else {
-            console.error(`[QR] FAIL: canvas=${!!canvas} lib=${!!lib}`);
             if (canvas) {
                 canvas.parentElement.innerHTML = `
                     <div style="color:#000; padding:20px; font-weight:800; text-align:center;">
@@ -836,7 +901,6 @@ function showQRModal() {
     const modal = document.getElementById('qr-modal');
     if (modal) {
         modal.style.display = 'flex';
-        // Force a reflow for transition if needed, then add active
         setTimeout(() => modal.classList.add('active'), 10);
         if (currentSession) generateQR(currentSession.id);
     }
@@ -854,13 +918,12 @@ async function deleteArchive(filename) {
     if (!confirm("Haluatko varmasti poistaa koko harjoituksen arkistosta? Tätä ei voi perua.")) return;
 
     try {
-        const baseUrl = SERVER_URL || window.location.origin;
-        const resp = await fetch(`${baseUrl}/api/archives/${filename}/delete`, { method: 'POST' });
+        const resp = await fetch(`${API_URL}?action=delete_archive&filename=${encodeURIComponent(filename)}`, { method: 'POST' });
         const data = await resp.json();
 
         if (data.success) {
             alert("Harjoitus poistettu.");
-            loadArchives(); // Refresh list
+            loadArchives();
         } else {
             throw new Error(data.error || "Poisto epäonnistui.");
         }
@@ -873,8 +936,7 @@ async function deleteRunFromArchive(filename, runId) {
     if (!confirm("Haluatko varmasti poistaa tämän yksittäisen suorituksen?")) return;
 
     try {
-        const baseUrl = SERVER_URL || window.location.origin;
-        const resp = await fetch(`${baseUrl}/api/archives/${filename}/runs/${runId}/delete`, { method: 'POST' });
+        const resp = await fetch(`${API_URL}?action=delete_archive_run&filename=${encodeURIComponent(filename)}&runId=${encodeURIComponent(runId)}`, { method: 'POST' });
         const data = await resp.json();
 
         if (data.success) {
@@ -883,10 +945,6 @@ async function deleteRunFromArchive(filename, runId) {
                 card.style.opacity = '0.3';
                 card.style.pointerEvents = 'none';
                 card.innerHTML = `<div style="padding:40px; text-align:center; font-weight:900; color:#ef4444;">SUORITUS POISTETTU</div>`;
-            }
-            if (data.remaining === 0) {
-                // If last run was deleted, the archive might still exist but be empty.
-                // We could just reload archives list.
             }
         } else {
             throw new Error(data.error || "Poisto epäonnistui.");
@@ -898,6 +956,6 @@ async function deleteRunFromArchive(filename, runId) {
 
 window.deleteArchive = deleteArchive;
 window.deleteRunFromArchive = deleteRunFromArchive;
-window.cardPlayerLoad = (idx) => { /* Placeholder if needed globally */ };
+window.cardPlayerLoad = (idx) => {};
 window.showQRModal = showQRModal;
 window.hideQRModal = hideQRModal;

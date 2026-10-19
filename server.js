@@ -175,6 +175,10 @@ function saveRunCard(runner, session) {
     console.log(`[CARD] Saved run card for ${runner.name} #${finalRunNumber} (ID: ${runner.runId})`);
 }
 
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+require('./api_handler')(app, upload);
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadDir));
 app.use('/public/uploads', express.static(uploadDir));
