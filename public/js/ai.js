@@ -20,8 +20,9 @@ function toggleStickman() {
     strickmanActive = !strickmanActive;
     const btn = document.getElementById('btn-toggle-ai');
     if(btn) {
-        btn.style.border = strickmanActive ? "2px solid #fff" : "2px solid transparent";
-        btn.style.background = strickmanActive ? "var(--accent)" : "rgba(255,255,255,0.05)";
+        btn.setAttribute('aria-pressed', strickmanActive ? 'true' : 'false');
+        btn.style.border = strickmanActive ? "2px solid #fff" : "2px solid rgba(255,255,255,0.32)";
+        btn.style.background = strickmanActive ? "var(--accent)" : "rgba(255,255,255,0.06)";
     }
 
     if(strickmanActive) {
@@ -59,9 +60,12 @@ function toggleDrawingMode() {
     }
 
     if(btn) {
-        btn.style.border = drawingModeActive ? "2px solid #fff" : "2px solid transparent";
-        btn.style.background = drawingModeActive ? "var(--accent)" : "rgba(255,255,255,0.05)";
-        btn.innerText = drawingModeActive ? "✏️ PIIRTÄMINEN PÄÄLLÄ" : "✏️ PIIRRÄ";
+        btn.setAttribute('aria-pressed', drawingModeActive ? 'true' : 'false');
+        btn.style.border = drawingModeActive ? "2px solid #fff" : "2px solid rgba(255,255,255,0.32)";
+        btn.style.background = drawingModeActive ? "var(--accent)" : "rgba(255,255,255,0.06)";
+        btn.innerHTML = drawingModeActive
+            ? `${iconHtml('draw', 'icon-sm')} PIIRTÄMINEN PÄÄLLÄ`
+            : `${iconHtml('draw', 'icon-sm')} PIIRRÄ`;
     }
 
     if(cvs) {
@@ -134,7 +138,7 @@ async function aiLoop() {
                     aiCtx.fillRect(10, 10, 240, 50);
                     aiCtx.font = "bold 12px Inter, sans-serif";
                     aiCtx.fillStyle = '#fff';
-                    aiCtx.fillText("🔒 S3 CORS-ESTO", 20, 30);
+                    aiCtx.fillText("S3 CORS-ESTO", 20, 30);
                     aiCtx.font = "10px Inter, sans-serif";
                     aiCtx.fillText("Tekoäly ei voi tutkia tätä videota.", 20, 48);
                 }
@@ -175,11 +179,11 @@ function onPoseResults(results) {
                       {color: 'rgba(255, 0, 0, 0.4)', lineWidth: 2, radius: 3});
     } else {
         // Visual feedback that the AI is trying but cannot detect a pose
-        aiCtx.fillStyle = 'rgba(239, 68, 68, 0.8)'; // Red background
-        aiCtx.fillRect(10, 10, 120, 26);
-        aiCtx.font = "12px Inter, sans-serif";
+        aiCtx.fillStyle = 'rgba(239, 68, 68, 0.85)'; // Red background
+        aiCtx.fillRect(10, 10, 130, 26);
+        aiCtx.font = "bold 11px Inter, sans-serif";
         aiCtx.fillStyle = '#fff';
-        aiCtx.fillText("⚠️ HAHMOA EI LÖYDY", 15, 27);
+        aiCtx.fillText("HAHMOA EI LÖYDY", 16, 27);
     }
 }
 

@@ -1,5 +1,10 @@
 // --- Alppikello Utilities ---
 
+function iconHtml(name, extraClass = '') {
+    const cls = extraClass ? `material-symbols-rounded ${extraClass}` : 'material-symbols-rounded';
+    return `<span class="${cls}" aria-hidden="true">${name}</span>`;
+}
+
 function formatDuration(ms) {
     if (ms === undefined || ms === null || isNaN(ms)) return "--,--";
     const absoluteMs = Math.abs(ms);
@@ -48,6 +53,18 @@ function getDistanceBetween(lat1, lon1, lat2, lon2) {
 }
 
 function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Linkki kopioitu leikepöydälle!');
+        }).catch(() => {
+            fallbackCopyText(text);
+        });
+    } else {
+        fallbackCopyText(text);
+    }
+}
+
+function fallbackCopyText(text) {
     const el = document.createElement('textarea');
     el.value = text;
     document.body.appendChild(el);
@@ -79,3 +96,5 @@ function getSyncedTime() {
     }
     return Date.now() - serverTimeOffset;
 }
+
+window.iconHtml = iconHtml;

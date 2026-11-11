@@ -8,11 +8,11 @@ function stopCV() {
         console.log("[CV] Stopped stream.");
     }
     // Reset overlays across all possible views
-    ['start', 'maali', 'väliaika', 'video'].forEach(prefix => {
+    ['start', 'starter', 'maali', 'väliaika', 'video'].forEach(prefix => {
         const status = document.getElementById(`${prefix}-status-overlay`);
         if (status) {
             status.innerText = "CV POIS PÄÄLTÄ";
-            status.style.background = "rgba(0,0,0,0.6)";
+            status.style.background = "rgba(0,0,0,0.75)";
         }
     });
 
@@ -28,7 +28,6 @@ function stopCV() {
 
 async function initTriggerCV(roleType) {
     if (cvStream) {
-        // If already streaming, just re-attach to new role elements without stopping
         console.log(`[CV] Re-targeting existing stream to ${roleType}`);
         await startCV(roleType);
         return;
@@ -36,15 +35,24 @@ async function initTriggerCV(roleType) {
     await startCV(roleType);
 }
 
-async function startCV(roleType) {
-    const isStart = roleType === 'lähtö';
-    const isFinish = roleType === 'maali';
-    const isSplit = roleType === 'väliaika';
-    const isVideo = roleType === 'video';
+function getCVDomIds(roleType) {
+    if (roleType === 'lähtö') {
+        return { videoId: 'start-video', canvasId: 'start-overlay', statusId: 'start-status-overlay' };
+    }
+    if (roleType === 'lähettäjä') {
+        return { videoId: 'starter-video', canvasId: 'starter-overlay', statusId: 'starter-status-overlay' };
+    }
+    if (roleType === 'maali') {
+        return { videoId: 'maali-video', canvasId: 'maali-overlay', statusId: 'maali-status-overlay' };
+    }
+    if (roleType === 'väliaika') {
+        return { videoId: 'väliaika-video', canvasId: 'väliaika-overlay', statusId: 'väliaika-status-overlay' };
+    }
+    return { videoId: 'video-video', canvasId: 'video-overlay', statusId: 'video-status-overlay' };
+}
 
-    const videoId = isStart ? 'start-video' : (isFinish ? 'maali-video' : (isSplit ? 'väliaika-video' : 'video-video'));
-    const canvasId = isStart ? 'start-overlay' : (isFinish ? 'maali-overlay' : (isSplit ? 'väliaika-overlay' : 'video-overlay'));
-    const statusId = isStart ? 'start-status-overlay' : (isFinish ? 'maali-status-overlay' : (isSplit ? 'väliaika-status-overlay' : 'video-status-overlay'));
+async function startCV(roleType) {
+    const { videoId, canvasId, statusId } = getCVDomIds(roleType);
 
     const video = document.getElementById(videoId);
     const canvas = document.getElementById(canvasId);
@@ -90,12 +98,13 @@ window.startCV = startCV;
 
 function startCVLogic(roleType, video, canvas) {
     currentCVRole = roleType;
+    const isStart = (roleType === 'lähtö' || roleType === 'lähettäjä');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const procCanvas = document.createElement('canvas');
     const procCtx = procCanvas.getContext('2d', { willReadFrequently: true });
 
     let triggerType = 'split';
-    if (roleType === 'lähtö') triggerType = 'start';
+    if (isStart) triggerType = 'start';
     if (roleType === 'maali') triggerType = 'finish';
     if (roleType === 'video') triggerType = 'video_clip';
 
@@ -104,7 +113,7 @@ function startCVLogic(roleType, video, canvas) {
     const threshold = 12; 
     const gateX = 0.5; 
 
-    const statusId = roleType === 'lähtö' ? 'start-status-overlay' : (roleType === 'maali' ? 'maali-status-overlay' : (roleType === 'väliaika' ? 'väliaika-status-overlay' : 'video-status-overlay'));
+    const { statusId } = getCVDomIds(roleType);
     const statusBadge = document.getElementById(statusId);
 
     const processFrame = () => {
@@ -122,10 +131,21 @@ function startCVLogic(roleType, video, canvas) {
         }
         lastEcoFrameAt = perfNow;
 
+        const queueCount = currentSession ? (currentSession.activeQueue || []).length : 0;
+        const onCourseCount = currentSession ? (currentSession.onCourse || []).length : 0;
+        const isArmingDelay = isStart && (Date.now() < (window.starterArmingUntil || 0));
+        const isCourseBusyForStart = isStart && queueCount > 0 && onCourseCount > 0;
+
         if (statusBadge) {
-            if (isEcoIdle) {
+            if (isCourseBusyForStart) {
+                statusBadge.innerText = "RATA VARATTU (ODOTTAA)";
+                statusBadge.style.background = "var(--danger)";
+            } else if (isArmingDelay) {
+                statusBadge.innerText = "LÄHTÖMERKKI KÄYNNISSÄ...";
+                statusBadge.style.background = "var(--warning)";
+            } else if (isEcoIdle) {
                 statusBadge.innerText = "CV ECO (4 FPS)";
-                statusBadge.style.background = "rgba(16, 185, 129, 0.45)";
+                statusBadge.style.background = "rgba(16, 185, 129, 0.55)";
             } else {
                 statusBadge.innerText = "CV AKTIIVINEN (60 FPS)";
                 statusBadge.style.background = "var(--success)";
@@ -144,7 +164,8 @@ function startCVLogic(roleType, video, canvas) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             const x = canvas.width * gateX;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.strokeStyle = isArmingDelay ? "rgba(245, 158, 11, 0.7)" : "rgba(255, 255, 255, 0.45)";
+            ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
 
             const procX = Math.round(procCanvas.width * gateX);
@@ -153,6 +174,13 @@ function startCVLogic(roleType, video, canvas) {
             let totalB = 0;
             for (let i = 0; i < data.length; i += 4) totalB += (data[i] + data[i + 1] + data[i + 2]) / 3;
             const avgIntensity = totalB / (data.length / 4);
+
+            // Reset baseline during arming delay or when course is busy so movement while settling doesn't trigger
+            if (isArmingDelay || isCourseBusyForStart) {
+                previousIntensity = avgIntensity;
+                requestAnimationFrame(processFrame);
+                return;
+            }
 
             const now = getSyncedTime();
             const diff = (previousIntensity !== -1) ? Math.abs(avgIntensity - previousIntensity) : 0;
@@ -166,19 +194,15 @@ function startCVLogic(roleType, video, canvas) {
                 ctx.fillStyle = diff > threshold ? "#ef4444" : "#22c55e";
                 ctx.fillRect(0, canvas.height - 15, meterW, 15);
 
-                if (diff > threshold && (now - lastTriggerTime > 3000)) {
-                    const queueCount = (currentSession.activeQueue || []).length;
-                    const onCourseCount = (currentSession.onCourse || []).length;
-
+                if (diff > threshold && (now - lastTriggerTime > 3000) && currentSession) {
                     if (roleType === 'video') {
-                        // Check if someone is on course OR just finished (within 10s)
                         let runnerToSave = null;
                         if (onCourseCount > 0) {
                             runnerToSave = { ...currentSession.onCourse[0] };
                         } else if ((currentSession.results || []).length > 0) {
                             const lastResult = currentSession.results[0];
                             const timeSinceFinish = now - (lastResult.finishTime || 0);
-                            if (timeSinceFinish < 10000) { // 10s grace period for video role
+                            if (timeSinceFinish < 10000) {
                                 runnerToSave = { ...lastResult };
                             }
                         }
@@ -186,21 +210,21 @@ function startCVLogic(roleType, video, canvas) {
                         if (runnerToSave && !hasRecordedForCurrentRunner) {
                             lastTriggerTime = now;
                             hasRecordedForCurrentRunner = true; 
-                            showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()} 📹`);
+                            showVideoNotification(`TALLENNETAAN: ${runnerToSave.name.toUpperCase()}`);
                             saveVideoClip(runnerToSave, 'video_clip', now);
                             ctx.fillStyle = "rgba(16, 185, 129, 0.6)"; 
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
                         }
                     } else {
                         let shouldTrigger = false;
-                        if (roleType === 'lähtö' && queueCount > 0) shouldTrigger = true;
+                        // Start gate triggers ONLY when a skier is in queue AND course is clear
+                        if (isStart && queueCount > 0 && onCourseCount === 0) shouldTrigger = true;
                         if (roleType === 'maali' && onCourseCount > 0) shouldTrigger = true;
                         if (roleType === 'väliaika' && onCourseCount > 0) shouldTrigger = true;
 
                         if (shouldTrigger) {
-                            // 1. Capture metadata FIRST based on role
                             let runnerToSave = null;
-                            if (roleType === 'lähtö') {
+                            if (isStart) {
                                 runnerToSave = currentSession.activeQueue && currentSession.activeQueue[0] ? { ...currentSession.activeQueue[0] } : null;
                                 console.log("[CV] Triggered START for:", runnerToSave ? runnerToSave.name : 'NONE');
                             } else {
@@ -211,7 +235,6 @@ function startCVLogic(roleType, video, canvas) {
                             lastTriggerTime = now;
                             simulateTrigger(triggerType, now);
 
-                            // --- RECORD CLIP FOR THIS ROLE ---
                             if (mediaRecorder && mediaRecorder.state === 'recording') {
                                 saveVideoClip(runnerToSave, triggerType, now);
                             }

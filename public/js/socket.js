@@ -216,7 +216,7 @@ function applyServerSessionState(session, timingEvent = null) {
         showPremiumModal({
             title: 'HARJOITUS LOPETETTU',
             text: 'Valmentaja on lopettanut harjoituksen. Kaikki suoritukset on arkistoitu.',
-            icon: '🏁',
+            icon: 'sports_score',
             confirmText: 'SELVÄ',
             cancelText: '',
             onConfirm: () => {
@@ -261,7 +261,7 @@ function applyServerSessionState(session, timingEvent = null) {
     if (newVideoCount > prevVideoCount && currentSession.results.length > 0) {
         const latestRunner = currentSession.results[0];
         if (typeof showVideoNotification === 'function') {
-            showVideoNotification(`VIDEO VALMIS: ${latestRunner.name.toUpperCase()} 🎬`);
+            showVideoNotification(`VIDEO VALMIS: ${latestRunner.name.toUpperCase()}`);
         }
     }
 
@@ -447,16 +447,16 @@ function renderNearbySessionsList(sessions) {
             if (toggleBtn) toggleBtn.style.display = 'block';
 
             listEl.innerHTML = filtered.map(s => `
-                <div class="card" onclick="joinNearbySession('${s.id}')" style="padding: 16px; margin: 0 0 10px 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.1); border-color: var(--accent);">
+                <button type="button" class="card" onclick="joinNearbySession('${s.id}')" style="width: 100%; padding: 16px; margin: 0 0 10px 0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.12); border: 2px solid var(--accent); color: var(--text);">
                     <div>
                         <div style="font-weight: 800; font-size: 16px;">${s.name.toUpperCase()}</div>
-                        <div style="font-size: 11px; opacity: 0.6; font-weight: 700;">${s.athleteCount} LASKIJAA</div>
+                        <div style="font-size: 11px; opacity: 0.7; font-weight: 700;">${s.athleteCount} LASKIJAA</div>
                     </div>
                     <div style="text-align: right;">
                         <div style="font-weight: 900; color: var(--accent); font-size: 14px;">${s.distance} km</div>
-                        <div style="font-size: 9px; opacity: 0.5;">ETÄISYYS</div>
+                        <div style="font-size: 9px; opacity: 0.6;">ETÄISYYS</div>
                     </div>
-                </div>
+                </button>
             `).join('');
             return;
         }

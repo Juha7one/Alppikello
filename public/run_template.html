@@ -6,8 +6,19 @@
     <title>Alppikello Run Card</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,600,1,0&display=swap" rel="stylesheet">
     <style>
+        .material-symbols-rounded {
+            font-family: 'Material Symbols Rounded';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+        }
         :root {
             --bg: #0f172a;
             --card-bg: #1e293b;
@@ -233,8 +244,8 @@
         <div class="video-container" id="video-wrapper">
             <video id="run-video" playsinline style="display: none;"></video>
             
-            <div id="video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; height: 100%;">
-                <div style="font-size: 40px; margin-bottom: 10px;">🎬</div>
+            <div id="video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.35; height: 100%;">
+                <span class="material-symbols-rounded" style="font-size: 40px; margin-bottom: 10px;" aria-hidden="true">videocam_off</span>
                 <div style="font-size: 10px; font-weight: 900; letter-spacing: 2px; text-align: center; padding: 0 20px;">VIDEOA KÄSITELLÄÄN TAI SE PUUTTUU</div>
             </div>
 

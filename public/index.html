@@ -5,445 +5,601 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ALPPIKELLO - Älykäs Ajanotto</title>
-    <link rel="stylesheet" href="css/style.css?v=3.1.0">
+    <link rel="stylesheet" href="css/style.css?v=3.2.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Outfit:wght@700;800;900&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #1e3a8a;">
-        <h1 class="splash-title" style="color: #fff;">ARCTIC VOICE</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.5; color: #fff;">ALPPIKELLO v3.1.0</div>
+    <div id="deployment-splash" style="background: #0b2545;">
+        <h1 class="splash-title" style="color: #fff;">ALPINE PULSE</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.7; color: #fff;">ALPPIKELLO v3.2.0</div>
     </div>
 
     <!-- Onboarding View -->
-    <div id="view-onboarding" class="view container active">
+    <main id="view-onboarding" class="view container active">
         <!-- Step 1: Name -->
-        <div id="ob-step-name" class="ob-step active">
-            <h1 class="premium-title">TERVETULOA</h1>
-            <p style="color: var(--text-secondary); margin-bottom: 40px;">Kirjoita nimesi aloittaaksesi.</p>
-            <input type="text" id="input-profile-name" class="premium-input" placeholder="Nimesi..." autocomplete="name" spellcheck="false" autocorrect="off" autocapitalize="words">
-            <button class="btn btn-primary" onclick="saveNameAndNext()">JATKA</button>
+        <div id="ob-step-name" class="ob-step active" style="width: 100%;">
+            <h1 class="premium-title" style="margin-bottom: 12px;">TERVETULOA</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 32px; font-weight: 600;">Kirjoita nimesi tai laitteen tunniste aloittaaksesi.</p>
+            <label for="input-profile-name" class="field-label">Oma nimesi tai laitteen paikka</label>
+            <input type="text" id="input-profile-name" class="premium-input" placeholder="Esim. Matti / Yläportti" autocomplete="name" spellcheck="false" autocorrect="off" autocapitalize="words">
+            <button type="button" class="btn btn-primary" onclick="saveNameAndNext()">
+                <span>JATKA</span>
+                <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+            </button>
         </div>
 
         <!-- Step 2: Role -->
-        <div id="ob-step-role" class="ob-step" style="display:none;">
+        <div id="ob-step-role" class="ob-step" style="display:none; width: 100%;">
             <h2 style="margin-bottom: 16px; font-weight: 900; letter-spacing: -1px;">VALITSE ROOLI</h2>
-            <div style="margin-bottom: 20px; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto;">
-                <div class="voice-lang-bar" style="margin-bottom: 10px;">
-                    <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
-                    <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
-                    <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
-                    <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+            <div style="margin-bottom: 20px; width: 100%; max-width: 420px; margin-left: auto; margin-right: auto;">
+                <div class="voice-lang-bar" role="group" aria-label="Puheohjauksen kieli" style="margin-bottom: 12px;">
+                    <span class="material-symbols-rounded" aria-hidden="true" style="color: var(--text-secondary); font-size: 20px;">translate</span>
+                    <button type="button" class="voice-lang-btn active" data-lang="FI" aria-pressed="true" onclick="setVoiceLanguage('FI')">FI</button>
+                    <button type="button" class="voice-lang-btn" data-lang="EN" aria-pressed="false" onclick="setVoiceLanguage('EN')">EN</button>
+                    <button type="button" class="voice-lang-btn" data-lang="SV" aria-pressed="false" onclick="setVoiceLanguage('SV')">SV</button>
+                    <button type="button" class="voice-lang-btn" data-lang="DE" aria-pressed="false" onclick="setVoiceLanguage('DE')">DE</button>
                 </div>
-                <button type="button" id="btn-role-mic" class="voice-mic-btn" style="padding: 14px; font-size: 13px;" onclick="toggleVoiceListening('role')">🎤 VALITSE ROOLI ÄÄNELLÄ</button>
+                <button type="button" id="btn-role-mic" class="voice-mic-btn" aria-pressed="false" onclick="toggleVoiceListening('role')">
+                    <span class="material-symbols-rounded" aria-hidden="true">mic</span>
+                    <span>VALITSE ROOLI ÄÄNELLÄ</span>
+                </button>
             </div>
-            <div class="role-grid">
-                <div class="role-card" data-role="LÄHTÖ" onclick="selectRole('LÄHTÖ')">
-                    <span class="role-icon">⏲️</span>
-                    <span class="role-title">STARTTIKELLO</span>
-                </div>
-                <div class="role-card" data-role="LÄHETTÄJÄ" onclick="selectRole('LÄHETTÄJÄ')">
-                    <span class="role-icon">📋</span>
+            <div class="role-grid" role="group" aria-label="Laitteen rooli">
+                <button type="button" class="role-card" data-role="LÄHETTÄJÄ" onclick="selectRole('LÄHETTÄJÄ')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">record_voice_over</span></span>
                     <span class="role-title">LÄHTÖPAIKKA</span>
-                </div>
-                <div class="role-card" data-role="MAALI" onclick="selectRole('MAALI')">
-                    <span class="role-icon">🏁</span>
+                    <span class="role-subtitle">Lähettäjä &amp; Starttikello</span>
+                </button>
+                <button type="button" class="role-card" data-role="LÄHTÖ" onclick="selectRole('LÄHTÖ')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">sensors</span></span>
+                    <span class="role-title">STARTTIKELLO</span>
+                    <span class="role-subtitle">Erillinen porttikamera</span>
+                </button>
+                <button type="button" class="role-card" data-role="MAALI" onclick="selectRole('MAALI')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">sports_score</span></span>
                     <span class="role-title">MAALIKELLO</span>
-                </div>
-                <div class="role-card" data-role="VÄLIAIKA" onclick="selectRole('VÄLIAIKA')">
-                    <span class="role-icon">⏱️</span>
+                    <span class="role-subtitle">Maalilinjan kamera</span>
+                </button>
+                <button type="button" class="role-card" data-role="VÄLIAIKA" onclick="selectRole('VÄLIAIKA')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">timer</span></span>
                     <span class="role-title">VÄLIAIKA</span>
-                </div>
-                <div class="role-card" data-role="VIDEO" onclick="selectRole('VIDEO')">
-                    <span class="role-icon">📹</span>
+                    <span class="role-subtitle">Väliaikapisteen kamera</span>
+                </button>
+                <button type="button" class="role-card" data-role="VIDEO" onclick="selectRole('VIDEO')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">videocam</span></span>
                     <span class="role-title">VIDEO</span>
-                </div>
-                <div class="role-card" data-role="VALMENTAJA" onclick="selectRole('VALMENTAJA')">
-                    <span class="role-icon">📋</span>
+                    <span class="role-subtitle">Automaattinen kuvaus</span>
+                </button>
+                <button type="button" class="role-card" data-role="VALMENTAJA" onclick="selectRole('VALMENTAJA')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">analytics</span></span>
                     <span class="role-title">VALMENTAJA</span>
-                </div>
-                <div class="role-card" data-role="URHEILIJA" onclick="selectRole('URHEILIJA')">
-                    <span class="role-icon">⛷️</span>
+                    <span class="role-subtitle">Hallinta &amp; tulokset</span>
+                </button>
+                <button type="button" class="role-card" data-role="URHEILIJA" onclick="selectRole('URHEILIJA')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">downhill_skiing</span></span>
                     <span class="role-title">URHEILIJA</span>
-                </div>
-                <div class="role-card" data-role="KATSOMO" onclick="selectRole('KATSOMO')">
-                    <span class="role-icon">👁️</span>
+                    <span class="role-subtitle">Omat ajat &amp; videot</span>
+                </button>
+                <button type="button" class="role-card" data-role="KATSOMO" onclick="selectRole('KATSOMO')">
+                    <span class="role-icon"><span class="material-symbols-rounded icon-xl" aria-hidden="true">visibility</span></span>
                     <span class="role-title">KATSOMO</span>
-                </div>
+                    <span class="role-subtitle">Live-tulostaulu</span>
+                </button>
             </div>
-            <button class="btn btn-outline" style="margin-top: 40px; border-color: rgba(255,255,255,0.2);" onclick="showOnboardingStep('name')">← TAKAISIN NIMEN VALINTAAN</button>
+            <button type="button" class="btn btn-outline" style="margin-top: 32px;" onclick="showOnboardingStep('name')">
+                <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+                <span>TAKAISIN NIMEN VALINTAAN</span>
+            </button>
         </div>
 
         <!-- Step 3: Session Selection -->
-        <div id="ob-step-session" class="ob-step" style="display:none;">
-            <h2 id="session-step-title" style="margin-bottom: 30px; font-weight: 900;">HARJOITUS</h2>
+        <div id="ob-step-session" class="ob-step" style="display:none; width: 100%;">
+            <h2 id="session-step-title" style="margin-bottom: 24px; font-weight: 900;">HARJOITUS</h2>
             
-            <div id="coach-only-create" style="display:none; margin-bottom: 40px;">
-                <button class="btn btn-outline" onclick="createSession()" style="width: 100%; height: 80px; font-size: 20px; margin-bottom: 15px; border-color: var(--accent); color: var(--accent); border-width: 2px;">LUO UUSI HARJOITUS</button>
-                <button class="btn btn-outline" onclick="toggleRangefinder()" style="width: 100%; height: 80px; font-size: 20px; border-color: var(--accent); color: var(--accent); margin-bottom: 20px;">ETÄISYYSMITTARI 📏</button>
-                <p style="font-size: 12px; opacity: 0.5; margin: 15px 0 15px 0; text-align: center;">TAI LIITY OLEMASSA OLEVAAN:</p>
+            <div id="coach-only-create" style="display:none; margin-bottom: 32px;">
+                <button type="button" id="btn-create-session" class="btn btn-primary" onclick="createSession()" style="min-height: 72px; font-size: 19px; margin-bottom: 14px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+                    <span>LUO UUSI HARJOITUS</span>
+                </button>
+                <button type="button" class="btn btn-accent-outline" onclick="toggleRangefinder()" style="min-height: 68px; font-size: 18px; margin-bottom: 20px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">straighten</span>
+                    <span>ETÄISYYSMITTARI</span>
+                </button>
+                <p style="font-size: 12px; color: var(--text-secondary); font-weight: 800; margin: 16px 0; text-align: center; text-transform: uppercase;">Tai liity olemassa olevaan:</p>
             </div>
             
             <!-- Quick Continue for role switchers -->
             <div id="continue-session-container" style="display:none;"></div>
 
-            <div id="nearby-sessions-container" style="display:none; margin-bottom: 30px;">
-                <p style="font-size: 12px; color: var(--accent); font-weight: 900; margin-bottom: 15px;">LÄHISTÖLLÄ:</p>
+            <div id="nearby-sessions-container" style="display:none; margin-bottom: 28px;">
+                <p style="font-size: 13px; color: #60a5fa; font-weight: 900; margin-bottom: 12px; text-transform: uppercase;">Lähistöllä olevat harjoitukset:</p>
                 <div id="nearby-sessions-list"></div>
             </div>
 
-            <button id="btn-toggle-manual" class="btn btn-outline" onclick="toggleManualJoin()" style="display:none; margin-top: 10px; border-color: rgba(255,255,255,0.2); font-size: 11px;">SYÖTÄ KOODI MANUAALISESTI</button>
+            <button type="button" id="btn-toggle-manual" class="btn btn-outline" onclick="toggleManualJoin()" style="display:none; margin-top: 10px; font-size: 14px;">
+                <span class="material-symbols-rounded" aria-hidden="true">keyboard</span>
+                <span>SYÖTÄ KOODI MANUAALISESTI</span>
+            </button>
 
-            <div id="manual-join-container" style="border-top: 2px solid rgba(255,255,255,0.1); padding-top: 30px; margin-top: 40px;">
-                <p style="font-size: 12px; font-weight: 900; color: #fff; margin-bottom: 15px; text-transform: uppercase;">Koodi:</p>
-                <input type="text" id="input-session-id" class="premium-input" placeholder="XYZ123" autocomplete="off" style="text-transform: uppercase; font-size: 22px; height: 80px; text-align: center; letter-spacing: 2px; margin-bottom: 15px; background: #fff; color: #000; font-weight: 900;">
-                <button class="btn btn-primary" onclick="joinSession()" style="height: 70px; font-size: 20px;">LIITY</button>
+            <div id="manual-join-container" style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 24px; margin-top: 28px;">
+                <label for="input-session-id" class="field-label">Harjoituksen koodi</label>
+                <input type="text" id="input-session-id" class="premium-input" placeholder="ESIM. TREENI-11.11" autocomplete="off" style="text-transform: uppercase; font-size: 22px; min-height: 72px; text-align: center; letter-spacing: 2px; margin-bottom: 16px; background: #fff; color: #000; font-weight: 900;">
+                <button type="button" class="btn btn-primary" onclick="joinSession()" style="min-height: 68px; font-size: 20px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">login</span>
+                    <span>LIITY HARJOITUKSEEN</span>
+                </button>
             </div>
 
-            <div style="margin-top: 60px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; width: 100%;">
-                <p style="font-size: 11px; opacity: 0.3; margin-bottom: 15px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Selaa historiaa:</p>
-                <button class="btn btn-outline" onclick="loadArchives()" style="width: 100%; height: 80px; font-size: 20px; margin-bottom: 20px; border-color: rgba(255,255,255,0.2);">HARKKA-ARKISTO 📁</button>
+            <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 24px; width: 100%;">
+                <p style="font-size: 12px; color: var(--text-secondary); font-weight: 700; margin-bottom: 12px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Selaa tallennettuja tuloksia:</p>
+                <button type="button" class="btn btn-outline" onclick="loadArchives()" style="width: 100%; min-height: 68px; font-size: 18px; margin-bottom: 16px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">folder_open</span>
+                    <span>HARKKA-ARKISTO</span>
+                </button>
             </div>
 
-            <button class="btn btn-outline" style="margin-top: 20px; border-color: rgba(255,255,255,0.2);" onclick="showOnboardingStep('role')">← TAKAISIN ROOLIVALINTAAN</button>
+            <button type="button" class="btn btn-outline" style="margin-top: 12px;" onclick="showOnboardingStep('role')">
+                <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+                <span>TAKAISIN ROOLIVALINTAAN</span>
+            </button>
         </div>
 
         <!-- Step 4: Name Selection (within session) -->
-        <div id="ob-step-setup-name" class="ob-step" style="display:none;">
+        <div id="ob-step-setup-name" class="ob-step" style="display:none; width: 100%;">
             <h2 id="setup-name-instruction" style="margin-bottom: 20px; font-weight: 900;">VALITSE NIMI</h2>
-            <div id="valitse-nimi-lista" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px;"></div>
+            <div id="valitse-nimi-lista" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px;"></div>
             
-            <p id="setup-name-new-label" style="font-size: 12px; opacity: 0.5; margin-bottom: 10px;">TAI KIRJOITA UUSI:</p>
+            <label for="name-input" id="setup-name-new-label" class="field-label">Tai kirjoita uusi nimi</label>
             <input type="text" id="name-input" class="premium-input" placeholder="Oma nimi" autocomplete="name" spellcheck="false" autocorrect="off" autocapitalize="words">
-            <button class="btn btn-primary" onclick="saveName()">JATKA</button>
+            <button type="button" class="btn btn-primary" onclick="saveName()">
+                <span>JATKA</span>
+                <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+            </button>
             
-            <button class="btn btn-outline" style="margin-top: 40px; border-color: rgba(255,255,255,0.2);" onclick="showOnboardingStep('session')">← TAKAISIN ISTUNTOVALINTAAN</button>
+            <button type="button" class="btn btn-outline" style="margin-top: 32px;" onclick="showOnboardingStep('session')">
+                <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+                <span>TAKAISIN ISTUNTOVALINTAAN</span>
+            </button>
         </div>
-    </div>
+    </main>
 
     <!-- Valmentaja / Keskus View -->
     <div id="view-valmentaja" class="view container">
         <!-- High-Contrast Session Control Card -->
-        <div id="coach-session-card" class="card" style="background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); padding: 25px; margin-bottom: 35px; border-radius: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="text-align: left;">
-                    <h1 id="coach-session-name" style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; color: #fff;">LATAUTUU...</h1>
-                    <button id="btn-edit-session-name" class="btn btn-outline btn-mini" onclick="editSessionName()" style="margin-top: 5px; font-size: 10px; padding: 4px 10px; border-color: rgba(255,255,255,0.2); opacity: 0.5; color: #fff;">MUOKKAA NIMI ✍️</button>
-                    <div id="s3-status-badge" style="display:inline-block; font-size: 11px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger); margin-top: 10px;">S3: POIS</div>
+        <div id="coach-session-card" class="card" style="background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.18); padding: 24px; margin-bottom: 32px; border-radius: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                <div style="text-align: left; flex: 1;">
+                    <div id="coach-role-badge" class="role-badge" style="margin-bottom: 10px;">VALMENTAJA</div>
+                    <h1 id="coach-session-name" style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; color: #fff; word-break: break-word;">LATAUTUU...</h1>
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px;">
+                        <button type="button" id="btn-edit-session-name" class="btn-mini-link" onclick="editSessionName()">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">edit</span>
+                            <span>MUOKKAA NIMEÄ</span>
+                        </button>
+                        <div id="s3-status-badge" style="display:inline-flex; align-items:center; gap:5px; font-size: 11px; font-weight: 900; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; color: var(--success);">TALLENNUS: OK</div>
+                    </div>
                 </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px;">
-                <button class="btn btn-primary" onclick="shareSession()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800;">JAA LINKKI</button>
-                <button class="btn btn-outline" onclick="showQRModal()" style="margin: 0; height: 65px; font-size: 18px; font-weight: 800; border-color: #fff; color: #fff; border-width: 2px;">JAA QR</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px;">
+                <button type="button" class="btn btn-primary" onclick="shareSession()" style="margin: 0; min-height: 62px; font-size: 16px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">share</span>
+                    <span>JAA LINKKI</span>
+                </button>
+                <button type="button" class="btn btn-outline" onclick="showQRModal()" style="margin: 0; min-height: 62px; font-size: 16px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>
+                    <span>JAA QR</span>
+                </button>
             </div>
 
             <!-- Audio Announcer & Multi-Language Bar (Coach / Spectator) -->
-            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
-                <button type="button" class="btn-voice-tts-toggle tts-active" onclick="toggleVoiceTts()">🔊 KUULUTUS: PÄÄLLÄ</button>
-                <div class="voice-lang-bar">
-                    <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
-                    <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
-                    <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
-                    <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn-voice-tts-toggle tts-active" aria-pressed="true" onclick="toggleVoiceTts()">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">volume_up</span>
+                    <span>KUULUTUS: PÄÄLLÄ</span>
+                </button>
+                <div class="voice-lang-bar" role="group" aria-label="Kuulutuskieli">
+                    <button type="button" class="voice-lang-btn active" data-lang="FI" aria-pressed="true" onclick="setVoiceLanguage('FI')">FI</button>
+                    <button type="button" class="voice-lang-btn" data-lang="EN" aria-pressed="false" onclick="setVoiceLanguage('EN')">EN</button>
+                    <button type="button" class="voice-lang-btn" data-lang="SV" aria-pressed="false" onclick="setVoiceLanguage('SV')">SV</button>
+                    <button type="button" class="voice-lang-btn" data-lang="DE" aria-pressed="false" onclick="setVoiceLanguage('DE')">DE</button>
                 </div>
             </div>
         </div>
 
-        <section id="coach-athlete-management" style="margin-bottom: 40px;">
+        <section id="coach-athlete-management" style="margin-bottom: 36px; width: 100%;">
             <div id="coach-controls">
-                <p style="font-size: 12px; color: var(--accent); font-weight: 900; letter-spacing: 1px; margin-bottom: 15px; text-transform: uppercase;">
-                    Aktiiviset urheilijat (Paina lisätäksesi jonoon):</p>
+                <h2 style="font-size: 13px; color: #60a5fa; font-weight: 900; letter-spacing: 0.8px; margin-bottom: 14px; text-transform: uppercase;">
+                    Aktiiviset urheilijat (paina lisätäksesi lähtöjonoon):
+                </h2>
                 <div id="coach-athlete-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
                 
-                <div class="card" style="padding: 20px; background: rgba(255,255,255,0.02); border: 2px dashed rgba(255,255,255,0.1); margin-top: 20px;">
-                    <p style="font-size: 11px; font-weight: 900; opacity: 0.5; margin-bottom: 15px;">LISÄÄ UUSI URHEILIJA LENNOSSA:</p>
-                    <input type="text" id="input-manual-athlete-coach" class="premium-input" placeholder="URHEILIJAN NIMI" style="font-size: 18px; padding: 12px; margin-bottom: 15px;">
-                    <button class="btn btn-outline btn-mini" style="width: 100%; border-color: var(--accent); color: var(--accent);" onclick="addAthleteManually('input-manual-athlete-coach')">LISÄÄ JONOON</button>
+                <div class="card" style="padding: 20px; background: rgba(255,255,255,0.03); border: 2px dashed rgba(255,255,255,0.22); margin-top: 20px;">
+                    <label for="input-manual-athlete-coach" class="field-label">Lisää uusi urheilija lennossa</label>
+                    <input type="text" id="input-manual-athlete-coach" class="premium-input" placeholder="Urheilijan nimi" style="font-size: 18px; padding: 14px; margin-bottom: 14px;">
+                    <button type="button" class="btn btn-accent-outline" style="margin-bottom: 0;" onclick="addAthleteManually('input-manual-athlete-coach')">
+                        <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+                        <span>LISÄÄ LÄHTÖJONOON</span>
+                    </button>
                 </div>
             </div>
         </section>
 
-        <section style="margin-bottom: 40px;">
-            <p
-                style="font-size: 12px; color: var(--text-secondary); font-weight: 900; letter-spacing: 1px; margin-bottom: 15px; text-transform: uppercase;">
-                Laskija radalla:</p>
+        <section style="margin-bottom: 36px; width: 100%;">
+            <h2 style="font-size: 13px; color: var(--text-secondary); font-weight: 900; letter-spacing: 0.8px; margin-bottom: 14px; text-transform: uppercase;">
+                Laskija radalla:
+            </h2>
             <div id="active-skier"></div>
         </section>
 
-        <section>
-            <p
-                style="font-size: 12px; color: var(--text-secondary); font-weight: 900; letter-spacing: 1px; margin-bottom: 15px; text-transform: uppercase;">
-                Viimeisimmät ajat:</p>
+        <section style="width: 100%;">
+            <h2 style="font-size: 13px; color: var(--text-secondary); font-weight: 900; letter-spacing: 0.8px; margin-bottom: 14px; text-transform: uppercase;">
+                Viimeisimmät ajat:
+            </h2>
             <div id="result-list"></div>
         </section>
 
         <!-- Device Status (at the bottom of coach view) -->
-        <section style="margin-top: 60px; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.05);">
-            <p
-                style="font-size: 11px; opacity: 0.3; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; text-align: center;">
-                Laitteiden tila:</p>
-            <div id="device-status-list"
-                style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 40px;"></div>
+        <section style="margin-top: 48px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.12); width: 100%;">
+            <h2 style="font-size: 12px; color: var(--text-secondary); font-weight: 900; text-transform: uppercase; margin-bottom: 16px; text-align: center; letter-spacing: 0.8px;">
+                Liitetyt laitteet:
+            </h2>
+            <div id="device-status-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 32px;"></div>
         </section>
 
-        <!-- End Session Button (Moved here inside scrolling area) -->
-        <div id="coach-only-end-local" style="display:none; margin: 60px 0 100px 0; padding-top: 40px; border-top: 2px solid rgba(255,255,255,0.1);">
-             <button class="btn btn-danger" onclick="confirmEndSession()" style="background: var(--danger); color: #fff; width: 100%; height: 85px; font-size: 22px; font-weight: 900; margin-top: 0; box-shadow: 0 15px 35px rgba(239, 68, 68, 0.3);">LOPETA HARJOITUS</button>
-             <p style="text-align: center; font-size: 12px; opacity: 0.5; margin-top: 15px; font-weight: 700;">HUOM: Tämä lopettaa harjoituksen kaikille ja arkistoi tulokset.</p>
+        <!-- End Session Button -->
+        <div id="coach-only-end-local" style="display:none; width: 100%; margin: 40px 0 80px 0; padding-top: 32px; border-top: 2px solid rgba(255,255,255,0.14);">
+             <button type="button" class="btn btn-danger" onclick="confirmEndSession()" style="width: 100%; min-height: 76px; font-size: 20px; font-weight: 900; margin-top: 0;">
+                 <span class="material-symbols-rounded" aria-hidden="true">sports_score</span>
+                 <span>LOPETA HARJOITUS</span>
+             </button>
+             <p style="text-align: center; font-size: 13px; color: var(--text-secondary); margin-top: 12px; font-weight: 600;">Huom: Tämä lopettaa harjoituksen kaikille laitteille ja arkistoi tulokset.</p>
         </div>
 
     </div>
 
     <!-- Urheilija View -->
     <div id="view-urheilija" class="view container">
-        <h1 id="athlete-welcome" style="font-weight: 900; margin-bottom: 20px;">MORO, LASKIJA!</h1>
+        <h1 id="athlete-welcome" style="font-weight: 900; margin-bottom: 20px;">TERVEHDYS, LASKIJA!</h1>
         <!-- Athlete Audio Announcer Bar -->
-        <div class="card" style="padding: 16px; margin-bottom: 25px; display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="btn-voice-tts-toggle tts-active" onclick="toggleVoiceTts()">🔊 KUULUTUS: PÄÄLLÄ</button>
-                <button type="button" id="btn-athlete-voice-filter" class="btn-voice-tts-toggle" onclick="toggleVoiceAthleteFilter()">🌐 KAIKKI LASKUT</button>
+        <div class="card" style="padding: 18px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-voice-tts-toggle tts-active" aria-pressed="true" onclick="toggleVoiceTts()">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">volume_up</span>
+                    <span>KUULUTUS: PÄÄLLÄ</span>
+                </button>
+                <button type="button" id="btn-athlete-voice-filter" class="btn-voice-tts-toggle" aria-pressed="false" onclick="toggleVoiceAthleteFilter()">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">groups</span>
+                    <span>KAIKKI LASKUT</span>
+                </button>
             </div>
-            <div class="voice-lang-bar">
-                <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
-                <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
-                <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
-                <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+            <div class="voice-lang-bar" role="group" aria-label="Kuulutuskieli">
+                <button type="button" class="voice-lang-btn active" data-lang="FI" aria-pressed="true" onclick="setVoiceLanguage('FI')">FI</button>
+                <button type="button" class="voice-lang-btn" data-lang="EN" aria-pressed="false" onclick="setVoiceLanguage('EN')">EN</button>
+                <button type="button" class="voice-lang-btn" data-lang="SV" aria-pressed="false" onclick="setVoiceLanguage('SV')">SV</button>
+                <button type="button" class="voice-lang-btn" data-lang="DE" aria-pressed="false" onclick="setVoiceLanguage('DE')">DE</button>
             </div>
         </div>
-        <div id="athlete-results-list"></div>
+        <div id="athlete-results-list" style="width: 100%;"></div>
     </div>
 
-    <!-- Lähtöjärjestys / Lähettäjä View -->
+    <!-- Lähtöjärjestys / Lähettäjä (& Yhdistetty Starttikello) View -->
     <div id="view-lahettaja" class="view container">
-        <div id="lahettaja-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">HARJOITUS</div>
-        <h1 style="font-weight: 900; margin-bottom: 20px;">LÄHTÖPAIKKA</h1>
+        <div id="lahettaja-session-name" style="font-size: 12px; color: var(--text-secondary); font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">HARJOITUS</div>
+        <h1 style="font-weight: 900; margin-bottom: 16px;">LÄHTÖPAIKKA</h1>
+
+        <!-- Combined Start Clock + Starter Mode Banner -->
+        <div id="starter-clock-mode-banner" class="starter-clock-banner">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <span id="starter-clock-mode-icon" class="material-symbols-rounded icon-lg" aria-hidden="true" style="color: #60a5fa;">sensors</span>
+                <div>
+                    <div id="starter-clock-mode-title" style="font-size: 13px; font-weight: 900; text-transform: uppercase; color: #fff;">STARTTIKELLO: EI AKTIIVINEN</div>
+                    <div id="starter-clock-mode-desc" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Voit käyttää tätä puhelinta myös lähtöportin valokennona.</div>
+                </div>
+            </div>
+            <button type="button" id="btn-toggle-starter-camera" class="btn-mini btn-accent-outline" aria-pressed="false" onclick="toggleStarterCameraMode()">
+                <span class="material-symbols-rounded icon-sm" aria-hidden="true">videocam</span>
+                <span id="btn-toggle-starter-camera-label">OTA KÄYTTÖÖN</span>
+            </button>
+        </div>
+
+        <!-- Integrated Start Clock Camera (Visible when Starter acts as Start Clock) -->
+        <div id="starter-cv-card" class="card" style="display: none; text-align: center; padding: 18px; margin-bottom: 20px; border: 2px solid rgba(16, 185, 129, 0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 15px; color: #6ee7b7;">
+                    <span class="material-symbols-rounded" aria-hidden="true">sensors</span>
+                    <span>SISÄÄNRAKENNETTU STARTTIKELLO</span>
+                </div>
+                <span id="starter-node-info" style="font-size: 12px; font-weight: 800; color: var(--text-secondary);">VALMIINA</span>
+            </div>
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 14px; position: relative; overflow: hidden; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.15);">
+                <video id="starter-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="starter-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="starter-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; color: #fff;">CV POIS</div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-eco btn-mini" style="flex: 1;" onclick="dimSensorScreen()">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">battery_saver</span>
+                    <span>PIMEÄ NÄYTTÖ (ECO)</span>
+                </button>
+                <button type="button" class="btn btn-outline btn-mini" style="flex: 1;" onclick="triggerFisStartCountdownManual()">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">Campaign</span>
+                    <span>LÄHTÖÄÄNET (4+1 PIIP)</span>
+                </button>
+            </div>
+        </div>
 
         <!-- Hands-Free Voice Control & Course Traffic Lights -->
-        <div class="card" style="padding: 18px; margin-bottom: 24px; border: 1px solid rgba(59, 130, 246, 0.25);">
-            <div class="starter-traffic-light">
-                <div class="tl-bulbs">
+        <div class="card" style="padding: 18px; margin-bottom: 24px; border: 2px solid rgba(59, 130, 246, 0.35);">
+            <div class="starter-traffic-light" role="status" aria-live="polite">
+                <div class="tl-bulbs" aria-hidden="true">
                     <div id="tl-bulb-red" class="tl-bulb"></div>
                     <div id="tl-bulb-yellow" class="tl-bulb"></div>
                     <div id="tl-bulb-green" class="tl-bulb active-green"></div>
                 </div>
-                <div id="tl-status-label" style="font-size: 13px; font-weight: 900; color: var(--success); text-align: right;">🟢 RATA VAPAA</div>
+                <div id="tl-status-label" style="font-size: 14px; font-weight: 900; color: var(--success); text-align: right; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">check_circle</span>
+                    <span>RATA VAPAA</span>
+                </div>
             </div>
 
-            <button type="button" id="btn-starter-mic" class="voice-mic-btn" onclick="toggleVoiceListening('starter')">
-                🎤 KÄYNNISTÄ ÄÄNIOHJAUS
+            <button type="button" id="btn-starter-mic" class="voice-mic-btn" aria-pressed="false" onclick="toggleVoiceListening('starter')">
+                <span class="material-symbols-rounded" aria-hidden="true">mic</span>
+                <span>KÄYNNISTÄ ÄÄNIOHJAUS</span>
             </button>
 
-            <div id="starter-voice-transcript" style="margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.35); font-size: 13px; font-weight: 700; color: var(--text-secondary); min-height: 40px; display: flex; align-items: center; justify-content: center;">
+            <div id="starter-voice-transcript" role="status" aria-live="polite" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); font-size: 13px; font-weight: 700; color: var(--text-secondary); min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 Sano laskijan nimi (esim. "Matti") tai lisää uusi: "Uusi [Nimi]"
             </div>
 
             <div style="margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
-                <button type="button" class="btn-voice-tts-toggle tts-active" onclick="toggleVoiceTts()">🔊 KUULUTUS: PÄÄLLÄ</button>
-                <div class="voice-lang-bar">
-                    <button type="button" class="voice-lang-btn active" data-lang="FI" onclick="setVoiceLanguage('FI')">🇫🇮 FI</button>
-                    <button type="button" class="voice-lang-btn" data-lang="EN" onclick="setVoiceLanguage('EN')">🇬🇧 EN</button>
-                    <button type="button" class="voice-lang-btn" data-lang="SV" onclick="setVoiceLanguage('SV')">🇸🇪 SV</button>
-                    <button type="button" class="voice-lang-btn" data-lang="DE" onclick="setVoiceLanguage('DE')">🇩🇪 DE</button>
+                <button type="button" class="btn-voice-tts-toggle tts-active" aria-pressed="true" onclick="toggleVoiceTts()">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">volume_up</span>
+                    <span>KUULUTUS: PÄÄLLÄ</span>
+                </button>
+                <div class="voice-lang-bar" role="group" aria-label="Puheohjauksen kieli">
+                    <button type="button" class="voice-lang-btn active" data-lang="FI" aria-pressed="true" onclick="setVoiceLanguage('FI')">FI</button>
+                    <button type="button" class="voice-lang-btn" data-lang="EN" aria-pressed="false" onclick="setVoiceLanguage('EN')">EN</button>
+                    <button type="button" class="voice-lang-btn" data-lang="SV" aria-pressed="false" onclick="setVoiceLanguage('SV')">SV</button>
+                    <button type="button" class="voice-lang-btn" data-lang="DE" aria-pressed="false" onclick="setVoiceLanguage('DE')">DE</button>
                 </div>
             </div>
         </div>
 
-        <div id="starter-queue-view"></div>
-        <div style="margin-top: 40px; width: 100%;">
-            <p style="font-size: 12px; color: var(--text-secondary); font-weight: 900; text-transform: uppercase; margin-bottom: 20px;">
-                Seuraavaksi lähtevä:</p>
-            <div id="starter-skier-list"
-                style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 30px;"></div>
+        <div id="starter-queue-view" style="width: 100%;"></div>
+        <div style="margin-top: 32px; width: 100%;">
+            <h2 style="font-size: 13px; color: var(--text-secondary); font-weight: 900; text-transform: uppercase; margin-bottom: 16px;">
+                Valitse seuraava lähtijä:
+            </h2>
+            <div id="starter-skier-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 28px;"></div>
             
-            <div class="card" style="padding: 20px; background: rgba(255,255,255,0.02); border: 2px dashed rgba(255,255,255,0.1);">
-                <p style="font-size: 11px; font-weight: 900; opacity: 0.5; margin-bottom: 15px;">LISÄÄ UUSI URHEILIJA LENNOSSA:</p>
-                <input type="text" id="input-manual-athlete" class="premium-input" placeholder="URHEILIJAN NIMI" style="font-size: 18px; padding: 12px; margin-bottom: 15px;">
-                <button class="btn btn-outline btn-mini" style="width: 100%; border-color: var(--accent); color: var(--accent);" onclick="addAthleteManually('input-manual-athlete')">LISÄÄ JONOON</button>
+            <div class="card" style="padding: 20px; background: rgba(255,255,255,0.03); border: 2px dashed rgba(255,255,255,0.22);">
+                <label for="input-manual-athlete" class="field-label">Lisää uusi urheilija lennossa</label>
+                <input type="text" id="input-manual-athlete" class="premium-input" placeholder="Urheilijan nimi" style="font-size: 18px; padding: 14px; margin-bottom: 14px;">
+                <button type="button" class="btn btn-accent-outline" style="margin-bottom: 0;" onclick="addAthleteManually('input-manual-athlete')">
+                    <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+                    <span>LISÄÄ LÄHTÖJONOON</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Starttikello (Trigger) View -->
+    <!-- Starttikello (Dedicated Trigger) View -->
     <div id="view-lahto" class="view container">
-        <div id="lahto-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">HARJOITUS</div>
+        <div id="lahto-session-name" style="font-size: 12px; color: var(--text-secondary); font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">HARJOITUS</div>
         <div class="card" style="text-align: center; padding: 20px;">
-            <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 15px;">STARTTIKELLO</h2>
+            <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-rounded" aria-hidden="true" style="color: #60a5fa;">sensors</span>
+                <span>STARTTIKELLO</span>
+            </h2>
             
-            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px;">
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.15);">
                 <video id="start-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <canvas id="start-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
-                <div id="start-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
+                <div id="start-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff;">CV POIS</div>
             </div>
 
-            <p id="start-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
-            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
+            <p id="start-node-info" style="font-size: 15px; font-weight: 800; color: var(--text-secondary); margin-top: 16px;">VALMIINA</p>
+            <button type="button" class="btn btn-eco" style="margin-top: 16px; margin-bottom: 0;" onclick="dimSensorScreen()">
+                <span class="material-symbols-rounded" aria-hidden="true">battery_saver</span>
+                <span>PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</span>
+            </button>
         </div>
     </div>
 
     <!-- Maali View -->
     <div id="view-maali" class="view container">
-        <div id="maali-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">HARJOITUS</div>
+        <div id="maali-session-name" style="font-size: 12px; color: var(--text-secondary); font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">HARJOITUS</div>
         <div class="card" style="text-align: center; padding: 20px;">
-            <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 15px;">MAALIKELLO</h2>
+            <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-rounded" aria-hidden="true" style="color: var(--success);">sports_score</span>
+                <span>MAALIKELLO</span>
+            </h2>
 
-            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px;">
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.15);">
                 <video id="maali-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <canvas id="maali-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
-                <div id="maali-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
+                <div id="maali-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff;">CV POIS</div>
             </div>
 
-            <p id="finish-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
-            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
+            <p id="finish-node-info" style="font-size: 15px; font-weight: 800; color: var(--text-secondary); margin-top: 16px;">VALMIINA</p>
+            <button type="button" class="btn btn-eco" style="margin-top: 16px; margin-bottom: 0;" onclick="dimSensorScreen()">
+                <span class="material-symbols-rounded" aria-hidden="true">battery_saver</span>
+                <span>PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</span>
+            </button>
         </div>
     </div>
 
     <!-- Väliaika View -->
     <div id="view-valiaika" class="view container">
-        <div id="split-session-name" style="font-size: 10px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">HARJOITUS</div>
+        <div id="split-session-name" style="font-size: 12px; color: var(--text-secondary); font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">HARJOITUS</div>
         <div class="card" style="text-align: center; padding: 20px;">
-            <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 15px;">VÄLIAIKAPORTTI</h2>
+            <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-rounded" aria-hidden="true" style="color: #60a5fa;">timer</span>
+                <span>VÄLIAIKAPORTTI</span>
+            </h2>
 
-            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px;">
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.15);">
                 <video id="väliaika-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <canvas id="väliaika-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
-                <div id="väliaika-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">CV POIS</div>
+                <div id="väliaika-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff;">CV POIS</div>
             </div>
 
-            <p id="split-node-info" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">VALMIINA</p>
-            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
+            <p id="split-node-info" style="font-size: 15px; font-weight: 800; color: var(--text-secondary); margin-top: 16px;">VALMIINA</p>
+            <button type="button" class="btn btn-eco" style="margin-top: 16px; margin-bottom: 0;" onclick="dimSensorScreen()">
+                <span class="material-symbols-rounded" aria-hidden="true">battery_saver</span>
+                <span>PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</span>
+            </button>
         </div>
     </div>
 
-    <!-- Video View ... unchanged ... -->
-    
     <!-- Rangefinder View -->
     <div id="view-rangefinder" class="view" style="padding:0; margin:0; position: fixed; inset: 0; background: #000; z-index: 1000;">
         <video id="rf-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
         <canvas id="rf-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
         
         <div style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
-            <div style="background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 10px; opacity: 0.6; font-weight: 900;">ETÄISYYS:</div>
+            <div style="background: rgba(0,0,0,0.75); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.25);">
+                <div style="font-size: 11px; color: var(--text-secondary); font-weight: 900;">ETÄISYYS:</div>
                 <div id="rf-distance" style="font-size: 32px; font-weight: 900; color: #fbbf24;">-- m</div>
             </div>
-            <button class="btn" onclick="toggleRangefinder()" style="pointer-events: auto; background: var(--danger); color: #ffffff; margin:0; padding: 0; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid rgba(255,255,255,0.2);">✕</button>
+            <button type="button" class="btn" aria-label="Sulje etäisyysmittari" onclick="toggleRangefinder()" style="pointer-events: auto; background: var(--danger); color: #ffffff; margin:0; padding: 0; width: 48px; height: 48px; min-height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.35);">
+                <span class="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
         </div>
 
         <div style="position: absolute; bottom: 40px; left: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px;">
-            
-            <div style="background: rgba(0,0,0,0.8); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
-                <button class="btn btn-outline" onclick="adjustRFCalibration(-0.05)" style="font-size: 24px; padding: 15px; margin: 0; width: 60px;">-</button>
+            <div style="background: rgba(0,0,0,0.85); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.18);">
+                <button type="button" class="btn btn-outline" aria-label="Pienennä korjauskerrointa" onclick="adjustRFCalibration(-0.05)" style="font-size: 24px; padding: 12px; margin: 0; width: 64px; min-height: 56px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">remove</span>
+                </button>
                 <div style="text-align: center; flex: 1;">
-                    <div style="font-size: 10px; opacity: 0.5;">KORJAUSKERROIN</div>
-                    <div id="rf-calib-val" style="font-weight: 900;">1.00x</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); font-weight: 800;">KORJAUSKERROIN</div>
+                    <div id="rf-calib-val" style="font-weight: 900; font-size: 20px;">1.00x</div>
                 </div>
-                <button class="btn btn-outline" onclick="adjustRFCalibration(0.05)" style="font-size: 24px; padding: 15px; margin: 0; width: 60px;">+</button>
+                <button type="button" class="btn btn-outline" aria-label="Suurenna korjauskerrointa" onclick="adjustRFCalibration(0.05)" style="font-size: 24px; padding: 12px; margin: 0; width: 64px; min-height: 56px;">
+                    <span class="material-symbols-rounded" aria-hidden="true">add</span>
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Video View -->
     <div id="view-video" class="view container">
         <div class="card" style="text-align: center;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                <h2 style="margin: 0; font-weight: 900;">VIDEOTALLENNIN</h2>
-                <div id="video-s3-status" style="font-size: 9px; font-weight: 900; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; color: var(--danger);">S3: POIS</div>
+                <h2 style="margin: 0; font-weight: 900; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-rounded" aria-hidden="true" style="color: #60a5fa;">videocam</span>
+                    <span>VIDEOTALLENNIN</span>
+                </h2>
+                <div id="video-s3-status" style="font-size: 10px; font-weight: 900; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; color: var(--success);">TALLENNUS: OK</div>
             </div>
 
-            <div id="video-info-overlay"
-                style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--accent);">
-                <p style="font-size: 14px; opacity: 0.5; margin: 0;">LATAUTUU...</p>
+            <div id="video-info-overlay" style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--accent);">
+                <p style="font-size: 14px; color: var(--text-secondary); font-weight: 700; margin: 0;">LATAUTUU...</p>
             </div>
 
-            <div
-                style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 16px; position: relative; overflow: hidden; margin-bottom: 15px; border: 2px solid rgba(255,255,255,0.05);">
-                <video id="video-video" autoplay playsinline muted
-                    style="width: 100%; height: 100%; object-fit: cover;"></video>
-                <canvas id="video-overlay"
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
-                <div id="video-status-overlay"
-                    style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #fff;">
-                    EIKAAPPAUSTA</div>
+            <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 16px; position: relative; overflow: hidden; margin-bottom: 15px; border: 2px solid rgba(255,255,255,0.12);">
+                <video id="video-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="video-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                <div id="video-status-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff;">EI KAAPPAUSTA</div>
             </div>
-            <p id="video-node-info" style="font-size: 16px; font-weight: 700;">ODOTTAA SIJAINTITIETOA</p>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 16px;">KAMERA VALMIINA - ODOTTAA LASKIJAA 🎬</p>
-            <button type="button" class="btn btn-outline btn-mini" style="margin-top: 15px; width: 100%; border-color: rgba(16, 185, 129, 0.35); color: #10b981;" onclick="dimSensorScreen()">🔋 PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</button>
+            <div id="video-node-info" style="font-size: 16px; font-weight: 700;">ODOTTAA SIJAINTITIETOA</div>
+            <p style="font-size: 13px; color: var(--text-secondary); font-weight: 700; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <span class="material-symbols-rounded icon-sm" aria-hidden="true">movie</span>
+                <span>KAMERA VALMIINA – ODOTTAA LASKIJAA</span>
+            </p>
+            <button type="button" class="btn btn-eco" style="margin-top: 16px; margin-bottom: 0;" onclick="dimSensorScreen()">
+                <span class="material-symbols-rounded" aria-hidden="true">battery_saver</span>
+                <span>PIMEÄ NÄYTTÖ (VIRRANSÄÄSTÖ)</span>
+            </button>
         </div>
 
         <div class="card" style="text-align: left;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <p style="color: var(--text-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase;">Tallenteet laitteessa:</p>
-                <button class="btn-mini-link" style="font-size: 10px; opacity: 0.5;" onclick="clearVideoGallery()">TYHJENNÄ 🗑️</button>
+                <h3 style="color: var(--text-secondary); font-size: 13px; font-weight: 800; text-transform: uppercase;">Tallenteet laitteessa:</h3>
+                <button type="button" class="btn-mini-link" onclick="clearVideoGallery()">
+                    <span class="material-symbols-rounded icon-sm" aria-hidden="true">delete</span>
+                    <span>TYHJENNÄ</span>
+                </button>
             </div>
             <div id="video-gallery" style="display: flex; flex-direction: column; gap: 10px;">
-                <p style="font-size: 14px; opacity: 0.5; text-align: center; padding: 10px;">Ei tallenteita tässä
-                    istunnossa.</p>
+                <p style="font-size: 14px; color: var(--text-secondary); text-align: center; padding: 10px;">Ei tallenteita tässä istunnossa.</p>
             </div>
         </div>
     </div>
 
-    <!-- Katsomo View ... -->
-    
     <!-- View: Individual Run Card (Shared Result) -->
     <div id="view-run-card" class="view container" style="padding: 0;">
-        <div id="run-card-loading" style="text-align: center; padding: 50px; opacity: 0.5;">Ladataan suoritusta...</div>
-        <div id="run-card-content" style="display: none;">
+        <div id="run-card-loading" style="text-align: center; padding: 50px; color: var(--text-secondary); font-weight: 700;">Ladataan suoritusta...</div>
+        <div id="run-card-content" style="display: none; width: 100%;">
             <div class="card" style="padding: 0; overflow: hidden; border-radius: 24px;">
-                <div id="card-video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; display: none; position: relative; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div id="card-video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; display: none; position: relative; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid rgba(255,255,255,0.12);">
                     <video id="card-video" playsinline controls crossorigin="anonymous" style="width: 100%; height: 100%; object-fit: contain; display: none;"></video>
-                    <div id="card-video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3;">
-                        <div style="font-size: 40px; margin-bottom: 10px;">🎬</div>
-                        <div style="font-size: 12px; font-weight: 900; letter-spacing: 2px;">VIDEOA KÄSITELLÄÄN TAI SE PUUTTUU</div>
+                    <div id="card-video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary);">
+                        <span class="material-symbols-rounded icon-xl" aria-hidden="true" style="margin-bottom: 10px; opacity: 0.6;">movie</span>
+                        <div style="font-size: 12px; font-weight: 900; letter-spacing: 1.5px;">VIDEOTA KÄSITELLÄÄN TAI SE PUUTTUU</div>
                     </div>
                     <!-- AI & Drawing Overlay -->
                     <canvas id="card-ai-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
                     
                     <!-- Digital Clock Overlay -->
                     <div id="card-video-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 20;">
-                        <div style="background: rgba(0,0,0,0.8); display: inline-block; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">
-                            <div id="card-video-name" style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">LASKIJA</div>
+                        <div style="background: rgba(0,0,0,0.85); display: inline-block; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(10px);">
+                            <div id="card-video-name" style="font-size: 8px; font-weight: 900; color: #60a5fa; letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">LASKIJA</div>
                             <div id="card-video-clock" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
                         </div>
                     </div>
                     <!-- Playlist Dots & Active Camera Badge -->
                     <div id="card-playlist-dots" style="position: absolute; top: 15px; left: 15px; display: flex; gap: 5px; z-index: 20;"></div>
-                    <div id="card-role-badge" class="role-badge" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.75); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 20;">VIDEO</div>
+                    <div id="card-role-badge" class="role-badge" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #60a5fa; z-index: 20;">VIDEO</div>
                 </div>
                 <!-- Multi-Camera Selector & Dual Split-Screen Container for Analysis View -->
                 <div id="card-multicam-controls" style="display: none; padding: 12px 24px 0 24px;"></div>
                 <div id="card-dual-container" style="display: none; padding: 12px 24px 0 24px;"></div>
                 <div style="padding: 24px;">
-                    <div id="card-session-badge" style="background: var(--success); color: #000; font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-bottom: 8px;">HARJOITUS</div>
+                    <div id="card-session-badge" style="background: var(--success); color: #052e16; font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-bottom: 10px;">HARJOITUS</div>
                     <div id="card-runner-name" style="margin-bottom: 20px;">
-                        <!-- Populated by app.js: loadRunCard -->
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                             <div>
                                 <h2 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase;">LASKIJA</h2>
-                                <p style="margin: 4px 0; color: rgba(255,255,255,0.4); font-size: 13px; font-weight: 700;">LATAUTUU...</p>
+                                <p style="margin: 4px 0; color: var(--text-secondary); font-size: 13px; font-weight: 700;">LATAUTUU...</p>
                             </div>
                         </div>
                     </div>
-                    <!-- Legacy box hidden by app.js if needed -->
                     <div id="card-total-time-box" style="display: none; text-align: right; margin-bottom: 20px;">
-                        <span style="display: block; font-size: 10px; font-weight: 900; color: var(--accent); text-transform: uppercase;">LOPPUAIKA</span>
+                        <span style="display: block; font-size: 10px; font-weight: 900; color: #60a5fa; text-transform: uppercase;">LOPPUAIKA</span>
                         <div id="card-total-time" style="font-size: 36px; font-weight: 900; font-family: monospace;">--.--</div>
                     </div>
-                    <div id="card-run-date" style="margin: -10px 0 15px 0; color: rgba(255,255,255,0.4); font-size: 13px; font-weight: 700; text-transform: uppercase;"></div>
+                    <div id="card-run-date" style="margin: -10px 0 18px 0; color: var(--text-secondary); font-size: 13px; font-weight: 700; text-transform: uppercase;"></div>
                     
-                    <!-- AI Tools -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 25px; align-items: center; flex-wrap: wrap;">
-                        <button id="btn-toggle-draw" class="btn" onclick="toggleDrawingMode()" style="background: rgba(255,255,255,0.05); color: #fff; border: 2px solid transparent; flex: 1; padding: 15px; font-size: 14px; border-radius: var(--border-radius); margin: 0;">✏️ PIIRRÄ</button>
-                        <button id="btn-toggle-ai" class="btn" onclick="toggleStickman()" style="background: rgba(255,255,255,0.05); color: #fff; border: 2px solid transparent; flex: 1; padding: 15px; font-size: 14px; border-radius: var(--border-radius); margin: 0;">🤖 TIKKU-UKKO</button>
-                        <button class="btn" onclick="clearAIDrawings()" style="background: var(--danger); color: #fff; width: 60px; padding: 15px; border-radius: var(--border-radius); border: 2px solid rgba(255,255,255,0.1); margin: 0; display: flex; align-items: center; justify-content: center;">🗑️</button>
+                    <!-- AI & Drawing Tools -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 24px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" id="btn-toggle-draw" class="btn btn-outline" aria-pressed="false" onclick="toggleDrawingMode()" style="flex: 1; min-height: 54px; padding: 12px 16px; font-size: 14px; margin: 0;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">draw</span>
+                            <span>PIIRRÄ</span>
+                        </button>
+                        <button type="button" id="btn-toggle-ai" class="btn btn-outline" aria-pressed="false" onclick="toggleStickman()" style="flex: 1; min-height: 54px; padding: 12px 16px; font-size: 14px; margin: 0;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">accessibility_new</span>
+                            <span>TIKKU-UKKO</span>
+                        </button>
+                        <button type="button" class="btn btn-danger" aria-label="Tyhjennä piirrokset" onclick="clearAIDrawings()" style="width: 56px; min-height: 54px; padding: 12px; margin: 0;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">delete</span>
+                        </button>
                     </div>
 
-                    <div id="card-splits" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-bottom: 25px;"></div>
+                    <div id="card-splits" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; margin-bottom: 24px;"></div>
 
-                    <button class="btn btn-outline" onclick="location.href='/'" style="width: 100%;">ALPPIKELLO PÄÄSIVU</button>
+                    <button type="button" class="btn btn-outline" onclick="location.href='/'" style="width: 100%; margin-bottom: 0;">
+                        <span class="material-symbols-rounded" aria-hidden="true">home</span>
+                        <span>ALPPIKELLO PÄÄSIVU</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -452,35 +608,49 @@
     <!-- Archive View -->
     <div id="view-archive" class="view container">
         <header style="margin-bottom: 20px; text-align: center;">
-            <h1 style="font-weight: 900; letter-spacing: -1px; margin: 0; font-size: 32px;">ARKISTO 📁</h1>
+            <h1 style="font-weight: 900; letter-spacing: -1px; margin: 0; font-size: 30px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span class="material-symbols-rounded icon-lg" aria-hidden="true" style="color: #60a5fa;">folder_open</span>
+                <span>ARKISTO</span>
+            </h1>
         </header>
         
-        <div id="archive-search-container" style="margin-bottom: 25px;">
-            <input type="text" id="input-archive-search" class="premium-input" placeholder="HAE NIMI TAI URHEILIJA..." onkeyup="filterArchives()" style="font-size: 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1);">
+        <div id="archive-search-container" style="margin-bottom: 24px; width: 100%;">
+            <label for="input-archive-search" class="visually-hidden">Hae harjoituksen tai urheilijan nimellä</label>
+            <input type="text" id="input-archive-search" class="premium-input" placeholder="Hae harjoitus tai urheilija..." onkeyup="filterArchives()" style="font-size: 16px; margin-bottom: 0;">
         </div>
-        <div id="archive-list" style="display: flex; flex-direction: column; gap: 12px;">
-            <p style="opacity:0.4; text-align:center; padding:40px;">Ladataan arkistoa...</p>
+        <div id="archive-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+            <p style="color: var(--text-secondary); text-align:center; padding:40px;">Ladataan arkistoa...</p>
         </div>
-        <div id="archive-results" style="display:none; margin-top: 30px; border-top: 2px solid rgba(255,255,255,0.05); padding-top: 30px;">
-            <button class="btn-mini-link" onclick="document.getElementById('archive-results').style.display='none'; document.getElementById('archive-list').style.display='flex';" style="margin-bottom: 20px;">← TAKAISIN LISTAAN</button>
-            <h2 id="archive-session-title" style="margin-bottom: 20px; font-weight: 900;">SESSION NIMI</h2>
+        <div id="archive-results" style="display:none; width: 100%; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 24px;">
+            <button type="button" class="btn-mini-link" onclick="document.getElementById('archive-results').style.display='none'; document.getElementById('archive-list').style.display='flex';" style="margin-bottom: 20px;">
+                <span class="material-symbols-rounded icon-sm" aria-hidden="true">arrow_back</span>
+                <span>TAKAISIN ARKISTOLISTAAN</span>
+            </button>
+            <h2 id="archive-session-title" style="margin-bottom: 20px; font-weight: 900;">HARJOITUKSEN NIMI</h2>
             <div id="archive-results-list" class="results-container"></div>
         </div>
 
-        <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; width: 100%;">
-            <button class="btn btn-outline" onclick="location.reload()" style="width: 100%; border-color: rgba(255,255,255,0.1);">SULJE ARKISTO</button>
+        <div style="margin-top: 36px; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 24px; width: 100%;">
+            <button type="button" class="btn btn-outline" onclick="location.reload()" style="width: 100%;">
+                <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                <span>SULJE ARKISTO</span>
+            </button>
         </div>
     </div>
     
     <!-- Footer Status & Role Change -->
-    <div class="status-bar">
-        <button id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()" style="display:none;">VAIHDA
-            LAITTEEN ROOLI</button>
+    <footer class="status-bar">
+        <button type="button" id="btn-change-role" class="btn-change-role" onclick="showRoleSelection()" style="display:none;">
+            <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>
+            <span>VAIHDA LAITTEEN ROOLI</span>
+        </button>
 
-        <button id="btn-change-name" class="btn-mini-link" onclick="showOnboardingStep('name')"
-            style="display:none;">VAIHDA NIMI (ID: <span id="current-user-name-display"></span>)</button>
+        <button type="button" id="btn-change-name" class="btn-mini-link" onclick="showOnboardingStep('name')" style="display:none;">
+            <span class="material-symbols-rounded icon-sm" aria-hidden="true">badge</span>
+            <span>VAIHDA NIMI (ID: <span id="current-user-name-display"></span>)</span>
+        </button>
 
-        <div style="display: flex; gap: 30px; opacity: 0.4;">
+        <div style="display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; color: var(--text-secondary);">
             <div class="status-indicator">
                 <span id="conn-dot" class="dot"></span>
                 <span id="conn-text">Kalibroidaan...</span>
@@ -489,44 +659,49 @@
                 Kello: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 10px; opacity: 0.2; margin-top: 20px;">Alppikello v3.1.0 | © 2026</p>
-    </div>
+        <p style="font-size: 11px; color: var(--text-secondary); opacity: 0.7; margin-top: 12px;">Alppikello v3.2.0 | © 2026</p>
+    </footer>
 
     <!-- Cold-Weather OLED Blackout Overlay (Tap anywhere to wake preview for 25s) -->
-    <div id="sensor-eco-overlay" onclick="wakeSensorScreen(true)">
-        <div style="font-size: 42px; margin-bottom: 14px; opacity: 0.5;">🔋</div>
-        <div id="eco-overlay-role" style="font-size: 16px; font-weight: 900; letter-spacing: 1px; color: rgba(255,255,255,0.65); margin-bottom: 10px;">
+    <div id="sensor-eco-overlay" role="button" tabindex="0" aria-label="Virransäästötila päällä. Kosketa näyttöä herättääksesi esikatselu." onclick="wakeSensorScreen(true)">
+        <span class="material-symbols-rounded icon-xl" aria-hidden="true" style="margin-bottom: 16px; color: #34d399;">battery_saver</span>
+        <div id="eco-overlay-role" style="font-size: 16px; font-weight: 900; letter-spacing: 1px; color: #ffffff; margin-bottom: 10px;">
             ANTURI – VIRRANSÄÄSTÖTILA
         </div>
-        <div id="eco-overlay-status" style="font-size: 14px; font-weight: 800; color: #10b981; margin-bottom: 28px;">
+        <div id="eco-overlay-status" style="font-size: 14px; font-weight: 800; color: #34d399; margin-bottom: 28px; display: flex; align-items: center; justify-content: center; gap: 8px;">
             KAMERA JA VALOKENNO AKTIIVISENA TAUSTALLA
         </div>
-        <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.12); padding: 10px 18px; border-radius: 20px;">
+        <div style="font-size: 12px; font-weight: 800; color: var(--text-secondary); border: 2px solid rgba(255,255,255,0.22); padding: 12px 20px; border-radius: 20px;">
             KOSKETA NÄYTTÖÄ HERÄTTÄÄKSESI ESIKATSELU (25s)
         </div>
     </div>
 
     <!-- QR Modal -->
-    <div id="qr-modal" class="modal-overlay" style="display:none;" onclick="hideQRModal()">
-        <div class="premium-modal" style="background: #fff; padding: 40px; border-radius: 40px;" onclick="event.stopPropagation()">
-            <h2 style="color: #000; font-weight: 900; margin-bottom: 20px;">LIITY HARJOITUKSEEN</h2>
-            <div style="display: flex; justify-content: center; margin-bottom: 25px; padding: 10px; border: 20px solid #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border-radius: 20px;">
+    <div id="qr-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title" style="display:none;" onclick="hideQRModal()">
+        <div class="premium-modal" style="background: #fff; padding: 36px 24px; border-radius: 36px;" onclick="event.stopPropagation()">
+            <h2 id="qr-modal-title" style="color: #000; font-weight: 900; margin-bottom: 20px;">LIITY HARJOITUKSEEN</h2>
+            <div style="display: flex; justify-content: center; margin-bottom: 24px; padding: 10px; border: 16px solid #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.12); border-radius: 20px;">
                 <canvas id="session-qr-large" style="width: 260px !important; height: 260px !important;"></canvas>
             </div>
-            <p style="color: #666; font-size: 14px; font-weight: 700; margin-bottom: 25px;">NÄYTÄ TÄMÄ QR TOISELLE PUHELIMELLE</p>
-            <button class="btn btn-primary" onclick="hideQRModal()" style="margin-top: 0;">SULJE</button>
+            <p style="color: #334155; font-size: 14px; font-weight: 800; margin-bottom: 24px;">NÄYTÄ TÄMÄ QR-KOODI TOISELLE PUHELIMELLE</p>
+            <button type="button" class="btn btn-primary" onclick="hideQRModal()" style="margin: 0;">
+                <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                <span>SULJE</span>
+            </button>
         </div>
     </div>
 
     <!-- Premium Modal Overlay -->
-    <div id="modal-overlay" class="modal-overlay">
+    <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-text">
         <div class="premium-modal">
-            <span id="modal-icon" class="modal-icon">⚠️</span>
+            <span id="modal-icon" class="modal-icon" aria-hidden="true">
+                <span class="material-symbols-rounded icon-xl">warning</span>
+            </span>
             <h2 id="modal-title" class="modal-title"></h2>
             <p id="modal-text" class="modal-text"></p>
             <div class="modal-footer">
-                <button id="modal-confirm" class="btn btn-danger" style="margin-top: 0; padding: 20px;">VAHVISTA</button>
-                <button id="modal-cancel" class="btn btn-outline" style="margin-bottom: 0;">PERUUTA</button>
+                <button type="button" id="modal-confirm" class="btn btn-primary" style="margin: 0; padding: 18px;">VAHVISTA</button>
+                <button type="button" id="modal-cancel" class="btn btn-outline" style="margin: 0;">PERUUTA</button>
             </div>
         </div>
     </div>
@@ -535,19 +710,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
-    <!-- Core App Logic (Stateless PHP/REST + Monotonic Clock + Multi-Language Voice Edition) -->
-    <script src="js/qrcode.min.js?v=3.1.0"></script>
-    <script src="js/state.js?v=3.1.0"></script>
-    <script src="js/utils.js?v=3.1.0"></script>
-    <script src="js/voice.js?v=3.1.0"></script>
-    <script src="js/socket.js?v=3.1.0"></script>
-    <script src="js/video.js?v=3.1.0"></script>
-    <script src="js/cv.js?v=3.1.0"></script>
-    <script src="js/ai.js?v=3.1.0"></script>
-    <script src="js/timing.js?v=3.1.0"></script>
-    <script src="js/ui.js?v=3.1.0"></script>
-    <script src="js/rangefinder.js?v=3.1.0"></script>
-    <script src="js/app.js?v=3.1.0"></script>
+    <!-- Core App Logic (Stateless PHP/REST + Monotonic Clock + Multi-Language Voice + Combined Start Gate Edition) -->
+    <script src="js/qrcode.min.js?v=3.2.0"></script>
+    <script src="js/state.js?v=3.2.0"></script>
+    <script src="js/utils.js?v=3.2.0"></script>
+    <script src="js/voice.js?v=3.2.0"></script>
+    <script src="js/socket.js?v=3.2.0"></script>
+    <script src="js/video.js?v=3.2.0"></script>
+    <script src="js/cv.js?v=3.2.0"></script>
+    <script src="js/ai.js?v=3.2.0"></script>
+    <script src="js/timing.js?v=3.2.0"></script>
+    <script src="js/ui.js?v=3.2.0"></script>
+    <script src="js/rangefinder.js?v=3.2.0"></script>
+    <script src="js/app.js?v=3.2.0"></script>
 </body>
 
 </html>

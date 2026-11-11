@@ -22,10 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
 async function createSession() {
     if (!userName) return showOnboardingStep('name');
 
-    const btn = document.querySelector('#coach-only-create .btn-outline');
+    const btn = document.getElementById('btn-create-session') || document.querySelector('#coach-only-create .btn');
     if (btn) {
         btn.disabled = true;
-        btn.innerText = "LUODAAN...";
+        btn.innerHTML = `${iconHtml('hourglass_top', 'icon-md')} LUODAAN...`;
     }
 
     let placeStr = "TREENI";
@@ -141,6 +141,10 @@ function handleSessionJoin(session, role) {
     if (roleForCV && typeof startCV === 'function') {
         console.log(`[AUTO-CV] Smarter activation for ${role}`);
         startCV(roleForCV);
+    } else if (role === 'LÄHETTÄJÄ') {
+        if (typeof handleStarterRoleEntry === 'function') {
+            handleStarterRoleEntry(session);
+        }
     } else if (typeof stopCV === 'function') {
         const isRecording = (typeof mediaRecorder !== 'undefined' && mediaRecorder && mediaRecorder.state === 'recording' && pendingRunnerMetadata);
         if (!isRecording) stopCV();
@@ -184,10 +188,10 @@ function showOnboardingStep(step) {
         const titleEl = document.getElementById('session-step-title');
         if (titleEl) titleEl.innerText = isCoach ? 'LUO HARJOITUS' : 'LIITY HARJOITUKSEEN';
         
-        const createBtn = document.querySelector('#coach-only-create .btn-outline');
+        const createBtn = document.getElementById('btn-create-session') || document.querySelector('#coach-only-create .btn');
         if (createBtn) {
             createBtn.disabled = false;
-            createBtn.innerText = "LUO UUSI HARJOITUS";
+            createBtn.innerHTML = `${iconHtml('add_circle', 'icon-md')} LUO UUSI HARJOITUS`;
         }
 
         const manualToggle = document.getElementById('btn-toggle-manual');
@@ -574,12 +578,12 @@ async function loadRunCard(runId, archiveFilename = null) {
                 vEl.setAttribute('data-start-time', startTime);
                 vEl.setAttribute('data-total-time', totalTimeMs);
                 vName.innerText = data.name.toUpperCase();
-                if (vBadge) vBadge.innerText = `📹 ${vid.cameraLabel}`;
+                if (vBadge) vBadge.innerHTML = `${iconHtml('videocam', 'icon-sm')} ${vid.cameraLabel}`;
 
                 const dots = document.getElementById('card-playlist-dots');
                 if (dots) {
                     dots.innerHTML = videos.map((_, i) => 
-                        `<div style="width:20px; height:4px; background:${i === idx ? 'var(--accent)' : 'rgba(255,255,255,0.2)'}; border-radius:2px; cursor:pointer;" onclick="window.cardPlayerLoad(${i}, true)"></div>`
+                        `<button type="button" aria-label="Kamera ${i + 1}" style="width:24px; height:6px; border:none; padding:0; background:${i === idx ? 'var(--accent)' : 'rgba(255,255,255,0.25)'}; border-radius:3px; cursor:pointer;" onclick="window.cardPlayerLoad(${i}, true)"></button>`
                     ).join('');
                 }
 
@@ -614,15 +618,15 @@ async function loadRunCard(runId, archiveFilename = null) {
                         <div style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1;">
                             ${videos.map((v, idx) => `
                                 <button type="button" id="card-cam-btn-${idx}" onclick="window.cardPlayerLoad(${idx}, true)"
-                                    style="background: ${idx === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.06)'}; color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                    style="background: ${idx === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.06)'}; color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 38px; padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                                     <span id="card-cam-dot-${idx}" style="width: 7px; height: 7px; border-radius: 50%; background: #fff; display: inline-block;"></span>
-                                    📹 ${v.cameraLabel} <span style="opacity: 0.65; font-size: 9px;">(${v.relStartSec.toFixed(0)}–${v.relEndSec.toFixed(0)}s)</span>
+                                    ${iconHtml('videocam', 'icon-sm')} ${v.cameraLabel} <span style="opacity: 0.75; font-size: 9px;">(${v.relStartSec.toFixed(0)}–${v.relEndSec.toFixed(0)}s)</span>
                                 </button>
                             `).join('')}
                         </div>
                         <button type="button" id="dual-btn-cardmain" onclick="toggleCardDualMode()"
-                            style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer;">
-                            ⧉ 2 KAMERAA RINNAKKAIN
+                            style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.45); min-height: 38px; padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                            ${iconHtml('grid_view', 'icon-sm')} 2 KAMERAA RINNAKKAIN
                         </button>
                     </div>
                 `;
@@ -634,29 +638,29 @@ async function loadRunCard(runId, archiveFilename = null) {
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
                             <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
                                 <video id="dual-vid-a-cardmain" src="${first.url}" playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
-                                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent);">📹 ${first.cameraLabel}</div>
+                                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); display: inline-flex; align-items: center; gap: 4px;">${iconHtml('videocam', 'icon-sm')} ${first.cameraLabel}</div>
                                 <div id="dual-wait-a-cardmain" style="position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); text-align: center; padding: 10px;"></div>
                             </div>
                             <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
                                 <video id="dual-vid-b-cardmain" src="${second.url}" playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
-                                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #10b981;">📹 ${second.cameraLabel}</div>
+                                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">${iconHtml('videocam', 'icon-sm')} ${second.cameraLabel}</div>
                                 <div id="dual-wait-b-cardmain" style="position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); text-align: center; padding: 10px;"></div>
                             </div>
                         </div>
                         <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <button type="button" id="dual-play-btn-cardmain" onclick="toggleDualPlay('cardmain')"
-                                    style="background: var(--accent); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 900; font-size: 12px; cursor: pointer;">
-                                    ▶ TOISTA SYNKRONOITUNA
+                                    style="background: var(--accent); color: #fff; border: none; min-height: 40px; padding: 8px 14px; border-radius: 8px; font-weight: 900; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                    ${iconHtml('play_arrow', 'icon-sm')} TOISTA SYNKRONOITUNA
                                 </button>
                                 <div style="display: flex; gap: 4px;">
-                                    <button type="button" onclick="setDualSpeed('cardmain', 1.0)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">1x</button>
-                                    <button type="button" onclick="setDualSpeed('cardmain', 0.5)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">0.5x</button>
-                                    <button type="button" onclick="setDualSpeed('cardmain', 0.25)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">0.25x</button>
+                                    <button type="button" onclick="setDualSpeed('cardmain', 1.0)" style="background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2); min-height: 36px; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer;">1x</button>
+                                    <button type="button" onclick="setDualSpeed('cardmain', 0.5)" style="background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2); min-height: 36px; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer;">0.5x</button>
+                                    <button type="button" onclick="setDualSpeed('cardmain', 0.25)" style="background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2); min-height: 36px; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer;">0.25x</button>
                                 </div>
                                 <div id="dual-clock-cardmain" style="margin-left: auto; font-family: monospace; font-size: 18px; font-weight: 900; color: #fff;">0,00 s</div>
                             </div>
-                            <input type="range" id="dual-scrub-cardmain" min="0" max="${totalSec}" step="0.02" value="0"
+                            <input type="range" id="dual-scrub-cardmain" aria-label="Aika-akseli" min="0" max="${totalSec}" step="0.02" value="0"
                                 oninput="scrubDualCameras('cardmain', this.value)"
                                 style="width: 100%; accent-color: var(--accent); cursor: pointer;">
                         </div>
@@ -672,7 +676,7 @@ async function loadRunCard(runId, archiveFilename = null) {
                         vCont.style.display = 'none';
                         dualCont.style.display = 'block';
                         if (btn) {
-                            btn.innerText = '✕ SULJE RINNAKKAISNÄKYMÄ';
+                            btn.innerHTML = `${iconHtml('close', 'icon-sm')} SULJE RINNAKKAISNÄKYMÄ`;
                             btn.style.background = 'var(--accent)';
                             btn.style.color = '#fff';
                         }
@@ -682,7 +686,7 @@ async function loadRunCard(runId, archiveFilename = null) {
                         dualCont.style.display = 'none';
                         vCont.style.display = 'flex';
                         if (btn) {
-                            btn.innerText = '⧉ 2 KAMERAA RINNAKKAIN';
+                            btn.innerHTML = `${iconHtml('grid_view', 'icon-sm')} 2 KAMERAA RINNAKKAIN`;
                             btn.style.background = 'rgba(16, 185, 129, 0.15)';
                             btn.style.color = '#10b981';
                         }
@@ -754,24 +758,24 @@ function renderArchiveList(archives) {
         const athleteNames = (a.athletes || []).slice(0, 3).join(', ') + ((a.athletes && a.athletes.length > 3) ? '...' : '');
         
         const deleteBtn = (selectedRole === 'VALMENTAJA' || currentRole === 'VALMENTAJA') 
-            ? `<button onclick="event.stopPropagation(); deleteArchive('${a.filename}')" style="background:#ef4444; color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:900; font-size:10px; cursor:pointer; margin-left:10px;">POISTA 🗑️</button>` 
+            ? `<button type="button" onclick="event.stopPropagation(); deleteArchive('${a.filename}')" style="background:#ef4444; color:#fff; border:none; min-height:40px; padding:8px 12px; border-radius:8px; font-weight:900; font-size:11px; cursor:pointer; margin-left:10px; display:inline-flex; align-items:center; gap:4px;">${iconHtml('delete', 'icon-sm')} POISTA</button>` 
             : '';
 
         return `
-            <div class="card" onclick="openArchive('${a.filename}')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${a.autoArchived ? 'rgba(255,255,255,0.2)' : 'var(--accent)'};">
+            <div class="card" role="button" tabindex="0" onclick="openArchive('${a.filename}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openArchive('${a.filename}');}" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${a.autoArchived ? 'rgba(255,255,255,0.2)' : 'var(--accent)'};">
                 <div style="flex-grow:1; padding-right:15px;">
                     <div style="font-weight:900; font-size:18px; display:flex; align-items:center;">
                         ${a.name.toUpperCase()} ${autoLabel}
                     </div>
-                    <div style="font-size:11px; opacity:0.5; font-weight:700; margin-bottom:4px;">
+                    <div style="font-size:11px; opacity:0.65; font-weight:700; margin-bottom:4px;">
                         ${dateStr} • ${a.athleteCount} SUORITUSTA
                     </div>
-                    <div style="font-size:10px; opacity:0.3; font-weight:600; text-transform:uppercase;">
+                    <div style="font-size:10px; opacity:0.45; font-weight:600; text-transform:uppercase;">
                         ${athleteNames || 'Ei nimitietoja'}
                     </div>
                 </div>
                 <div style="display:flex; align-items:center;">
-                    <div style="color:var(--accent); font-weight:900; white-space:nowrap; font-size:12px;">KATSO →</div>
+                    <div style="color:var(--accent); font-weight:900; white-space:nowrap; font-size:12px; display:inline-flex; align-items:center; gap:4px;">KATSO ${iconHtml('arrow_forward', 'icon-sm')}</div>
                     ${deleteBtn}
                 </div>
             </div>
@@ -827,8 +831,8 @@ async function openArchive(filename) {
 
         resultsList.innerHTML = session.results.map((r, i) => {
             const splitList = (r.splits || []).map((s, idx) => 
-                `<div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">
-                    <span style="color: var(--accent); font-weight: 800;">⏱️ V${idx + 1}:</span> 
+                `<div style="font-size: 11px; opacity: 0.8; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; margin-right: 12px;">
+                    <span style="color: var(--accent); font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">${iconHtml('timer', 'icon-sm')} V${idx + 1}:</span> 
                     <span style="font-weight: 700;">${formatDuration(s.duration)} s</span> 
                 </div>`
             ).join('');
@@ -838,14 +842,14 @@ async function openArchive(filename) {
             const videoHtml = buildMultiCamPlayerHtml(safeArcId, r, videos);
 
             const deleteRunBtn = (selectedRole === 'VALMENTAJA' || currentRole === 'VALMENTAJA')
-                ? `<button onclick="deleteRunFromArchive('${filename}', '${r.runId}')" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.2); padding:4px 8px; border-radius:4px; font-size:9px; font-weight:800; cursor:pointer;">POISTA SUORITUS 🗑️</button>`
+                ? `<button type="button" onclick="deleteRunFromArchive('${filename}', '${r.runId}')" style="background:rgba(239, 68, 68, 0.14); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.35); min-height:36px; padding:6px 10px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin-top:6px;">${iconHtml('delete', 'icon-sm')} POISTA SUORITUS</button>`
                 : '';
 
             return `
                 <div class="card" id="run-card-${r.runId}" style="margin-bottom:15px; border-left: 4px solid #fff;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
                         <div>
-                            <span style="opacity:0.3; font-size: 11px;">#${session.results.length - i}</span>
+                            <span style="opacity:0.45; font-size: 11px;">#${session.results.length - i}</span>
                             <div style="font-weight: 900; font-size: 22px; margin: 4px 0;">${r.name.toUpperCase()}</div>
                         </div>
                         <div style="text-align:right;">
@@ -856,8 +860,8 @@ async function openArchive(filename) {
                     ${videoHtml}
                     <div style="margin-top: 10px;">${splitList}</div>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button class="btn btn-outline" onclick="shareRun('${r.runId}', '${filename}')" style="flex: 1; margin: 0; padding: 15px; font-size: 14px;">JAA 🔗</button>
-                        <button class="btn btn-primary" onclick="loadRunCard('${r.runId}', '${filename}')" style="flex: 1; margin: 0; padding: 15px; font-size: 14px;">ANALYSOI 🤖</button>
+                        <button type="button" class="btn btn-outline" onclick="shareRun('${r.runId}', '${filename}')" style="flex: 1; margin: 0; padding: 15px; font-size: 14px;">${iconHtml('share', 'icon-sm')} JAA TULOS</button>
+                        <button type="button" class="btn btn-primary" onclick="loadRunCard('${r.runId}', '${filename}')" style="flex: 1; margin: 0; padding: 15px; font-size: 14px;">${iconHtml('analytics', 'icon-sm')} ANALYSOI</button>
                     </div>
                 </div>
             `;
@@ -865,7 +869,7 @@ async function openArchive(filename) {
 
         resultsList.innerHTML += `
             <div style="margin: 40px 0 20px 0; border-top: 2px solid rgba(255,255,255,0.05); padding-top: 30px;">
-                <button class="btn btn-primary" onclick="shareArchive('${filename}')" style="width: 100%; height: 80px; font-size: 20px;">JAA KOKO HARJOITUS 🔗</button>
+                <button type="button" class="btn btn-primary" onclick="shareArchive('${filename}')" style="width: 100%; height: 80px; font-size: 20px;">${iconHtml('share', 'icon-md')} JAA KOKO HARJOITUS</button>
             </div>
         `;
     } catch (e) {

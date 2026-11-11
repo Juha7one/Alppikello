@@ -1,8 +1,22 @@
 // --- Alppikello Timing Actions ---
 
-function addToQueue(athleteId) {
+function addToQueue(athleteId, options = {}) {
     if (!currentSession) return console.error("[CLIENT] No active session!");
     console.log("[CLIENT] Emitting move_to_queue for athlete:", athleteId);
+
+    const queue = currentSession.activeQueue || [];
+    const isAlreadyQueued = queue.some(q => String(q.id) === String(athleteId));
+
+    if (isAlreadyQueued) {
+        if (typeof cancelFisStartSequence === 'function') cancelFisStartSequence();
+    } else {
+        window.starterArmingUntil = Date.now() + 2000;
+        const isCourseClear = (currentSession.onCourse || []).length === 0;
+        if (!options.fromVoice && currentRole === 'LÄHETTÄJÄ' && isCourseClear && typeof playFisStartSequence === 'function') {
+            playFisStartSequence();
+        }
+    }
+
     socket.emit('move_to_queue', { 
         sessionId: currentSession.id, 
         athleteId: String(athleteId) 
@@ -26,6 +40,10 @@ function simulateTrigger(type, explicitTimestamp = null) {
         ? ('run_' + timestamp + '_' + Math.random().toString(36).substring(2, 6))
         : undefined;
 
+    if (type === 'start' && typeof cancelFisStartSequence === 'function') {
+        cancelFisStartSequence();
+    }
+
     socket.emit(`trigger_${type}`, {
         sessionId: currentSession.id,
         timestamp,
@@ -33,14 +51,19 @@ function simulateTrigger(type, explicitTimestamp = null) {
         deviceName: userName || 'Tuntematon laite'
     });
 
-    // Feedback
-    const id = type === 'start' ? 'start' : (type === 'finish' ? 'finish' : 'split');
-    const infoEl = document.getElementById(`${id}-node-info`);
-    if (infoEl) {
-        const old = infoEl.innerText;
-        infoEl.innerText = "LAUKAISTU! ⏱️";
-        setTimeout(() => infoEl.innerText = old, 2000);
-    }
+    // Visual Feedback on sensor / starter node info
+    const ids = type === 'start' ? ['start-node-info', 'starter-node-info'] : (type === 'finish' ? ['finish-node-info'] : ['split-node-info']);
+    ids.forEach(nodeId => {
+        const infoEl = document.getElementById(nodeId);
+        if (infoEl) {
+            infoEl.innerText = "LAUKAISTU!";
+            infoEl.style.color = "var(--success)";
+            setTimeout(() => {
+                infoEl.innerText = "VALMIINA";
+                infoEl.style.color = "var(--text-secondary)";
+            }, 2000);
+        }
+    });
 }
 
 function markRunnerDNF(runnerId) {
@@ -70,8 +93,8 @@ function confirmEndSession() {
     
     showPremiumModal({
         title: 'LOPETETAANKO HARJOITUS?',
-        text: 'Kaikkien laitteiden yhteys katkaistaan ja tulokset arkistoidaan JSON-tiedostoon.',
-        icon: '🏁',
+        text: 'Kaikkien laitteiden yhteys katkaistaan ja tulokset arkistoidaan pysyvästi.',
+        icon: 'sports_score',
         confirmText: 'KYLLÄ, LOPETA NYT',
         cancelText: 'PYSY HARJOITUKSESSA',
         onConfirm: () => {
@@ -93,17 +116,27 @@ function addAthleteManually(inputId = 'input-manual-athlete') {
     const name = input ? input.value.trim() : "";
     if (!currentSession || !name) return alert("Anna urheilijan nimi!");
 
+    window.starterArmingUntil = Date.now() + 2000;
+    const isCourseClear = (currentSession.onCourse || []).length === 0;
+
     socket.emit('add_athlete', {
         sessionId: currentSession.id,
         name: name,
         autoQueue: true // Starter adds directly to queue
     });
 
+    if (currentRole === 'LÄHETTÄJÄ' && isCourseClear && typeof playFisStartSequence === 'function') {
+        playFisStartSequence();
+    }
+
     if (input) input.value = '';
 }
 
 function clearQueue() {
     if (!currentSession) return;
+    if (typeof cancelFisStartSequence === 'function') {
+        cancelFisStartSequence();
+    }
     console.log("[CLIENT] Clearing queue for session:", currentSession.id);
     socket.emit('clear_queue', { sessionId: currentSession.id });
 }

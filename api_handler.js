@@ -193,7 +193,11 @@ module.exports = function registerApiPhpRoutes(app, upload) {
 
             if (role === 'LÄHTÖ' || role === 'MAALI') {
                 Object.keys(session.devices || {}).forEach(did => {
-                    if (session.devices[did].role === role && did !== deviceId) delete session.devices[did];
+                    if (session.devices[did].role === role && did !== deviceId) {
+                        delete session.devices[did];
+                    } else if (role === 'LÄHTÖ' && session.devices[did].role === 'LÄHETTÄJÄ' && did !== deviceId) {
+                        session.devices[did].actsAsStartClock = false;
+                    }
                 });
             }
             session.devices[deviceId] = {
@@ -202,6 +206,7 @@ module.exports = function registerApiPhpRoutes(app, upload) {
                 name: deviceName,
                 lastHeartbeat: Date.now(),
                 battery: 100,
+                actsAsStartClock: role === 'LÄHTÖ',
                 location: body.location || null
             };
             if (role === 'URHEILIJA') {
@@ -353,6 +358,21 @@ module.exports = function registerApiPhpRoutes(app, upload) {
                     case 'update_session_name':
                         if (ev.name) session.name = ev.name;
                         break;
+                    case 'set_starter_clock_mode': {
+                        const devId = ev.deviceId || '';
+                        const enabled = !!ev.enabled;
+                        if (devId && session.devices && session.devices[devId]) {
+                            session.devices[devId].actsAsStartClock = enabled;
+                        }
+                        if (enabled && session.devices) {
+                            Object.keys(session.devices).forEach(did => {
+                                if (session.devices[did].role === 'LÄHTÖ' && did !== devId) {
+                                    delete session.devices[did];
+                                }
+                            });
+                        }
+                        break;
+                    }
                     case 'end_session': {
                         session.ended = true;
                         session.archivedAt = Date.now();

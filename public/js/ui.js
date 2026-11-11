@@ -13,13 +13,15 @@ function showPremiumModal(config) {
     titleEl.innerText = config.title || '';
     titleEl.style.display = config.title ? 'block' : 'none';
     textEl.innerText = config.text || '';
-    iconEl.innerText = config.icon || '⚠️';
+
+    const iconName = config.icon || 'warning';
+    iconEl.innerHTML = `<span class="material-symbols-rounded icon-xl" aria-hidden="true">${iconName}</span>`;
     
     confirmBtn.innerText = config.confirmText || 'VAHVISTA';
     if (config.cancelText === '') {
         cancelBtn.style.display = 'none';
     } else {
-        cancelBtn.style.display = 'block';
+        cancelBtn.style.display = 'inline-flex';
         cancelBtn.innerText = config.cancelText || 'PERUUTA';
     }
 
@@ -71,7 +73,7 @@ function updateUILayout() {
     const sNameEl = document.getElementById('coach-session-name');
     if (sNameEl) sNameEl.innerText = currentSession.name.toUpperCase();
 
-    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'athlete'].forEach(id => {
+    ['start', 'finish', 'lahettaja', 'lahto', 'split', 'athlete', 'maali'].forEach(id => {
         const el = document.getElementById(`${id}-session-name`);
         if (el) el.innerText = currentSession.name;
     });
@@ -90,7 +92,7 @@ function updateUILayout() {
     const storageActiveNow = !!(s3Active);
     const coachS3Resource = document.getElementById('s3-status-badge');
     if (coachS3Resource) {
-        coachS3Resource.innerText = storageActiveNow ? "TALLENNUS: OK" : "TALLENNUS: VIRHE";
+        coachS3Resource.innerHTML = `${iconHtml(storageActiveNow ? 'cloud_done' : 'error', 'icon-sm')} <span>${storageActiveNow ? "TALLENNUS: OK" : "TALLENNUS: VIRHE"}</span>`;
         coachS3Resource.style.color = storageActiveNow ? "var(--success)" : "var(--danger)";
         coachS3Resource.style.borderColor = storageActiveNow ? "var(--success)" : "var(--danger)";
     }
@@ -104,11 +106,13 @@ function updateUILayout() {
     const coachBadge = document.getElementById('coach-role-badge');
     if (coachBadge) {
         if (currentRole === 'KATSOMO') {
-            coachBadge.innerText = 'KATSOMO / LIVE';
+            coachBadge.innerHTML = `${iconHtml('visibility', 'icon-sm')} <span>KATSOMO / LIVE</span>`;
             coachBadge.style.background = 'var(--success)';
+            coachBadge.style.color = '#052e16';
         } else if (currentRole === 'VALMENTAJA') {
-            coachBadge.innerText = 'VALMENTAJA';
+            coachBadge.innerHTML = `${iconHtml('analytics', 'icon-sm')} <span>VALMENTAJA</span>`;
             coachBadge.style.background = 'var(--accent)';
+            coachBadge.style.color = '#ffffff';
         }
     }
 
@@ -124,10 +128,6 @@ function updateUILayout() {
 // MULTI-CAMERA TIMESTAMP NORMALIZATION & SYNCHRONIZED PLAYBACK ENGINE
 // ============================================================================
 
-/**
- * Normalizes a run's video array so every clip has accurate videoStartTime and videoEndTime
- * relative to the synchronized epoch clock, sorted chronologically.
- */
 function normalizeRunVideos(r) {
     const startTime = Number(r.startTime) || 0;
     const totalTime = Number(r.totalTime) || 0;
@@ -142,7 +142,6 @@ function normalizeRunVideos(r) {
         const durMs = Number(v.durationMs) || 0;
 
         if (vStart <= 0) {
-            // Legacy fallback: assume clip started 4s before trigger
             vStart = trig - 4000;
         }
         if (vEnd <= 0 || vEnd <= vStart) {
@@ -169,9 +168,6 @@ function normalizeRunVideos(r) {
     return normalized;
 }
 
-/**
- * Computes the Race Clock time (in seconds from run.startTime) for a video element at its current playback position.
- */
 function getVideoRaceTimeSec(vEl) {
     const startTime = Number(vEl.getAttribute('data-start-time')) || 0;
     const videoAbsStart = Number(vEl.getAttribute('data-video-start-time')) || 0;
@@ -196,23 +192,15 @@ function getVideoRaceTimeSec(vEl) {
     return raceSec;
 }
 
-/**
- * Given a target Race Clock time (seconds from run.startTime) and a normalized clip object,
- * returns the corresponding video.currentTime (in seconds) within that clip.
- */
 function getClipTimeForRaceSec(clip, runStartTime, targetRaceSec) {
     if (!runStartTime || !clip.videoStartTime) return 0;
     const targetAbsMs = runStartTime + (targetRaceSec * 1000);
     return (targetAbsMs - clip.videoStartTime) / 1000;
 }
 
-/**
- * Builds the HTML for a Multi-Camera Player (supports Single View with Smart TV-Cut,
- * Instant Angle Switch at the exact same race time, and Dual Split-Screen side-by-side mode).
- */
 function buildMultiCamPlayerHtml(safeRunId, r, videos) {
     if (!videos || videos.length === 0) {
-        return `<div style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; display: flex; align-items: center; justify-content: center; opacity: 0.2; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">🎬 ODOTETAAN VIDEOTA...</div>`;
+        return `<div style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary); font-weight: 700; font-size: 13px; border: 1px solid rgba(255,255,255,0.12); margin-top: 10px;">${iconHtml('movie', 'icon-md')} <span>ODOTETAAN VIDEOTA...</span></div>`;
     }
 
     const first = videos[0];
@@ -222,56 +210,61 @@ function buildMultiCamPlayerHtml(safeRunId, r, videos) {
     const totalSec = ((r.totalTime || 25000) / 1000).toFixed(2);
 
     const camButtonsHtml = videos.length > 1 ? `
-        <div class="multicam-bar" id="cam-bar-${safeRunId}" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; justify-content: space-between;">
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1;">
+        <div class="multicam-bar" id="cam-bar-${safeRunId}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; justify-content: space-between;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; flex: 1;">
                 ${videos.map((v, idx) => {
                     const rangeStr = `${v.relStartSec.toFixed(0)}–${v.relEndSec.toFixed(0)}s`;
                     const isFirst = idx === 0;
                     return `<button type="button" id="cam-btn-${safeRunId}-${idx}" class="cam-angle-btn"
                         onclick="switchClip('${safeRunId}', ${idx}, true)"
-                        style="background: ${isFirst ? 'var(--accent)' : 'rgba(255,255,255,0.08)'}; color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                        <span class="overlap-dot" id="cam-dot-${safeRunId}-${idx}" style="width: 7px; height: 7px; border-radius: 50%; background: ${isFirst ? '#fff' : 'rgba(255,255,255,0.3)'}; display: inline-block;"></span>
-                        📹 ${v.cameraLabel} <span style="opacity: 0.65; font-size: 9px;">(${rangeStr})</span>
+                        style="background: ${isFirst ? 'var(--accent)' : 'rgba(255,255,255,0.08)'}; color: #fff; border: 2px solid ${isFirst ? '#fff' : 'rgba(255,255,255,0.25)'}; min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="overlap-dot" id="cam-dot-${safeRunId}-${idx}" style="width: 8px; height: 8px; border-radius: 50%; background: ${isFirst ? '#fff' : 'rgba(255,255,255,0.35)'}; display: inline-block;"></span>
+                        ${iconHtml('videocam', 'icon-sm')}
+                        <span>${v.cameraLabel}</span>
+                        <span style="opacity: 0.8; font-size: 10px;">(${rangeStr})</span>
                     </button>`;
                 }).join('')}
             </div>
             <button type="button" id="dual-btn-${safeRunId}" onclick="toggleDualCameraMode('${safeRunId}')"
-                style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer; white-space: nowrap;">
-                ⧉ 2 KAMERAA RINNAKKAIN
+                style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 2px solid #34d399; min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                ${iconHtml('splitscreen', 'icon-sm')}
+                <span>2 KAMERAA RINNAKKAIN</span>
             </button>
         </div>
     ` : '';
 
     const dualViewHtml = videos.length > 1 ? `
-        <div id="dual-container-${safeRunId}" style="display: none; margin-top: 10px; background: #050505; border-radius: 12px; padding: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
+        <div id="dual-container-${safeRunId}" style="display: none; margin-top: 10px; background: #050505; border-radius: 12px; padding: 12px; border: 2px solid rgba(16, 185, 129, 0.35);">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
-                <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15);">
                     <video id="dual-vid-a-${safeRunId}" src="${first.url}" playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
-                    <div id="dual-badge-a-${safeRunId}" style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent);">📹 ${first.cameraLabel}</div>
-                    <div id="dual-wait-a-${safeRunId}" style="position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); text-align: center; padding: 10px;"></div>
+                    <div id="dual-badge-a-${safeRunId}" style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #60a5fa; display: inline-flex; align-items: center; gap: 4px;">${iconHtml('videocam', 'icon-sm')} <span>${first.cameraLabel}</span></div>
+                    <div id="dual-wait-a-${safeRunId}" style="position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-align: center; padding: 10px;"></div>
                 </div>
-                <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15);">
                     <video id="dual-vid-b-${safeRunId}" src="${second.url}" playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
-                    <div id="dual-badge-b-${safeRunId}" style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #10b981;">📹 ${second.cameraLabel}</div>
-                    <div id="dual-wait-b-${safeRunId}" style="position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); text-align: center; padding: 10px;"></div>
+                    <div id="dual-badge-b-${safeRunId}" style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #34d399; display: inline-flex; align-items: center; gap: 4px;">${iconHtml('videocam', 'icon-sm')} <span>${second.cameraLabel}</span></div>
+                    <div id="dual-wait-b-${safeRunId}" style="position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); text-align: center; padding: 10px;"></div>
                 </div>
             </div>
-            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <button type="button" id="dual-play-btn-${safeRunId}" onclick="toggleDualPlay('${safeRunId}')"
-                        style="background: var(--accent); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 900; font-size: 12px; cursor: pointer;">
-                        ▶ TOISTA SYNKRONOITUNA
+                        style="background: var(--accent); color: #fff; border: 2px solid rgba(255,255,255,0.25); min-height: 44px; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        ${iconHtml('play_arrow', 'icon-sm')}
+                        <span>TOISTA SYNKRONOITUNA</span>
                     </button>
-                    <div style="display: flex; gap: 4px;">
-                        <button type="button" onclick="setDualSpeed('${safeRunId}', 1.0)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">1x</button>
-                        <button type="button" onclick="setDualSpeed('${safeRunId}', 0.5)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">0.5x</button>
-                        <button type="button" onclick="setDualSpeed('${safeRunId}', 0.25)" style="background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer;">0.25x</button>
+                    <div style="display: flex; gap: 6px;" role="group" aria-label="Toistonopeus">
+                        <button type="button" onclick="setDualSpeed('${safeRunId}', 1.0)" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.25); min-height: 44px; min-width: 44px; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer;">1x</button>
+                        <button type="button" onclick="setDualSpeed('${safeRunId}', 0.5)" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.25); min-height: 44px; min-width: 44px; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer;">0.5x</button>
+                        <button type="button" onclick="setDualSpeed('${safeRunId}', 0.25)" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.25); min-height: 44px; min-width: 44px; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer;">0.25x</button>
                     </div>
                     <div id="dual-clock-${safeRunId}" style="margin-left: auto; font-family: monospace; font-size: 18px; font-weight: 900; color: #fff;">0,00 s</div>
                 </div>
+                <label for="dual-scrub-${safeRunId}" class="visually-hidden">Selaa laskuaikaa</label>
                 <input type="range" id="dual-scrub-${safeRunId}" min="0" max="${totalSec}" step="0.02" value="0"
                     oninput="scrubDualCameras('${safeRunId}', this.value)"
-                    style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+                    style="width: 100%; accent-color: var(--accent); cursor: pointer; margin-bottom: 0; padding: 8px 0;">
             </div>
         </div>
     ` : '';
@@ -279,13 +272,13 @@ function buildMultiCamPlayerHtml(safeRunId, r, videos) {
     return `
         <div class="multicam-wrapper" id="wrap-${safeRunId}">
             <div class="video-container playlist-player" id="player-${safeRunId}" data-videos="${videoDataJson}" data-current-index="0" data-start-time="${r.startTime || 0}" data-total-time="${r.totalTime || 0}"
-                 style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
+                 style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.15); margin-top: 10px;">
                 <video id="vid-el-${safeRunId}" src="${first.url}" data-trigger-time="${first.triggerTime || r.startTime}" data-video-start-time="${first.videoStartTime || 0}"
                        data-start-time="${r.startTime || 0}" data-total-time="${r.totalTime || 0}" controls playsinline style="width: 100%; height: 100%; object-fit: contain;"
                        onended="playNextClip('${safeRunId}')" onplay="attachVideoClockLogic(this)" onloadedmetadata="attachVideoClockLogic(this)"></video>
-                <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: var(--accent); z-index: 10;">📹 ${first.cameraLabel}</div>
-                <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
-                    <div style="font-size: 8px; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${runnerNameUpper}</div>
+                <div class="role-badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #60a5fa; z-index: 10;">${iconHtml('videocam', 'icon-sm')} <span>${first.cameraLabel}</span></div>
+                <div class="clock-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; background: rgba(0,0,0,0.85); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(10px); transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 10;">
+                    <div style="font-size: 8px; font-weight: 900; color: #60a5fa; letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">${runnerNameUpper}</div>
                     <div class="clock-val" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0,00</div>
                 </div>
             </div>
@@ -310,7 +303,6 @@ function attachVideoClockLogic(vEl) {
             const displayTimeSec = getVideoRaceTimeSec(vEl);
             clockVal.innerText = formatSeconds(displayTimeSec);
 
-            // Highlight any other camera buttons that also cover this exact race moment!
             if (runId) {
                 updateOverlappingCameraBadges(runId, displayTimeSec);
             }
@@ -342,23 +334,17 @@ function updateOverlappingCameraBadges(runId, currentRaceSec) {
             btn.style.borderColor = '#fff';
             dot.style.background = '#fff';
         } else if (coversMoment) {
-            // Simultaneous coverage! Highlight with green dot so user knows this camera has the exact same moment
             btn.style.background = 'rgba(16, 185, 129, 0.2)';
-            btn.style.borderColor = '#10b981';
-            dot.style.background = '#10b981';
+            btn.style.borderColor = '#34d399';
+            dot.style.background = '#34d399';
         } else {
-            btn.style.background = 'rgba(255,255,255,0.06)';
-            btn.style.borderColor = 'rgba(255,255,255,0.15)';
-            dot.style.background = 'rgba(255,255,255,0.25)';
+            btn.style.background = 'rgba(255,255,255,0.08)';
+            btn.style.borderColor = 'rgba(255,255,255,0.25)';
+            dot.style.background = 'rgba(255,255,255,0.35)';
         }
     });
 }
 
-/**
- * Switches camera clip.
- * If preserveRaceTime === true, calculates the current Race Clock position and seeks the new camera
- * directly to the exact same millisecond of the ski run (so overlapping cameras never jump backward!).
- */
 function switchClip(runId, index, preserveRaceTime = true) {
     const player = document.getElementById(`player-${runId}`);
     if (!player) return;
@@ -378,7 +364,7 @@ function switchClip(runId, index, preserveRaceTime = true) {
     vidEl.src = clip.url;
     vidEl.setAttribute('data-trigger-time', clip.triggerTime || startTime);
     vidEl.setAttribute('data-video-start-time', clip.videoStartTime || 0);
-    if (badge) badge.innerText = `📹 ${(clip.cameraLabel || clip.role || 'VIDEO').toUpperCase()}`;
+    if (badge) badge.innerHTML = `${iconHtml('videocam', 'icon-sm')} <span>${(clip.cameraLabel || clip.role || 'VIDEO').toUpperCase()}</span>`;
     player.setAttribute('data-current-index', index);
 
     updateOverlappingCameraBadges(runId, currentRaceSec);
@@ -389,7 +375,6 @@ function switchClip(runId, index, preserveRaceTime = true) {
 
         if (preserveRaceTime && startTime > 0 && clip.videoStartTime > 0) {
             const targetClipSec = getClipTimeForRaceSec(clip, startTime, currentRaceSec);
-            // If the target race moment falls inside this camera's recording, jump directly to it!
             if (targetClipSec > 0.1 && targetClipSec < (vidEl.duration - 0.2)) {
                 vidEl.currentTime = targetClipSec;
             }
@@ -403,10 +388,6 @@ function switchClip(runId, index, preserveRaceTime = true) {
     vidEl.addEventListener('loadedmetadata', onLoaded);
 }
 
-/**
- * Smart TV-Cut when a clip ends: advances to the next camera and seeks directly
- * to the current race timestamp so overlapping cameras continue seamlessly.
- */
 function playNextClip(runId) {
     const player = document.getElementById(`player-${runId}`);
     if (!player) return;
@@ -439,9 +420,10 @@ function toggleDualCameraMode(runId) {
         singlePlayer.style.display = 'none';
         dualCont.style.display = 'block';
         if (dualBtn) {
-            dualBtn.innerText = '✕ SULJE RINNAKKAISNÄKYMÄ';
+            dualBtn.innerHTML = `${iconHtml('close', 'icon-sm')} <span>SULJE RINNAKKAISNÄKYMÄ</span>`;
             dualBtn.style.background = 'var(--accent)';
             dualBtn.style.color = '#fff';
+            dualBtn.style.borderColor = '#fff';
         }
         scrubDualCameras(runId, currentRaceSec);
     } else {
@@ -449,9 +431,10 @@ function toggleDualCameraMode(runId) {
         dualCont.style.display = 'none';
         singlePlayer.style.display = 'flex';
         if (dualBtn) {
-            dualBtn.innerText = '⧉ 2 KAMERAA RINNAKKAIN';
+            dualBtn.innerHTML = `${iconHtml('splitscreen', 'icon-sm')} <span>2 KAMERAA RINNAKKAIN</span>`;
             dualBtn.style.background = 'rgba(16, 185, 129, 0.15)';
-            dualBtn.style.color = '#10b981';
+            dualBtn.style.color = '#6ee7b7';
+            dualBtn.style.borderColor = '#34d399';
         }
     }
 }
@@ -540,7 +523,7 @@ function startDualPlay(runId) {
     dualPlayStates[runId] = state;
 
     const btn = document.getElementById(`dual-play-btn-${runId}`);
-    if (btn) btn.innerText = '⏸ TAUKO';
+    if (btn) btn.innerHTML = `${iconHtml('pause', 'icon-sm')} <span>TAUKO</span>`;
 
     let lastTick = performance.now();
     if (state.timer) clearInterval(state.timer);
@@ -577,7 +560,7 @@ function stopDualPlay(runId) {
     if (vidB) vidB.pause();
 
     const btn = document.getElementById(`dual-play-btn-${runId}`);
-    if (btn) btn.innerText = '▶ TOISTA SYNKRONOITUNA';
+    if (btn) btn.innerHTML = `${iconHtml('play_arrow', 'icon-sm')} <span>TOISTA SYNKRONOITUNA</span>`;
 }
 
 function setDualSpeed(runId, rate) {
@@ -609,6 +592,7 @@ function renderValmentajaView() {
     const coachListEl = document.getElementById('coach-athlete-list');
     const coachCtrlEl = document.getElementById('coach-controls');
     const sessionNameEl = document.getElementById('coach-session-name');
+    const devStatusEl = document.getElementById('device-status-list');
     if (!activeEl || !resultEl) return;
 
     if (sessionNameEl && currentSession.name) {
@@ -619,6 +603,7 @@ function renderValmentajaView() {
     const athletes = currentSession.allAthletes || [];
     const onCourse = currentSession.onCourse || [];
     const queue = currentSession.activeQueue || [];
+    const devicesObj = currentSession.devices || {};
 
     const currentHash = JSON.stringify({
         role: currentRole,
@@ -626,6 +611,7 @@ function renderValmentajaView() {
         ocCount: onCourse.length,
         qCount: queue.length,
         aCount: athletes.length,
+        dKeys: Object.keys(devicesObj).map(k => `${k}:${devicesObj[k].role}:${devicesObj[k].actsAsStartClock}`),
         vSum: results.reduce((acc, r) => acc + (r.videos ? r.videos.length : (r.videoUrl ? 1 : 0)), 0),
         sSum: results.reduce((acc, r) => acc + (r.status === 'DNF' ? 1 : 0) + (r.splits ? r.splits.length : 0), 0)
     });
@@ -640,13 +626,14 @@ function renderValmentajaView() {
     if (coachListEl) {
         coachListEl.innerHTML = athletes.length ? athletes.map(a => {
             const isInQueue = queue.some(q => String(q.id) === String(a.id));
-            const style = isInQueue ? 'background: var(--accent); border-color: var(--accent); color: #fff;' : '';
+            const style = isInQueue ? 'background: var(--accent); border-color: #ffffff; color: #fff;' : '';
             return `
-                <button class="btn btn-outline" style="padding: 15px; margin-bottom: 8px; font-size: 20px; text-align: center; display: block; width: 100%; ${style}" onclick="addToQueue('${a.id}')">
-                    ${a.name.toUpperCase()} ${isInQueue ? '⏱️' : ''}
+                <button type="button" class="btn btn-outline" aria-pressed="${isInQueue}" style="padding: 16px; margin-bottom: 8px; font-size: 19px; width: 100%; ${style}" onclick="addToQueue('${a.id}')">
+                    <span>${a.name.toUpperCase()}</span>
+                    ${isInQueue ? iconHtml('schedule', 'icon-md') : ''}
                 </button>
             `;
-        }).join('') : '<p>Ei nimiä listalla.</p>';
+        }).join('') : '<p style="color: var(--text-secondary); padding: 12px;">Ei urheilijoita listalla.</p>';
     }
 
     // 2. Active Runners
@@ -655,27 +642,37 @@ function renderValmentajaView() {
         activeEl.innerHTML = onCourse.map(r => {
             const runningTime = Math.max(0, now - r.startTime);
             return `
-                <div class="card" style="border-left: 8px solid var(--accent); padding: 25px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h3 style="margin: 0; font-size: 34px;">${r.name.toUpperCase()}</h3>
-                            <p style="color: var(--accent); font-weight: 900; margin: 8px 0; font-size: 18px;">LASKEE...</p>
+                <div class="card" style="border-left: 8px solid var(--accent); padding: 24px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="text-align: left;">
+                            <h3 style="margin: 0; font-size: 30px;">${r.name.toUpperCase()}</h3>
+                            <p style="color: #60a5fa; font-weight: 900; margin: 6px 0 0 0; font-size: 15px; display: flex; align-items: center; gap: 6px;">
+                                ${iconHtml('downhill_skiing', 'icon-sm')}
+                                <span>RADALLA...</span>
+                            </p>
                         </div>
                         <div style="text-align: right;">
-                            <h2 id="timer-${r.id}" style="margin: 0; font-family: monospace; font-size: 54px; font-weight: 800;">${formatDuration(runningTime)}</h2>
+                            <div id="timer-${r.id}" style="margin: 0; font-family: monospace; font-size: 46px; font-weight: 900;">${formatDuration(runningTime)}</div>
                         </div>
                     </div>
-                    ${isCoach ? `<div style="display:flex; gap:10px; margin-top:15px;">
-                        <button class="btn btn-danger" onclick="markRunnerDNF('${r.id}')">DNF</button>
-                        <button class="btn btn-outline" style="color: var(--warning);" onclick="manualFinish('${r.id}')">MANUAALI</button>
+                    ${isCoach ? `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:18px;">
+                        <button type="button" class="btn btn-danger" style="margin: 0;" onclick="markRunnerDNF('${r.id}')">
+                            ${iconHtml('cancel', 'icon-sm')}
+                            <span>KESKEYTYS (DNF)</span>
+                        </button>
+                        <button type="button" class="btn btn-outline" style="margin: 0; border-color: var(--warning); color: #fcd34d;" onclick="manualFinish('${r.id}')">
+                            ${iconHtml('timer_off', 'icon-sm')}
+                            <span>KÄSIAIKA</span>
+                        </button>
                     </div>` : ''}
                 </div>
             `;
         }).join('');
     } else {
-        activeEl.innerHTML = `<div style="text-align: center; padding: 40px; opacity:0.3;">RATA VAPAA</div>`;
+        activeEl.innerHTML = `<div class="card" style="text-align: center; padding: 28px; color: var(--text-secondary); font-weight: 700;">RATA VAPAA</div>`;
     }
 
+    // 3. Results List
     if (results.length > 0) {
         const validResults = [...results]
             .filter(r => r.totalTime > 0 && r.status !== 'DNF')
@@ -742,8 +739,9 @@ function renderValmentajaView() {
                 const sGapVal = s.duration - splitBest;
                 const splitGap = (s.duration > splitBest) ? ` +${formatDuration(sGapVal)}` : '';
                 return `
-                    <div style="font-size: 13px; opacity: 0.8; margin-top: 6px; font-weight: 700;">
-                        <span style="color: var(--accent);">⏱️ VÄLIAIKA ${idx + 1}:</span> 
+                    <div style="font-size: 13px; color: var(--text-primary); margin-top: 6px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                        ${iconHtml('timer', 'icon-sm')}
+                        <span style="color: #60a5fa;">VÄLIAIKA ${idx + 1}:</span> 
                         <span>${formatDuration(s.duration)}</span> 
                         <span class="result-gap">${splitGap}</span>
                     </div>`;
@@ -753,15 +751,15 @@ function renderValmentajaView() {
             const videoHtml = buildMultiCamPlayerHtml(safeRunId, r, videos);
 
             return `
-                <div class="card" style="margin-bottom:15px; border-left: 4px solid var(--accent); padding-bottom: 25px; position: relative;">
+                <div class="card" style="margin-bottom:18px; border-left: 4px solid var(--accent); padding-bottom: 20px; position: relative;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 12px;">
                         <div style="text-align: left;">
-                            <div style="font-weight: 900; font-size: 24px; letter-spacing: -0.5px; opacity: 1;">
+                            <div style="font-weight: 900; font-size: 23px; letter-spacing: -0.5px;">
                                 ${r.name.toUpperCase()}, #${runNumbers[r.runId] || '?'}
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 11px; font-weight: 800; opacity: 0.5; letter-spacing: 0.5px; text-transform: uppercase;">${label}</div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase;">${label}</div>
                             <div style="font-weight: 900; font-size: 24px; color: #fff;">
                                 ${timeVal}${gapHtml}
                             </div>
@@ -770,18 +768,55 @@ function renderValmentajaView() {
 
                     ${videoHtml}
 
-                    <div style="margin-top: 15px; text-align: left; padding-left: 5px;">
+                    <div style="margin-top: 14px; text-align: left; padding-left: 4px;">
                         ${splitList}
                     </div>
 
-                    <button class="corner-share-btn" onclick="shareRun('${safeRunId}')">
-                        <span>🔗</span>
-                    </button>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <button type="button" class="btn-share-run" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.28);" onclick="loadRunCard('${safeRunId}')">
+                            ${iconHtml('analytics', 'icon-sm')}
+                            <span>ANALYSOI</span>
+                        </button>
+                        <button type="button" class="btn-share-run" onclick="shareRun('${safeRunId}')">
+                            ${iconHtml('share', 'icon-sm')}
+                            <span>JAA TULOS</span>
+                        </button>
+                    </div>
                 </div>
             `;
         }).join('');
     } else {
-        resultEl.innerHTML = `<p style="text-align:center; opacity:0.3; padding:20px;">Ei tuloksia vielä.</p>`;
+        resultEl.innerHTML = `<p style="text-align:center; color: var(--text-secondary); padding:20px;">Ei tuloksia vielä.</p>`;
+    }
+
+    // 4. Connected Devices List
+    if (devStatusEl) {
+        const devList = Object.values(devicesObj);
+        const roleIconMap = {
+            'VALMENTAJA': 'analytics',
+            'LÄHETTÄJÄ': 'record_voice_over',
+            'LÄHTÖ': 'sensors',
+            'MAALI': 'sports_score',
+            'VÄLIAIKA': 'timer',
+            'VIDEO': 'videocam',
+            'URHEILIJA': 'downhill_skiing',
+            'KATSOMO': 'visibility'
+        };
+        devStatusEl.innerHTML = devList.map(d => {
+            const rLabel = (d.role === 'LÄHETTÄJÄ' && d.actsAsStartClock)
+                ? 'LÄHETTÄJÄ + STARTTIKELLO'
+                : (d.role || 'LAITE');
+            const ic = roleIconMap[d.role] || 'smartphone';
+            return `
+                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 12px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <span class="material-symbols-rounded" aria-hidden="true" style="color: #60a5fa;">${ic}</span>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 800; color: #fff;">${(d.name || 'Laite').toUpperCase()}</div>
+                        <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary);">${rLabel}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 }
 
@@ -793,6 +828,9 @@ function renderStarterView() {
     if (typeof updateStarterTrafficLight === 'function') {
         updateStarterTrafficLight(currentSession);
     }
+    if (typeof updateStarterClockBannerUI === 'function') {
+        updateStarterClockBannerUI();
+    }
 
     const queue = currentSession.activeQueue || [];
     const athletes = currentSession.allAthletes || [];
@@ -800,22 +838,26 @@ function renderStarterView() {
     if (queue.length > 0) {
         const next = queue[0];
         queueEl.innerHTML = `
-            <div onclick="clearQueue()" style="background: var(--accent); padding: 40px; border-radius: 24px; text-align: center; cursor: pointer; border: 2px solid rgba(255,255,255,0.2);">
-                <p style="font-weight:900; opacity:0.8; margin:0 0 10px 0;">SEURAAVA LÄHTIJÄ:</p>
-                <h1 style="font-size: 72px; margin:0; line-height: 1;">${next.name.toUpperCase()}</h1>
-                <p style="font-size: 11px; margin-top: 15px; opacity: 0.6;">(Paina tai sano "Peruuta" poistaaksesi)</p>
-            </div>
+            <button type="button" class="starter-next-btn" onclick="clearQueue()">
+                <span style="font-size: 13px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; opacity: 0.9;">SEURAAVA LÄHTIJÄ:</span>
+                <span style="font-size: 56px; font-weight: 900; line-height: 1.05; word-break: break-word;">${next.name.toUpperCase()}</span>
+                <span style="font-size: 12px; font-weight: 800; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.25); padding: 6px 14px; border-radius: 20px;">
+                    ${iconHtml('cancel', 'icon-sm')}
+                    <span>Paina tai sano "Peruuta" poistaaksesi jonosta</span>
+                </span>
+            </button>
         `;
     } else {
-        queueEl.innerHTML = `<div style="padding: 40px; text-align:center; opacity:0.3;">JONO TYHJÄ</div>`;
+        queueEl.innerHTML = `<div class="card" style="padding: 28px; text-align:center; color: var(--text-secondary); font-weight: 700; margin-bottom: 0;">LÄHTÖJONO TYHJÄ</div>`;
     }
 
     listEl.innerHTML = athletes.map(a => {
         const isInQueue = queue.some(q => String(q.id) === String(a.id));
-        const style = isInQueue ? 'background: var(--accent); border-color: var(--accent); color: #fff;' : '';
+        const style = isInQueue ? 'background: var(--accent); border-color: #ffffff; color: #fff;' : '';
         return `
-            <button class="btn btn-outline" style="padding:15px; width:100%; margin-bottom:10px; ${style}" onclick="addToQueue('${a.id}')">
-                ${a.name.toUpperCase()}
+            <button type="button" class="btn btn-outline" aria-pressed="${isInQueue}" style="padding:16px 12px; width:100%; margin-bottom:0; font-size: 17px; ${style}" onclick="addToQueue('${a.id}')">
+                <span>${a.name.toUpperCase()}</span>
+                ${isInQueue ? iconHtml('check_circle', 'icon-sm') : ''}
             </button>
         `;
     }).join('');
@@ -892,8 +934,9 @@ function renderAthleteView() {
             const sGapVal = s.duration - splitBest;
             const splitGap = (s.duration > splitBest) ? ` +${formatDuration(sGapVal)}` : '';
             return `
-                <div style="font-size: 13px; opacity: 0.8; margin-top: 6px; font-weight: 700;">
-                    <span style="color: var(--accent);">⏱️ VÄLIAIKA ${idx + 1}:</span> 
+                <div style="font-size: 13px; color: var(--text-primary); margin-top: 6px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    ${iconHtml('timer', 'icon-sm')}
+                    <span style="color: #60a5fa;">VÄLIAIKA ${idx + 1}:</span> 
                     <span>${formatDuration(s.duration)}</span> 
                     <span class="result-gap">${splitGap}</span>
                 </div>`;
@@ -903,30 +946,37 @@ function renderAthleteView() {
         const videoHtml = buildMultiCamPlayerHtml(safeRunId, r, videos);
 
         return `
-            <div class="card" style="margin-bottom:15px; padding-bottom: 25px; position: relative; border-left: 4px solid var(--accent);">
+            <div class="card" style="margin-bottom:18px; padding-bottom: 20px; position: relative; border-left: 4px solid var(--accent);">
                 <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 12px;">
                     <div style="text-align: left;">
-                        <div style="font-weight: 900; font-size: 24px; letter-spacing: -0.5px; opacity: 1;">
+                        <div style="font-weight: 900; font-size: 23px; letter-spacing: -0.5px;">
                             ${r.name.toUpperCase()}, #${runNumbers[r.runId] || '?'}
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 11px; font-weight: 800; opacity: 0.5; letter-spacing: 0.5px; text-transform: uppercase;">${label}</div>
+                        <div style="font-size: 11px; font-weight: 800; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase;">${label}</div>
                         <div style="font-weight: 900; font-size: 24px; color: #fff;">
                             ${timeVal}${gapHtml}
                         </div>
                     </div>
                 </div>
                 ${videoHtml}
-                <div style="margin-top: 15px; text-align: left; padding-left: 5px;">
+                <div style="margin-top: 14px; text-align: left; padding-left: 4px;">
                     ${splitList}
                 </div>
-                <button class="corner-share-btn" onclick="shareRun('${r.runId || safeRunId}')">
-                    <span>🔗</span>
-                </button>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <button type="button" class="btn-share-run" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.28);" onclick="loadRunCard('${r.runId || safeRunId}')">
+                        ${iconHtml('analytics', 'icon-sm')}
+                        <span>ANALYSOI</span>
+                    </button>
+                    <button type="button" class="btn-share-run" onclick="shareRun('${r.runId || safeRunId}')">
+                        ${iconHtml('share', 'icon-sm')}
+                        <span>JAA TULOS</span>
+                    </button>
+                </div>
             </div>
         `;
-    }).join('') : '<p style="text-align:center; opacity:0.3; padding: 20px;">Ei omia laskuja vielä.</p>';
+    }).join('') : '<p style="text-align:center; color: var(--text-secondary); padding: 20px;">Ei omia laskuja vielä.</p>';
 }
 
 function renderVideoView() {
@@ -935,9 +985,10 @@ function renderVideoView() {
 
     let startLoc = currentSession.location || null;
     for (let id in currentSession.devices) {
-        if (currentSession.devices[id].role === 'LÄHTÖ' && currentSession.devices[id].location) {
-            startLoc = currentSession.devices[id].location;
-            break;
+        const d = currentSession.devices[id];
+        if ((d.role === 'LÄHTÖ' || d.role === 'LÄHETTÄJÄ') && d.location) {
+            startLoc = d.location;
+            if (d.role === 'LÄHTÖ' || d.actsAsStartClock) break;
         }
     }
 
@@ -963,18 +1014,21 @@ function renderVideoView() {
         }
 
         if (hasRecordedForCurrentRunner) {
-            statusText = "TALLENNETTU ✅";
+            statusText = "TALLENNETTU";
             countdownText = "Odotetaan seuraavaa...";
         }
 
         infoEl.innerHTML = `
-            <div style="font-size: 22px; color: var(--accent); font-weight: 900;">${statusText}</div>
+            <div style="font-size: 22px; color: #60a5fa; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                ${hasRecordedForCurrentRunner ? iconHtml('check_circle', 'icon-md') : ''}
+                <span>${statusText}</span>
+            </div>
             <div style="font-size: 16px; color: #fff; font-weight: 700;">${countdownText}</div>
-            <div style="font-size: 10px; opacity: 0.6; margin-top:5px;">${distText}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top:5px;">${distText}</div>
         `;
     } else {
         const missing = !startLoc ? "LÄHTÖPISTETTÄ" : "SIJAINTITIETOA";
-        infoEl.innerHTML = `<div style="opacity:0.5; font-size:12px;">ODOTTAA ${missing}...</div>`;
+        infoEl.innerHTML = `<div style="color: var(--text-secondary); font-size:13px;">ODOTTAA ${missing}...</div>`;
     }
 }
 

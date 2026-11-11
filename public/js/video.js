@@ -85,7 +85,7 @@ function saveVideoClip(explicitRunner = null, triggerType = 'clip', triggerTime 
     let safetyDuration = 8000; // Default post-trigger tail (8s after passing camera)
     if (captureRole === 'MAALI') {
         safetyDuration = 4000; // 4s after crossing finish line
-    } else if (captureRole === 'LÄHTÖ') {
+    } else if (captureRole === 'LÄHTÖ' || captureRole === 'LÄHETTÄJÄ') {
         safetyDuration = 6000; // 6s after start gate
     }
 
@@ -144,7 +144,7 @@ function processAndSaveVideo(runner, chunks) {
     }
 
     renderVideoGallery();
-    showVideoNotification(`VIDEO TALLESSA: ${(runner.name || 'LASKIJA').toUpperCase()} 🎬`);
+    showVideoNotification(`VIDEO TALLESSA: ${(runner.name || 'LASKIJA').toUpperCase()}`);
 
     // Try matching runId locally if available, otherwise backend pairs by timestamp window
     if (!runner.runId && currentSession) {
@@ -245,7 +245,7 @@ function renderVideoGallery() {
                 <div style="font-size: 10px; opacity: 0.5;">${clip.time} • ${clip.size} KB</div>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button class="btn-mini" onclick="window.open('${clip.url}')" style="background: var(--accent);">KATSO</button>
+                <button type="button" class="btn-mini" onclick="window.open('${clip.url}')" style="background: var(--accent);">${iconHtml('play_arrow', 'icon-sm')} KATSO</button>
             </div>
         </div>
     `).join('');

@@ -386,20 +386,25 @@ if ($action === 'join_session') {
 
         // Single LÄHTÖ or MAALI gate role replacement
         if ($role === 'LÄHTÖ' || $role === 'MAALI') {
-            foreach ($session['devices'] ?? [] as $did => $dev) {
+            foreach ($session['devices'] ?? [] as $did => &$dev) {
                 if (($dev['role'] ?? '') === $role && $did !== $deviceId) {
                     unset($session['devices'][$did]);
+                } elseif ($role === 'LÄHTÖ' && ($dev['role'] ?? '') === 'LÄHETTÄJÄ' && $did !== $deviceId) {
+                    // Automatically disable start clock function on LÄHETTÄJÄ when dedicated LÄHTÖ joins
+                    $dev['actsAsStartClock'] = false;
                 }
             }
+            unset($dev);
         }
 
         $session['devices'][$deviceId] = [
-            'id'            => $deviceId,
-            'role'          => $role,
-            'name'          => $deviceName,
-            'lastHeartbeat' => nowMs(),
-            'battery'       => 100,
-            'location'      => $location ?? ($session['devices'][$deviceId]['location'] ?? null)
+            'id'               => $deviceId,
+            'role'             => $role,
+            'name'             => $deviceName,
+            'lastHeartbeat'    => nowMs(),
+            'battery'          => 100,
+            'actsAsStartClock' => ($role === 'LÄHTÖ'),
+            'location'         => $location ?? ($session['devices'][$deviceId]['location'] ?? null)
         ];
 
         if ($location && empty($session['location'])) {
@@ -869,6 +874,23 @@ if ($action === 'event') {
                     $newName = trim($ev['name'] ?? '');
                     if ($newName !== '') {
                         $session['name'] = $newName;
+                    }
+                    break;
+                }
+
+                case 'set_starter_clock_mode': {
+                    $devId = trim($ev['deviceId'] ?? '');
+                    $enabled = !empty($ev['enabled']);
+                    if ($devId && isset($session['devices'][$devId])) {
+                        $session['devices'][$devId]['actsAsStartClock'] = $enabled;
+                    }
+                    if ($enabled) {
+                        // Ensure no duplicate LÄHTÖ device remains if starter explicitly takes over start clock
+                        foreach ($session['devices'] ?? [] as $did => $dev) {
+                            if (($dev['role'] ?? '') === 'LÄHTÖ' && $did !== $devId) {
+                                unset($session['devices'][$did]);
+                            }
+                        }
                     }
                     break;
                 }
