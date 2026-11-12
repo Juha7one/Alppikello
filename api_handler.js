@@ -58,8 +58,13 @@ module.exports = function registerApiPhpRoutes(app, upload) {
             sessionResults: (session.results || []).map(r => ({
                 name: r.name || '',
                 totalTime: r.totalTime || 0,
+                startTime: r.startTime || 0,
+                finishTime: r.finishTime || null,
                 status: r.status || 'OK',
-                runId: r.runId || ''
+                runId: r.runId || '',
+                splits: r.splits || [],
+                videos: r.videos || [],
+                videoUrl: r.videoUrl || null
             }))
         };
         fs.writeFileSync(path.join(runcardsDir, `${sanitizeId(runner.runId)}.json`), JSON.stringify(card, null, 2), 'utf8');
@@ -428,7 +433,19 @@ module.exports = function registerApiPhpRoutes(app, upload) {
             const runId = sanitizeId(req.query.runId || '');
             const p = path.join(runcardsDir, `${runId}.json`);
             if (fs.existsSync(p)) {
-                return res.json(JSON.parse(fs.readFileSync(p, 'utf8')));
+                let card = JSON.parse(fs.readFileSync(p, 'utf8'));
+                const sid = card.sessionId || '';
+                if (sid && fs.existsSync(getSessionPath(sid))) {
+                    const sess = readSession(sid);
+                    if (sess && Array.isArray(sess.results)) {
+                        const found = sess.results.find(r => r.runId === runId);
+                        if (found) {
+                            saveRunCardFile(found, sess);
+                            card = JSON.parse(fs.readFileSync(p, 'utf8'));
+                        }
+                    }
+                }
+                return res.json(card);
             }
             return res.status(404).json({ error: 'Suoritusta ei löytynyt' });
         }

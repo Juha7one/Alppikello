@@ -443,7 +443,17 @@ async function loadRunCard(runId, archiveFilename = null) {
                 sessionName: session.name || "Arkistoitu Harkka",
                 timestamp: session.archivedAt || Date.now(),
                 status: foundRun.status,
-                sessionResults: session.results.map(r => ({ name: r.name, totalTime: r.totalTime, status: r.status, runId: r.runId }))
+                sessionResults: session.results.map(r => ({
+                    name: r.name,
+                    totalTime: r.totalTime,
+                    startTime: r.startTime || session.timestamp || 0,
+                    finishTime: r.finishTime || null,
+                    status: r.status,
+                    runId: r.runId,
+                    splits: r.splits || [],
+                    videos: r.videos || [],
+                    videoUrl: r.videoUrl || null
+                }))
             };
         } else {
             const resp = await fetch(`${API_URL}?action=get_run&runId=${encodeURIComponent(runId)}`);
@@ -508,20 +518,6 @@ async function loadRunCard(runId, archiveFilename = null) {
         const standardTimeBox = document.getElementById('card-total-time-box');
         if (standardTimeBox) standardTimeBox.style.display = 'none';
         
-        // Splits
-        const splitsEl = document.getElementById('card-splits');
-        if (data.splits && data.splits.length > 0) {
-            splitsEl.innerHTML = data.splits.map((s, idx) => `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
-                    <span style="opacity: 0.5; font-weight: 700;">VÄLIAIKA ${idx+1} (${s.deviceName || 'Piste'})</span>
-                    <span style="font-weight: 900;">${formatDuration(s.duration)}</span>
-                </div>
-            `).join('');
-            splitsEl.style.display = 'block';
-        } else {
-            splitsEl.style.display = 'none';
-        }
-
         // Multi-Camera Synchronized Video Handling in Run Card
         const vCont = document.getElementById('card-video-container');
         const vEl = document.getElementById('card-video');
@@ -540,6 +536,20 @@ async function loadRunCard(runId, archiveFilename = null) {
         const videos = normalizeRunVideos(data);
         const startTime = parseInt(data.startTime) || parseInt(data.timestamp) || Date.now();
         const totalTimeMs = parseInt(data.totalTime) || 25000;
+
+        // Build Micro-Sector Telemetry, Fastest/Slowest Highlights & Initialize Ghost Comparison
+        const splitsEl = document.getElementById('card-splits');
+        const telemetryModel = typeof window.buildRunTelemetry === 'function'
+            ? window.buildRunTelemetry(data, videos)
+            : null;
+        if (telemetryModel && typeof window.renderRunTelemetryUI === 'function') {
+            window.renderRunTelemetryUI(splitsEl, telemetryModel);
+        } else if (splitsEl) {
+            splitsEl.style.display = 'none';
+        }
+        if (typeof window.initGhostComparisonUI === 'function') {
+            window.initGhostComparisonUI(data, videos, telemetryModel);
+        }
 
         if (videos.length > 0) {
             let currentIdx = 0;
@@ -566,8 +576,10 @@ async function loadRunCard(runId, archiveFilename = null) {
                 });
             };
 
-            const loadClip = (idx, preserveRaceTime = false) => {
-                const prevRaceSec = preserveRaceTime ? getVideoRaceTimeSec(vEl) : 0;
+            const loadClip = (idx, preserveRaceTime = false, explicitRaceSec = null) => {
+                const prevRaceSec = explicitRaceSec !== null
+                    ? explicitRaceSec
+                    : (preserveRaceTime ? getVideoRaceTimeSec(vEl) : 0);
                 const wasPaused = vEl.paused;
                 currentIdx = idx;
                 const vid = videos[idx];
@@ -588,17 +600,23 @@ async function loadRunCard(runId, archiveFilename = null) {
                 }
 
                 updateCardCamButtons(prevRaceSec);
+                if (typeof window.matchGhostClipToMainCamera === 'function') {
+                    window.matchGhostClipToMainCamera();
+                }
 
                 const onLoaded = () => {
                     vEl.removeEventListener('loadedmetadata', onLoaded);
-                    if (preserveRaceTime && startTime > 0 && vid.videoStartTime > 0) {
+                    if ((preserveRaceTime || explicitRaceSec !== null) && startTime > 0 && vid.videoStartTime > 0) {
                         const targetSec = getClipTimeForRaceSec(vid, startTime, prevRaceSec);
-                        if (targetSec > 0.1 && targetSec < (vEl.duration - 0.2)) {
+                        if (targetSec > 0.05 && targetSec < (vEl.duration - 0.1)) {
                             vEl.currentTime = targetSec;
                         }
                     }
-                    if (!wasPaused || !preserveRaceTime) {
+                    if (!wasPaused || !preserveRaceTime || explicitRaceSec !== null) {
                         vEl.play().catch(() => {});
+                    }
+                    if (typeof window.syncGhostToMainVideo === 'function') {
+                        window.syncGhostToMainVideo();
                     }
                 };
                 vEl.addEventListener('loadedmetadata', onLoaded);
@@ -706,10 +724,32 @@ async function loadRunCard(runId, archiveFilename = null) {
                 const raceTimeSec = getVideoRaceTimeSec(vEl);
                 vClock.innerText = formatSeconds(raceTimeSec);
                 updateCardCamButtons(raceTimeSec);
+                if (typeof window.updateLiveTelemetryHUD === 'function') {
+                    window.updateLiveTelemetryHUD(raceTimeSec);
+                }
+                if (typeof window.syncGhostToMainVideo === 'function') {
+                    window.syncGhostToMainVideo();
+                }
             };
 
-            vEl.onplay = () => { vOverlay.style.opacity = '1'; };
-            vEl.onpause = () => { vOverlay.style.opacity = '0.75'; };
+            vEl.onseeked = () => {
+                const raceTimeSec = getVideoRaceTimeSec(vEl);
+                if (typeof window.updateLiveTelemetryHUD === 'function') {
+                    window.updateLiveTelemetryHUD(raceTimeSec);
+                }
+                if (typeof window.syncGhostToMainVideo === 'function') {
+                    window.syncGhostToMainVideo();
+                }
+            };
+
+            vEl.onplay = () => {
+                vOverlay.style.opacity = '1';
+                if (typeof window.syncGhostToMainVideo === 'function') window.syncGhostToMainVideo();
+            };
+            vEl.onpause = () => {
+                vOverlay.style.opacity = '0.75';
+                if (typeof window.syncGhostToMainVideo === 'function') window.syncGhostToMainVideo();
+            };
             
             vEl.style.display = 'block';
             vPlaceholder.style.display = 'none';

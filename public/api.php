@@ -142,10 +142,15 @@ function saveRunCardFile(array $runner, array $session): void {
         'status'         => $runner['status'] ?? 'OK',
         'sessionResults' => array_map(function ($r) {
             return [
-                'name'      => $r['name'] ?? '',
-                'totalTime' => $r['totalTime'] ?? 0,
-                'status'    => $r['status'] ?? 'OK',
-                'runId'     => $r['runId'] ?? ''
+                'name'       => $r['name'] ?? '',
+                'totalTime'  => $r['totalTime'] ?? 0,
+                'startTime'  => $r['startTime'] ?? 0,
+                'finishTime' => $r['finishTime'] ?? null,
+                'status'     => $r['status'] ?? 'OK',
+                'runId'      => $r['runId'] ?? '',
+                'splits'     => $r['splits'] ?? [],
+                'videos'     => $r['videos'] ?? [],
+                'videoUrl'   => $r['videoUrl'] ?? null
             ];
         }, $session['results'] ?? [])
     ];

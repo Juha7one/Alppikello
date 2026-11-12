@@ -579,6 +579,7 @@ window.toggleDualPlay = toggleDualPlay;
 window.scrubDualCameras = scrubDualCameras;
 window.setDualSpeed = setDualSpeed;
 window.normalizeRunVideos = normalizeRunVideos;
+window.getVideoRaceTimeSec = getVideoRaceTimeSec;
 window.buildMultiCamPlayerHtml = buildMultiCamPlayerHtml;
 
 // ============================================================================

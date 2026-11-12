@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ALPPIKELLO - Älykäs Ajanotto</title>
-    <link rel="stylesheet" href="css/style.css?v=3.2.0">
+    <link rel="stylesheet" href="css/style.css?v=3.3.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Outfit:wght@700;800;900&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
@@ -15,9 +15,9 @@
 
 <body>
     <!-- Deployment Splash Screen (Identification for new pushes) -->
-    <div id="deployment-splash" style="background: #0b2545;">
-        <h1 class="splash-title" style="color: #fff;">ALPINE PULSE</h1>
-        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.7; color: #fff;">ALPPIKELLO v3.2.0</div>
+    <div id="deployment-splash" style="background: #1e1b4b;">
+        <h1 class="splash-title" style="color: #fff;">GHOST APEX</h1>
+        <div style="margin-top: 30px; font-weight: 800; font-size: 14px; opacity: 0.7; color: #fff;">ALPPIKELLO v3.3.0</div>
     </div>
 
     <!-- Onboarding View -->
@@ -535,13 +535,17 @@
         </div>
     </div>
 
-    <!-- View: Individual Run Card (Shared Result) -->
+    <!-- View: Individual Run Card (Shared Result & Video Analysis Studio) -->
     <div id="view-run-card" class="view container" style="padding: 0;">
         <div id="run-card-loading" style="text-align: center; padding: 50px; color: var(--text-secondary); font-weight: 700;">Ladataan suoritusta...</div>
         <div id="run-card-content" style="display: none; width: 100%;">
             <div class="card" style="padding: 0; overflow: hidden; border-radius: 24px;">
                 <div id="card-video-container" style="width: 100%; aspect-ratio: 16/9; background: #000; display: none; position: relative; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid rgba(255,255,255,0.12);">
                     <video id="card-video" playsinline controls crossorigin="anonymous" style="width: 100%; height: 100%; object-fit: contain; display: none;"></video>
+                    <!-- Ghost Comparison Overlay Video -->
+                    <video id="card-ghost-video" playsinline muted crossorigin="anonymous" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: none; z-index: 12; opacity: 0.48;"></video>
+                    <div id="card-ghost-wipe-line" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #f59e0b; box-shadow: 0 0 10px rgba(245,158,11,0.9); pointer-events: none; display: none; z-index: 14;"></div>
+
                     <div id="card-video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary);">
                         <span class="material-symbols-rounded icon-xl" aria-hidden="true" style="margin-bottom: 10px; opacity: 0.6;">movie</span>
                         <div style="font-size: 12px; font-weight: 900; letter-spacing: 1.5px;">VIDEOTA KÄSITELLÄÄN TAI SE PUUTTUU</div>
@@ -549,17 +553,46 @@
                     <!-- AI & Drawing Overlay -->
                     <canvas id="card-ai-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
                     
-                    <!-- Digital Clock Overlay -->
+                    <!-- Digital Clock & TV-Style Live Delta HUD Overlay -->
                     <div id="card-video-overlay" style="position: absolute; bottom: 15px; right: 15px; pointer-events: none; transition: opacity 0.3s; opacity: 0; text-align: right; z-index: 20;">
-                        <div style="background: rgba(0,0,0,0.85); display: inline-block; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(10px);">
-                            <div id="card-video-name" style="font-size: 8px; font-weight: 900; color: #60a5fa; letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">LASKIJA</div>
-                            <div id="card-video-clock" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
+                        <div id="card-video-sector-badge" style="display: none; background: rgba(15,23,42,0.88); color: #93c5fd; font-size: 9px; font-weight: 900; padding: 3px 8px; border-radius: 5px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 0.4px; text-transform: uppercase;"></div>
+                        <div style="background: rgba(0,0,0,0.85); display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(10px);">
+                            <div style="text-align: right;">
+                                <div id="card-video-name" style="font-size: 8px; font-weight: 900; color: #60a5fa; letter-spacing: 0.5px; line-height: 1; text-transform: uppercase; margin-bottom: 2px;">LASKIJA</div>
+                                <div id="card-video-clock" style="font-size: 16px; font-weight: 900; font-family: monospace; line-height: 1; color: #fff;">0.00</div>
+                            </div>
+                            <span id="card-video-delta" style="display: none; font-family: monospace; font-size: 13px; font-weight: 900; padding: 4px 7px; border-radius: 6px; line-height: 1;">+0,00 s</span>
                         </div>
                     </div>
                     <!-- Playlist Dots & Active Camera Badge -->
                     <div id="card-playlist-dots" style="position: absolute; top: 15px; left: 15px; display: flex; gap: 5px; z-index: 20;"></div>
                     <div id="card-role-badge" class="role-badge" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #60a5fa; z-index: 20;">VIDEO</div>
                 </div>
+
+                <!-- Precision Frame-by-Frame, Slow-Mo & Turn Loop Bar -->
+                <div style="background: rgba(15, 23, 42, 0.9); padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 6px; align-items: center;" role="group" aria-label="Ruutukelaus ja silmukka">
+                        <button type="button" onclick="stepVideoFrame(-1)" aria-label="Edellinen ruutu" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 38px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">skip_previous</span>
+                            <span>-1f</span>
+                        </button>
+                        <button type="button" onclick="stepVideoFrame(1)" aria-label="Seuraava ruutu" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 38px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                            <span>+1f</span>
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">skip_next</span>
+                        </button>
+                        <button type="button" id="btn-turn-loop" aria-pressed="false" onclick="toggleTurnLoop()" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 38px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">repeat</span>
+                            <span>LOOP ±1.5s</span>
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 4px; align-items: center;" role="group" aria-label="Toistonopeus">
+                        <button type="button" id="card-speed-1" aria-pressed="true" onclick="setCardPlaybackSpeed(1.0)" style="background: var(--accent); color: #fff; border: 1px solid #fff; min-height: 36px; min-width: 38px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 900; cursor: pointer;">1x</button>
+                        <button type="button" id="card-speed-0_5" aria-pressed="false" onclick="setCardPlaybackSpeed(0.5)" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 36px; min-width: 38px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer;">0.5x</button>
+                        <button type="button" id="card-speed-0_25" aria-pressed="false" onclick="setCardPlaybackSpeed(0.25)" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 36px; min-width: 38px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer;">0.25x</button>
+                        <button type="button" id="card-speed-0_1" aria-pressed="false" onclick="setCardPlaybackSpeed(0.1)" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 36px; min-width: 38px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer;">0.1x</button>
+                    </div>
+                </div>
+
                 <!-- Multi-Camera Selector & Dual Split-Screen Container for Analysis View -->
                 <div id="card-multicam-controls" style="display: none; padding: 12px 24px 0 24px;"></div>
                 <div id="card-dual-container" style="display: none; padding: 12px 24px 0 24px;"></div>
@@ -579,19 +612,118 @@
                     </div>
                     <div id="card-run-date" style="margin: -10px 0 18px 0; color: var(--text-secondary); font-size: 13px; font-weight: 700; text-transform: uppercase;"></div>
                     
-                    <!-- AI & Drawing Tools -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 24px; align-items: center; flex-wrap: wrap;">
-                        <button type="button" id="btn-toggle-draw" class="btn btn-outline" aria-pressed="false" onclick="toggleDrawingMode()" style="flex: 1; min-height: 54px; padding: 12px 16px; font-size: 14px; margin: 0;">
-                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">draw</span>
-                            <span>PIIRRÄ</span>
-                        </button>
-                        <button type="button" id="btn-toggle-ai" class="btn btn-outline" aria-pressed="false" onclick="toggleStickman()" style="flex: 1; min-height: 54px; padding: 12px 16px; font-size: 14px; margin: 0;">
+                    <!-- AI Biomechanics, Ghost Comparison, Pro Drawing & Voice-Over Toolbar -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
+                        <button type="button" id="btn-toggle-ai" class="btn btn-outline" aria-pressed="false" onclick="toggleStickman()" style="min-height: 50px; padding: 10px 12px; font-size: 13px; margin: 0;">
                             <span class="material-symbols-rounded icon-sm" aria-hidden="true">accessibility_new</span>
-                            <span>TIKKU-UKKO</span>
+                            <span>BIOMEKANIIKKA (AI)</span>
                         </button>
-                        <button type="button" class="btn btn-danger" aria-label="Tyhjennä piirrokset" onclick="clearAIDrawings()" style="width: 56px; min-height: 54px; padding: 12px; margin: 0;">
+                        <button type="button" id="btn-toggle-ghost" class="btn btn-outline" aria-pressed="false" onclick="toggleGhostMode()" style="min-height: 50px; padding: 10px 12px; font-size: 13px; margin: 0;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">compare</span>
+                            <span>HAAMUVERTAILU</span>
+                        </button>
+                        <button type="button" id="btn-toggle-draw" class="btn btn-outline" aria-pressed="false" onclick="toggleDrawingMode()" style="min-height: 50px; padding: 10px 12px; font-size: 13px; margin: 0;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">draw</span>
+                            <span>PIIRRÄ &amp; MITTAA</span>
+                        </button>
+                        <button type="button" id="btn-coach-voiceover" class="btn btn-outline" aria-pressed="false" onclick="toggleCoachVoiceOverRecording()" style="min-height: 50px; padding: 10px 12px; font-size: 13px; margin: 0;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">mic</span>
+                            <span>ÄÄNITÄ PALAUTE</span>
+                        </button>
+                    </div>
+
+                    <!-- Voice-Over Download Result Box -->
+                    <div id="coach-voiceover-result" style="display: none; align-items: center; justify-content: space-between; gap: 10px; background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;"></div>
+
+                    <!-- Pro Drawing Sub-Toolbar -->
+                    <div id="card-draw-subtools" style="display: none; gap: 8px; align-items: center; flex-wrap: wrap; background: rgba(255,255,255,0.04); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); margin-bottom: 14px;">
+                        <button type="button" id="draw-tool-free" aria-pressed="true" onclick="selectDrawTool('free')" style="flex: 1; background: var(--accent); color: #fff; border: 1px solid #fff; min-height: 40px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">gesture</span>
+                            <span>VAPAA VIIVA</span>
+                        </button>
+                        <button type="button" id="draw-tool-line" aria-pressed="false" onclick="selectDrawTool('line')" style="flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 40px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">horizontal_rule</span>
+                            <span>SUORA LINJA</span>
+                        </button>
+                        <button type="button" id="draw-tool-angle" aria-pressed="false" onclick="selectDrawTool('angle')" style="flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 40px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">square_foot</span>
+                            <span>KULMA (3 PISTETTÄ)</span>
+                        </button>
+                        <button type="button" aria-label="Tyhjennä piirrokset" onclick="clearAIDrawings()" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; min-height: 40px; padding: 0 12px; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
                             <span class="material-symbols-rounded icon-sm" aria-hidden="true">delete</span>
+                            <span>TYHJENNÄ</span>
                         </button>
+                    </div>
+
+                    <!-- Live Biomechanics Telemetry Panel -->
+                    <div id="card-biomech-panel" style="display: none; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 14px; margin-bottom: 16px; text-align: left;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                            <div style="font-size: 11px; font-weight: 900; color: #38bdf8; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                                <span class="material-symbols-rounded icon-sm" aria-hidden="true">monitoring</span>
+                                <span>LASKIJAN ASENTO &amp; NIVELKULMAT (LIVE)</span>
+                            </div>
+                            <button type="button" onclick="jumpToTurnApex()" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid #38bdf8; min-height: 36px; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                <span class="material-symbols-rounded icon-sm" aria-hidden="true">my_location</span>
+                                <span>ETSI TIUKIN KÄÄNNÖS (APEX)</span>
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px;">
+                            <div style="background: rgba(255,255,255,0.04); padding: 8px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary);">VASEN POLVI</div>
+                                <div id="bio-val-lknee" style="font-family: monospace; font-size: 16px; font-weight: 900; color: #fff;">--°</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.04); padding: 8px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary);">OIKEA POLVI</div>
+                                <div id="bio-val-rknee" style="font-family: monospace; font-size: 16px; font-weight: 900; color: #fff;">--°</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.04); padding: 8px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary);">LONKKA-ANG.</div>
+                                <div id="bio-val-ang" style="font-family: monospace; font-size: 16px; font-weight: 900; color: #60a5fa;">--°</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.04); padding: 8px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary);">KALLISTUS</div>
+                                <div id="bio-val-lean" style="font-family: monospace; font-size: 14px; font-weight: 900; color: #facc15;">--°</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.04); padding: 8px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary);">SÄÄRET (A-FRAME)</div>
+                                <div id="bio-val-shin" style="font-family: monospace; font-size: 13px; font-weight: 900; color: #4ade80;">--°</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ghost Comparison Control Panel -->
+                    <div id="card-ghost-panel" style="display: none; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(245, 158, 11, 0.45); border-radius: 14px; padding: 14px; margin-bottom: 16px; text-align: left;">
+                        <div style="font-size: 11px; font-weight: 900; color: #fbbf24; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-symbols-rounded icon-sm" aria-hidden="true">compare</span>
+                            <span>HAAMUKUVA &amp; SUORITUSVERTAILU</span>
+                        </div>
+                        <label for="ghost-run-select" style="display: block; font-size: 11px; font-weight: 800; color: var(--text-secondary); margin-bottom: 4px;">Valitse vertailulasku</label>
+                        <select id="ghost-run-select" onchange="loadGhostComparisonRun(this.value)" style="width: 100%; background: #0f172a; color: #fff; border: 1px solid rgba(255,255,255,0.25); padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; margin-bottom: 10px;"></select>
+
+                        <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;" role="group" aria-label="Haamukuvan synkronointitapa">
+                            <button type="button" id="ghost-sync-trigger" aria-pressed="true" onclick="setGhostSyncMode('trigger')" style="flex: 1; background: var(--accent); color: #fff; border: 1px solid #fff; min-height: 38px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer;">
+                                PORTTI-SYNK (SAMA KOHTA)
+                            </button>
+                            <button type="button" id="ghost-sync-start" aria-pressed="false" onclick="setGhostSyncMode('start')" style="flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 38px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer;">
+                                LÄHTÖ-SYNK (T = 0)
+                            </button>
+                        </div>
+
+                        <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;" role="group" aria-label="Haamukuvan esitystapa">
+                            <button type="button" id="ghost-mode-alpha" aria-pressed="true" onclick="setGhostVisualMode('alpha')" style="flex: 1; background: var(--accent); color: #fff; border: 1px solid #fff; min-height: 38px; padding: 6px 8px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer;">
+                                HAAMUKUVA
+                            </button>
+                            <button type="button" id="ghost-mode-wipe" aria-pressed="false" onclick="setGhostVisualMode('wipe')" style="flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 38px; padding: 6px 8px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer;">
+                                JAETTU RUUTU
+                            </button>
+                            <button type="button" id="ghost-mode-stickman" aria-pressed="false" onclick="setGhostVisualMode('stickman')" style="flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.22); min-height: 38px; padding: 6px 8px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer;">
+                                HAAMU-LUURANKO
+                            </button>
+                        </div>
+
+                        <label id="ghost-slider-label" for="ghost-blend-slider" style="display: block; font-size: 10px; font-weight: 900; color: var(--text-secondary); margin-bottom: 4px;">HAAMUN LÄPINÄKYVYYS: 48%</label>
+                        <input type="range" id="ghost-blend-slider" min="10" max="90" value="48" oninput="setGhostSliderValue(this.value)" style="width: 100%; accent-color: #f59e0b; cursor: pointer;">
+                        <div id="ghost-sync-status" style="font-size: 11px; font-weight: 700; color: #fde68a; margin-top: 6px;"></div>
                     </div>
 
                     <div id="card-splits" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; margin-bottom: 24px;"></div>
@@ -659,7 +791,7 @@
                 Kello: <span id="sync-offset" class="sync-badge">-- ms</span>
             </div>
         </div>
-        <p style="font-size: 11px; color: var(--text-secondary); opacity: 0.7; margin-top: 12px;">Alppikello v3.2.0 | © 2026</p>
+        <p style="font-size: 11px; color: var(--text-secondary); opacity: 0.7; margin-top: 12px;">Alppikello v3.3.0 | © 2026</p>
     </footer>
 
     <!-- Cold-Weather OLED Blackout Overlay (Tap anywhere to wake preview for 25s) -->
@@ -710,19 +842,21 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
-    <!-- Core App Logic (Stateless PHP/REST + Monotonic Clock + Multi-Language Voice + Combined Start Gate Edition) -->
-    <script src="js/qrcode.min.js?v=3.2.0"></script>
-    <script src="js/state.js?v=3.2.0"></script>
-    <script src="js/utils.js?v=3.2.0"></script>
-    <script src="js/voice.js?v=3.2.0"></script>
-    <script src="js/socket.js?v=3.2.0"></script>
-    <script src="js/video.js?v=3.2.0"></script>
-    <script src="js/cv.js?v=3.2.0"></script>
-    <script src="js/ai.js?v=3.2.0"></script>
-    <script src="js/timing.js?v=3.2.0"></script>
-    <script src="js/ui.js?v=3.2.0"></script>
-    <script src="js/rangefinder.js?v=3.2.0"></script>
-    <script src="js/app.js?v=3.2.0"></script>
+    <!-- Core App Logic (Stateless PHP/REST + Monotonic Clock + Multi-Language Voice + Video Analysis Studio Edition) -->
+    <script src="js/qrcode.min.js?v=3.3.0"></script>
+    <script src="js/state.js?v=3.3.0"></script>
+    <script src="js/utils.js?v=3.3.0"></script>
+    <script src="js/voice.js?v=3.3.0"></script>
+    <script src="js/socket.js?v=3.3.0"></script>
+    <script src="js/video.js?v=3.3.0"></script>
+    <script src="js/cv.js?v=3.3.0"></script>
+    <script src="js/ai.js?v=3.3.0"></script>
+    <script src="js/telemetry.js?v=3.3.0"></script>
+    <script src="js/ghost.js?v=3.3.0"></script>
+    <script src="js/timing.js?v=3.3.0"></script>
+    <script src="js/ui.js?v=3.3.0"></script>
+    <script src="js/rangefinder.js?v=3.3.0"></script>
+    <script src="js/app.js?v=3.3.0"></script>
 </body>
 
 </html>
